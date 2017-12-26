@@ -62,3 +62,32 @@ func Dele(key string) error {
 
 	return nil
 }
+
+func Get(key string, opts []string) (map[string]string, error) {
+	log.Println(key)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+
+	var ops []clientv3.OpOption
+	if len(opts) > 0 {
+		for _, o := range opts {
+			switch o {
+			case "--from-key":
+				ops = append(ops, clientv3.WithFromKey())
+			}
+		}
+	}
+
+	resp, err := cli.Get(ctx, key, ops...)
+	defer cancel()
+
+	data := make(map[string]string)
+	if err != nil {
+		return data, err
+	}
+
+	for _, ev := range resp.Kvs {
+		data[string(ev.Key)] = string(ev.Value)
+	}
+
+	return data, nil
+}

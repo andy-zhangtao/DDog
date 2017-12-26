@@ -9,6 +9,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server"
 	"github.com/andy-zhangtao/DDog/server/etcd"
 	gg "github.com/andy-zhangtao/gogather/strings"
+	"strings"
 )
 
 const (
@@ -22,7 +23,10 @@ type DnsMeteData struct {
 	Value string `json:"value"`
 }
 
-func SaveDns(w http.ResponseWriter, r *http.Request) {
+// SaveDNS 保存DNS数据
+// Key为需要解析的域名
+// Value为相对应的A记录
+func SaveDNS(w http.ResponseWriter, r *http.Request) {
 
 	dmd, err := getDNS(r, SaveMethod)
 	if err != nil {
@@ -37,6 +41,8 @@ func SaveDns(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleDNS 删除指定DNS记录
+// Key为需要删除的域名
 func DeleDNS(w http.ResponseWriter, r *http.Request) {
 	dmd, err := getDNS(r, DeleMethod)
 	if err != nil {
@@ -49,6 +55,54 @@ func DeleDNS(w http.ResponseWriter, r *http.Request) {
 		server.ReturnError(w, err)
 		return
 	}
+}
+
+// GetDNS 获取指定DNS记录
+// Key为需要查询的域名,支持模糊查询
+func GetDNS(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+	if domain == "" {
+		server.ReturnError(w, errors.New("Domain can not be empty"))
+		return
+	}
+
+	isFuzzy := false
+	fuzzy := r.URL.Query().Get("fuzzy")
+	if strings.ToLower(fuzzy) == "true" {
+		isFuzzy = true
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	var resp []byte
+	if !isFuzzy {
+		data, err := etcd.Get(parseDomain(domain), []string{})
+		if err != nil {
+			server.ReturnError(w, err)
+			return
+		}
+
+		resp, _ = json.Marshal(&DnsMeteData{
+			Key:   domain,
+			Value: data[parseDomain(domain)],
+		})
+	} else {
+		var td []DnsMeteData
+		data, err := etcd.Get(parseDomain(domain), []string{"--from-key"})
+		if err != nil {
+			server.ReturnError(w, err)
+			return
+		}
+
+		for key, value := range data {
+			k := gg.ReverseWithSeg(key, "/", ".")
+			td = append(td, DnsMeteData{
+				Key:   k[0:len(k)-1],
+				Value: value,
+			})
+		}
+		resp, _ = json.Marshal(td)
+	}
+	w.Write(resp)
 }
 
 func getDNS(r *http.Request, method int) (DnsMeteData, error) {
