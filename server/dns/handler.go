@@ -18,7 +18,6 @@ const (
 )
 
 type DnsMeteData struct {
-	//Domain string `json:"domain"`
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
@@ -119,10 +118,6 @@ func getDNS(r *http.Request, method int) (DnsMeteData, error) {
 
 	switch method {
 	case SaveMethod:
-		//if dmd.Domain == "" {
-		//	return dmd, errors.New("Domain can not be empty!")
-		//}
-
 		if dmd.Key == "" {
 			return dmd, errors.New("Key can not be empty!")
 		}
@@ -131,10 +126,6 @@ func getDNS(r *http.Request, method int) (DnsMeteData, error) {
 			return dmd, errors.New("Value can not be empty!")
 		}
 	case DeleMethod:
-		//if dmd.Domain == "" {
-		//	return dmd, errors.New("Domain can not be empty!")
-		//}
-
 		if dmd.Key == "" {
 			return dmd, errors.New("Key can not be empty!")
 		}

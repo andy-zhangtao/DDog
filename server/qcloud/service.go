@@ -1,16 +1,15 @@
 package qcloud
 
 import (
-	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
-	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"net/http"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/andy-zhangtao/DDog/server"
 	"errors"
 	"encoding/json"
 )
 
-func GetClusterNodes(w http.ResponseWriter, r *http.Request) {
-
+func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	sid := r.Header.Get("secretId")
 	if sid == "" {
 		server.ReturnError(w, errors.New("SecretId Can not be empty"))
@@ -40,26 +39,30 @@ func GetClusterNodes(w http.ResponseWriter, r *http.Request) {
 		namespace = "default"
 	}
 
-	q := cvm.Cluster{
+	allnamespace := r.Header.Get("allnamespace")
+	if allnamespace == "" {
+		allnamespace = "0"
+	}
+
+	q := service.Svc{
 		Pub: public.Public{
-			Action:   "DescribeClusterInstances",
+			Action:   "DescribeClusterService",
 			Region:   region,
 			SecretId: sid,
 		},
-		Cid:       cid,
-		Namespace: namespace,
-		Offset:    0,
-		Limit:     20,
-		SecretKey: key,
+		ClusterId:    cid,
+		Namespace:    namespace,
+		Allnamespace: allnamespace,
+		SecretKey:    key,
 	}
 
-	nodes, err := q.QueryClusterNodes()
+	service, err := q.QuerySampleInfo()
 	if err != nil {
 		server.ReturnError(w, err)
 		return
 	}
 
-	data, err := json.Marshal(nodes)
+	data, err := json.Marshal(service)
 	if err != nil {
 		server.ReturnError(w, err)
 		return
