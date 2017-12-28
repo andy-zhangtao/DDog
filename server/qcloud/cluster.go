@@ -42,7 +42,6 @@ func GetClusterNodes(w http.ResponseWriter, r *http.Request) {
 
 	q := cvm.Cluster{
 		Pub: public.Public{
-			Action:   "DescribeClusterInstances",
 			Region:   region,
 			SecretId: sid,
 		},

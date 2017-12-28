@@ -46,7 +46,6 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	q := service.Svc{
 		Pub: public.Public{
-			Action:   "DescribeClusterService",
 			Region:   region,
 			SecretId: sid,
 		},

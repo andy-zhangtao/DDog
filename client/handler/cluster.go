@@ -23,11 +23,12 @@ const (
 	CloudEtcdClusterInfo = "/cluster/info"
 )
 
+// saveClusterInfo 查询集群信息并持久化到etcd
+// 如果选择持久化，则会覆盖旧值
 func (this ClusterHandler) saveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
 
 	c := cvm.Cluster{
 		Pub: public.Public{
-			Action:   "DescribeCluster",
 			Region:   this.Region,
 			SecretId: this.SecretId,
 		},

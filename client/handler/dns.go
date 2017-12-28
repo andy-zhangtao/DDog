@@ -32,7 +32,6 @@ func (this SvcHandler) ChangeDns() (bool, error) {
 
 	q := service.Svc{
 		Pub: public.Public{
-			Action:   "DescribeClusterService",
 			Region:   this.Region,
 			SecretId: this.SecretId,
 		},
