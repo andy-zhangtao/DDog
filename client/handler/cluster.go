@@ -10,22 +10,18 @@ import (
 	"encoding/json"
 	"strconv"
 	"github.com/andy-zhangtao/DDog/server/etcd"
+	"github.com/andy-zhangtao/DDog/const"
 )
 
-type ClusterHandler struct {
+type Cluster struct {
 	SecretId  string `json:"secret_id"`
 	SecretKey string `json:"secret_key"`
 	Region    string `json:"region"`
 }
 
-const (
-	CloudEtcdRootPath = "/cloud/meta"
-	CloudEtcdClusterInfo = "/cluster/info"
-)
-
 // saveClusterInfo 查询集群信息并持久化到etcd
 // 如果选择持久化，则会覆盖旧值
-func (this ClusterHandler) saveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
+func (this Cluster) SaveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
 
 	c := cvm.Cluster{
 		Pub: public.Public{
@@ -35,7 +31,7 @@ func (this ClusterHandler) saveClusterInfo(save bool) (*cvm.ClusterInfo, error) 
 		SecretKey: this.SecretKey,
 	}
 
-	c.SetDebug(true)
+	c.SetDebug(_const.DEBUG)
 
 	cinfo, err := c.QueryClusters()
 	if err != nil {
@@ -47,7 +43,7 @@ func (this ClusterHandler) saveClusterInfo(save bool) (*cvm.ClusterInfo, error) 
 		if err != nil{
 			return nil, err
 		}
-		err = etcd.Put(CloudEtcdRootPath+"/"+c.Pub.Region+CloudEtcdClusterInfo,string(data))
+		err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdClusterInfo,string(data))
 		if err != nil{
 			return nil, err
 		}
@@ -75,7 +71,7 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 		save = false
 	}
 
-	var ch ClusterHandler
+	var ch Cluster
 
 	err = json.Unmarshal(data, &ch)
 	if err != nil {
@@ -83,7 +79,7 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cinfo, err := ch.saveClusterInfo(save)
+	cinfo, err := ch.SaveClusterInfo(save)
 	if err != nil {
 		server.ReturnError(w, err)
 		return

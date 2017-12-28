@@ -13,7 +13,7 @@ import (
 	"encoding/json"
 )
 
-type SvcHandler struct {
+type Svc struct {
 	Svcname      string `json:"svcname"`
 	SecretId     string `json:"secret_id"`
 	SecretKey    string `json:"secret_key"`
@@ -25,10 +25,51 @@ type SvcHandler struct {
 	Domain       string `json:"domain"`
 }
 
+
+// WatchDNS 维护服务名称与DNS的对应关系
+// 例如:
+// 服务名称为: user-manager-domain-com
+// 将转换为: /com/domain/manager/user
+// 实际在DNS中对应的域名为 user.manager.domain.com
+func (this Svc) WatchDNS() error{
+	q := service.Svc{
+		Pub: public.Public{
+			Region:   this.Region,
+			SecretId: this.SecretId,
+		},
+		ClusterId:    this.Clusterid,
+		Namespace:    this.Namespace,
+		Allnamespace: this.Allnamespace,
+		SecretKey:    this.SecretKey,
+	}
+	q.SetDebug(_const.DEBUG)
+	ssmd, err := q.QuerySampleInfo()
+	if err != nil {
+		return  err
+	}
+
+	if ssmd.Code != 0 {
+		return  errors.New(ssmd.Message)
+	}
+
+	for _, svc := range ssmd.Data.Services {
+		if svc.ServiceIp == "" {
+			continue
+		}
+
+		err = etcd.Put("/"+strings.ReverseWithSeg(svc.ServiceName, "-", "/"),svc.ServiceIp)
+		if err != nil{
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ChangeDns 修改指定服务名称的DNS记录
 // 当前支持修改A记录,如果修改成功则返回True, 如果找不到指定的服务名称则返回False
 // 如果出现其他错误，则返回error
-func (this SvcHandler) ChangeDns() (bool, error) {
+func (this Svc) ChangeDns() (bool, error) {
 
 	q := service.Svc{
 		Pub: public.Public{
@@ -41,6 +82,7 @@ func (this SvcHandler) ChangeDns() (bool, error) {
 		SecretKey:    this.SecretKey,
 	}
 
+	q.SetDebug(_const.DEBUG)
 	ssmd, err := q.QuerySampleInfo()
 	if err != nil {
 		return false, err
@@ -76,7 +118,7 @@ func AddSvcDnsAR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var svc SvcHandler
+	var svc Svc
 
 	err = json.Unmarshal(data, &svc)
 	if err != nil {

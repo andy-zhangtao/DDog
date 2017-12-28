@@ -7,4 +7,5 @@ const (
 	GetClusterInfo   = "/cloud/cluster/info"
 	GetNSInfo        = "/cloud/namespace/info"
 	GetSvcSampleInfo = "/cloud/svc/info/sample"
+	AddMetaData      = "/cloud/metadata"
 )

@@ -10,6 +10,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	ns "github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"github.com/andy-zhangtao/DDog/server/etcd"
+	"github.com/andy-zhangtao/DDog/const"
 )
 
 type NameSpace struct {
@@ -18,10 +19,6 @@ type NameSpace struct {
 	Region    string `json:"region"`
 	ClusterID string `json:"cluster_id"`
 }
-
-const (
-	CloudEtcdNameSpaceInfo = "/namespace/info"
-)
 
 func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
@@ -48,7 +45,7 @@ func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
 		save = false
 	}
 
-	nsinfo, err := ns.saveNSInfo(save)
+	nsinfo, err := ns.SaveNSInfo(save)
 	if err != nil {
 		server.ReturnError(w, err)
 		return
@@ -64,7 +61,7 @@ func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func (this NameSpace) saveNSInfo(save bool) (*ns.NSInfo, error) {
+func (this NameSpace) SaveNSInfo(save bool) (*ns.NSInfo, error) {
 	c := ns.NSpace{
 		Pub: public.Public{
 			Region:   this.Region,
@@ -74,7 +71,7 @@ func (this NameSpace) saveNSInfo(save bool) (*ns.NSInfo, error) {
 		ClusterId: this.ClusterID,
 	}
 
-	c.SetDebug(true)
+	c.SetDebug(_const.DEBUG)
 
 	ns, err := c.QueryNSInfo()
 	if err != nil {
@@ -86,7 +83,7 @@ func (this NameSpace) saveNSInfo(save bool) (*ns.NSInfo, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = etcd.Put(CloudEtcdRootPath+"/"+c.Pub.Region+CloudEtcdNameSpaceInfo, string(data))
+		err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdNameSpaceInfo, string(data))
 		if err != nil {
 			return nil, err
 		}
