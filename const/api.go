@@ -5,4 +5,5 @@ const (
 	DnsMetaData      = "/dns/metadata"
 	GetNodeInfo      = "/cloud/cluster/nodes"
 	GetSvcSampleInfo = "/cloud/cluster/svcinfo/sample"
+	GetClusterInfo   = "/cloud/cluster/info"
 )
