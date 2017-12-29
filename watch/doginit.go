@@ -44,13 +44,13 @@ func Go() {
 		case <-t.C:
 			if w.sid != "" {
 				watch(w)
-			}else{
+			} else {
 				log.Println("当前MetaData数据为空")
 			}
-		case <- bridge.GetMetaChan():
+		case <-bridge.GetMetaChan():
 			w, err = getMetaData()
-			if err != nil{
-				log.Printf("获取MetaData失败[%s]\n",err.Error())
+			if err != nil {
+				log.Printf("获取MetaData失败[%s]\n", err.Error())
 			}
 		}
 	}
@@ -60,8 +60,9 @@ func Go() {
 // genConfigure 生成DNS配置文件
 func genConfigure() error {
 	type conf struct {
-		Domain string
-		Etcd string
+		Domain   string
+		Etcd     string
+		Upstream string
 	}
 
 	name := os.Getenv(_const.EnvDomain)
@@ -79,12 +80,29 @@ func genConfigure() error {
 		path = "/"
 	}
 
-	if !strings.HasSuffix(path, "/") {
-		path += "/"
-	}
 	var mf = conf{
 		Domain: name,
-		Etcd: etcd,
+		Etcd:   etcd,
+	}
+
+	upstream := os.Getenv(_const.EnvUpStream)
+	if upstream == "" {
+		return errors.New(_const.EnvUpStreamNotFound)
+	}
+
+	us := strings.Split(upstream, ";")
+	for _, s := range us {
+		if !strings.Contains(s, ":") && !strings.Contains(s, "/") {
+			mf.Upstream += s + ":53 "
+		} else if !strings.Contains(s, ":") && strings.Contains(s, "/") {
+			mf.Upstream += s + " "
+		} else {
+			mf.Upstream += s + " "
+		}
+	}
+
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
 	}
 
 	t := template.Must(template.New("makefile").Parse(_const.Corefile))
@@ -112,11 +130,17 @@ func watchCluster(w *watchdog) {
 		SecretId:  w.sid,
 		SecretKey: w.skey,
 	}
+
 	for _, r := range w.region {
 		ch.Region = r
 		cinfo, err := ch.SaveClusterInfo(true)
 		if err != nil {
 			log.Printf("[%s]Get Cluster Info Error [%s]\n", ch.Region, err.Error())
+			continue
+		}
+
+		if cinfo.Code != 0 {
+			log.Printf("检索集群数据调用成功,返回失败状态码[%d]\n", cinfo.Code)
 			continue
 		}
 
@@ -127,11 +151,18 @@ func watchCluster(w *watchdog) {
 				continue
 			}
 
+			if nsInfo.Code != 0 {
+				log.Printf("检索命名空间数据调用成功,返回失败状态码[%d]\n", cinfo.Code)
+				continue
+			}
+
 			for _, n := range nsInfo.Data.Namespaces {
-				err = watchSVC(n, c, w)
-				if err != nil {
-					log.Printf("[%s]Maintain Svc <-> DNS Error [%s]\n", n.Name, err.Error())
-					return
+				if n.Name != "kube-system" {
+					err = watchSVC(n, c, w)
+					if err != nil {
+						log.Printf("[%s]Maintain Svc <-> DNS Error [%s]\n", n.Name, err.Error())
+						return
+					}
 				}
 			}
 		}
@@ -155,7 +186,7 @@ func watchSVC(n namespace.NSInfo_data_namespaces, c cvm.ClusterInfo_data_cluster
 	svc := handler.Svc{
 		SecretId:  w.sid,
 		SecretKey: w.skey,
-		Region:    c.Region,
+		Region:    _const.RegionMap[c.Region],
 		Clusterid: c.ClusterId,
 		Namespace: n.Name,
 	}

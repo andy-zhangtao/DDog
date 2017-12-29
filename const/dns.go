@@ -7,15 +7,13 @@ const Corefile = `
 	whoami
 	log
 
-	proxy . /etc/resolv.conf {
-		except {{.Domain}}
-	}
-
 	etcd {{.Domain}} {
 		stubzones
 		path /
 		endpoint http://{{.Etcd}}
+		upstream {{.Upstream}}
 	}
 
+	proxy . {{.Upstream}}
 }
 `

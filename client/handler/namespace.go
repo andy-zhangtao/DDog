@@ -11,6 +11,7 @@ import (
 	ns "github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"github.com/andy-zhangtao/DDog/server/etcd"
 	"github.com/andy-zhangtao/DDog/const"
+	"log"
 )
 
 type NameSpace struct {
@@ -79,6 +80,9 @@ func (this NameSpace) SaveNSInfo(save bool) (*ns.NSInfo, error) {
 	}
 
 	if save {
+		if (_const.DEBUG){
+			log.Printf("[SaveNSInfo]调用SDK获取到NameSpace数据为[%s]\n",ns.Data.Namespaces)
+		}
 		data, err := json.Marshal(ns.Data.Namespaces)
 		if err != nil {
 			return nil, err
