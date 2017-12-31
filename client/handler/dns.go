@@ -11,6 +11,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server"
 	"io/ioutil"
 	"encoding/json"
+	"log"
 )
 
 type Svc struct {
@@ -25,13 +26,17 @@ type Svc struct {
 	Domain       string `json:"domain"`
 }
 
+type vsvc struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
 
 // WatchDNS 维护服务名称与DNS的对应关系
 // 例如:
 // 服务名称为: user-manager-domain-com
 // 将转换为: /com/domain/manager/user
 // 实际在DNS中对应的域名为 user.manager.domain.com
-func (this Svc) WatchDNS() error{
+func (this Svc) WatchDNS() error {
 	q := service.Svc{
 		Pub: public.Public{
 			Region:   this.Region,
@@ -45,11 +50,11 @@ func (this Svc) WatchDNS() error{
 	q.SetDebug(_const.DEBUG)
 	ssmd, err := q.QuerySampleInfo()
 	if err != nil {
-		return  err
+		return err
 	}
 
 	if ssmd.Code != 0 {
-		return  errors.New(ssmd.Message)
+		return errors.New(ssmd.Message)
 	}
 
 	for _, svc := range ssmd.Data.Services {
@@ -57,8 +62,21 @@ func (this Svc) WatchDNS() error{
 			continue
 		}
 
-		err = etcd.Put("/"+strings.ReverseWithSeg(svc.ServiceName, "-", "/"),svc.ServiceIp)
-		if err != nil{
+		s := vsvc{
+			Host: svc.ServiceIp,
+			Port: 80,
+		}
+
+		data, err := json.Marshal(&s)
+		if err != nil {
+			return err
+		}
+		if _const.DEBUG {
+			log.Printf("[UpDns][%s]\n", string(data))
+		}
+
+		err = etcd.Put("/"+strings.ReverseWithSeg(svc.ServiceName, "-", "/"), string(data))
+		if err != nil {
 			return err
 		}
 	}
@@ -106,7 +124,20 @@ func (this Svc) ChangeDns() (bool, error) {
 		return false, errors.New(_const.SvcIPEmpty)
 	}
 
-	err = etcd.Put("/"+strings.ReverseWithSeg(this.Domain, ".", "/"), this.svcip)
+	s := vsvc{
+		Host: this.svcip,
+		Port: 80,
+	}
+
+	data, err := json.Marshal(&s)
+	if err != nil {
+		return false, err
+	}
+	if _const.DEBUG {
+		log.Printf("[UpDns][%s]\n", string(data))
+	}
+
+	err = etcd.Put("/"+strings.ReverseWithSeg(this.Domain, ".", "/"), string(data))
 	return true, err
 }
 

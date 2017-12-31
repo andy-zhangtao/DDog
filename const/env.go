@@ -3,6 +3,7 @@ package _const
 import (
 	"os"
 	"strconv"
+	"log"
 )
 
 const (
@@ -24,5 +25,11 @@ func init() {
 		DEBUG = false
 	} else {
 		DEBUG = debug
+	}
+
+	if DEBUG {
+		log.Println("启动DEBUG模式")
+	} else {
+		log.Println("关闭DEBUG模式")
 	}
 }

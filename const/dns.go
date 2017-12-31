@@ -10,8 +10,7 @@ const Corefile = `
 	etcd {{.Domain}} {
 		stubzones
 		path /
-		endpoint http://{{.Etcd}}
-		upstream {{.Upstream}}
+		endpoint {{.Etcd}}
 	}
 
 	proxy . {{.Upstream}}

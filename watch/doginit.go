@@ -75,6 +75,12 @@ func genConfigure() error {
 		return errors.New(_const.EnvEtcdNotFound)
 	}
 
+	etcdList := strings.Split(etcd, ";")
+	for i, e := range etcdList {
+		etcdList[i] = "http://" + e
+	}
+
+	etcd = strings.Join(etcdList, " ")
 	path := os.Getenv(_const.EnvConfPath)
 	if path == "" {
 		path = "/"
