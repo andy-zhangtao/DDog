@@ -21,11 +21,11 @@
       "description": "集群操作API"
     },
     {
-      "name":"dns",
+      "name": "dns",
       "description": "DNS操作API"
     },
     {
-      "name":"svc",
+      "name": "svc",
       "description": "服务操作API"
     }
   ],
@@ -34,7 +34,7 @@
   ],
   "paths": {
     "/cloud/cluster/info": {
-      "post": {
+      "get": {
         "tags": [
           "cluster"
         ],
@@ -45,13 +45,11 @@
         ],
         "parameters": [
           {
-            "in": "body",
-            "name": "body",
-            "description": "查询所需的信息",
+            "in": "query",
+            "name": "region",
+            "description": "集群所在区域",
             "required": true,
-            "schema": {
-              "$ref": "#/definitions/ClusterInfo"
-            }
+            "type": "string"
           },
           {
             "name": "save",
@@ -65,8 +63,7 @@
           "200": {
             "description": "信息获取成功",
             "schema": {
-              "type": "string",
-              "example": "http://cn-hbjz3-dx.acgvideo.com/vg8/0/e3/3965549-1-hd.mp4?expires=1507526400&platform=pc&ssig=qwzGdHIf6dJklgCPfEu6jQ&oi=1743518229&nfa=dqicF3m0tsCYAScRMi4sEg==&dynamic=1&hfa=2078920504&hfb=Yjk5ZmZjM2M1YzY4ZjAwYTMzMTIzYmIyNWY4ODJkNWI="
+              "$ref": "#/definitions/ClusterInfo"
             }
           },
           "500": {
@@ -75,8 +72,8 @@
         }
       }
     },
-    "/dns/metadata":{
-      "get":{
+    "/dns/metadata": {
+      "get": {
         "tags": [
           "dns"
         ],
@@ -87,14 +84,14 @@
         ],
         "parameters": [
           {
-            "in":"query",
-            "name":"domain",
+            "in": "query",
+            "name": "domain",
             "description": "域名",
             "required": true,
             "type": "string"
           },
           {
-            "in":"query",
+            "in": "query",
             "name": "fuzzy",
             "description": "是否需要模糊查询",
             "required": false,
@@ -102,7 +99,7 @@
           }
         ],
         "responses": {
-          "200":{
+          "200": {
             "description": "操作成功",
             "schema": {
               "$ref": "#/definitions/DnsInfo"
@@ -140,7 +137,7 @@
         }
       }
     },
-    "/dns/metadata/{domain}":{
+    "/dns/metadata/{domain}": {
       "delete": {
         "tags": [
           "dns"
@@ -150,66 +147,14 @@
         "parameters": [
           {
             "name": "domain",
-            "in":"path",
+            "in": "path",
             "description": "域名",
             "required": true,
             "type": "string"
           }
         ],
         "responses": {
-          "200":{
-            "description": "操作成功"
-          },
-          "500":{
-            "description": "操作失败"
-          }
-        }
-      }
-    },
-    "/cloud/cluster/nodes":{
-      "get":{
-        "tags": [
-          "cluster"
-        ],
-        "summary": "获取节点数据",
-        "description":"获取指定节点数据",
-        "parameters": [
-          {
-            "name": "clusterid",
-            "in":"query",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200":{
-            "description": "操作成功",
-            "schema": {
-              "$ref": "#/definitions/NodeInfo"
-            }
-          }
-        }
-      }
-    },
-    "/svc/dns/a-record":{
-      "post":{
-        "tags": [
-          "dns"
-        ],
-        "summary": "增加A记录",
-        "description": "增加指定域名的A记录, 与POST/dns/metadata重复",
-        "parameters": [
-          {
-            "name":"body",
-            "in":"body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/DnsInfo"
-            }
-          }
-        ],
-        "responses": {
-          "200":{
+          "200": {
             "description": "操作成功"
           },
           "500": {
@@ -218,7 +163,59 @@
         }
       }
     },
-    "/cloud/svc/info/sample":{
+    "/cloud/cluster/nodes": {
+      "get": {
+        "tags": [
+          "cluster"
+        ],
+        "summary": "获取节点数据",
+        "description": "获取指定节点数据",
+        "parameters": [
+          {
+            "name": "clusterid",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/NodeInfo"
+            }
+          }
+        }
+      }
+    },
+    "/svc/dns/a-record": {
+      "post": {
+        "tags": [
+          "dns"
+        ],
+        "summary": "增加A记录",
+        "description": "增加指定域名的A记录, 与POST/dns/metadata重复",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DnsInfo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/info/sample": {
       "get": {
         "tags": [
           "svc"
@@ -226,21 +223,21 @@
         "parameters": [
           {
             "name": "region",
-            "in":"query",
+            "in": "query",
             "required": true,
             "type": "string",
             "description": "机房所在区域"
           },
           {
             "name": "clusterid",
-            "in":"query",
+            "in": "query",
             "required": true,
             "type": "string",
             "description": "集群名称"
           },
           {
             "name": "namespace",
-            "in":"query",
+            "in": "query",
             "required": false,
             "type": "string",
             "description": "命名空间名称,默认为default"
@@ -249,7 +246,7 @@
         "summary": "获取服务简要描述",
         "description": "获取服务概述",
         "responses": {
-          "200":{
+          "200": {
             "description": "操作成功",
             "schema": {
               "$ref": "#/definitions/SvcInfo"
@@ -260,7 +257,7 @@
     }
   },
   "definitions": {
-    "ClusterInfo": {
+    "MetaData": {
       "type": "object",
       "properties": {
         "secret_id": {
@@ -280,74 +277,74 @@
         }
       }
     },
-    "DnsInfo":{
-      "type":"object",
+    "DnsInfo": {
+      "type": "object",
       "properties": {
-        "key":{
+        "key": {
           "type": "string",
           "description": "域名",
           "example": "zk.eqshow.cn"
         },
-        "value":{
+        "value": {
           "$ref": "#/definitions/DNSValue"
         }
       }
     },
-    "DNSValue":{
+    "DNSValue": {
       "type": "object",
       "properties": {
-        "host":{
+        "host": {
           "type": "string",
           "description": "IP地址",
           "example": "172.0.0.3"
         },
-        "port":{
+        "port": {
           "type": "integer",
           "description": "服务端口",
           "example": "80"
         }
       }
     },
-    "NodeInfo":{
+    "NodeInfo": {
       "type": "object",
       "properties": {
-        "host":{
+        "host": {
           "type": "string",
           "description": "IP地址",
           "example": "172.0.0.3"
         }
       }
     },
-    "SvcInfo":{
+    "SvcInfo": {
       "type": "object",
       "properties": {
-        "code":{
+        "code": {
           "type": "number",
           "description": "响应码",
           "example": 200
         },
-        "message":{
+        "message": {
           "type": "string",
           "description": "返回信息"
         },
-        "codedesc":{
+        "codedesc": {
           "type": "string",
           "description": "响应码描述"
         },
-        "data":{
+        "data": {
           "$ref": "#/definitions/SvcData"
         }
       }
     },
-    "SvcData":{
+    "SvcData": {
       "type": "object",
       "properties": {
-        "totalcount":{
+        "totalcount": {
           "type": "number",
           "description": "服务个数",
           "example": 1
         },
-        "services":{
+        "services": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/SvcContent"
@@ -355,69 +352,207 @@
         }
       }
     },
-    "SvcContent":{
+    "SvcContent": {
       "type": "object",
       "properties": {
-        "servicename":{
+        "servicename": {
           "type": "string",
           "description": "服务名称",
           "example": "zk-cn"
         },
-        "status":{
+        "status": {
           "type": "string",
           "description": "服务状态",
           "example": "Normal"
         },
-        "serviceip":{
+        "serviceip": {
           "type": "string",
           "description": "服务IP",
           "example": "172.0.0.4"
         },
-        "externalip":{
+        "externalip": {
           "type": "string",
           "description": "对外服务IP",
           "example": "192.0.0.4"
         },
-        "lbid":{
+        "lbid": {
           "type": "string",
           "description": "负载名称",
           "example": "lb-cluster-1"
         },
-        "lbstatus":{
+        "lbstatus": {
           "type": "string",
           "description": "负载状态",
           "example": "Running"
         },
-        "accesstype":{
+        "accesstype": {
           "type": "string",
           "description": "访问方式",
           "example": "ClusterIP"
         },
-        "desiredreplicas":{
+        "desiredreplicas": {
           "type": "number",
           "description": "预设副本个数",
           "example": "3"
         },
-        "currentreplicas":{
+        "currentreplicas": {
           "type": "number",
           "description": "当前副本个数",
           "example": "2"
         },
-        "createdat":{
+        "createdat": {
           "type": "string",
           "description": "创建时间",
           "example": "2017-12-25 11:02:42"
         },
-        "namespace":{
+        "namespace": {
           "type": "string",
           "description": "所处命名空间",
           "example": "mynamespace"
         }
       }
+    },
+    "ClusterInfo": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "number",
+          "description": "响应码",
+          "example": 200
+        },
+        "message": {
+          "type": "string",
+          "description": "返回信息"
+        },
+        "codedesc": {
+          "type": "string",
+          "description": "响应码描述"
+        },
+        "data": {
+          "$ref": "#/definitions/ClusterData"
+        }
+      }
+    },
+    "ClusterData": {
+      "type": "object",
+      "properties": {
+        "totalcount": {
+          "type": "number",
+          "description": "服务个数",
+          "example": 1
+        },
+        "clusters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClusterContent"
+          }
+        }
+      }
+    },
+    "ClusterContent": {
+      "type": "object",
+      "properties": {
+        "clusterid": {
+          "type": "string",
+          "description": "集群ID",
+          "example": "zk-cn"
+        },
+        "clustername": {
+          "type": "string",
+          "description": "集群名称",
+          "example": "Cluster_01"
+        },
+        "description": {
+          "type": "string",
+          "description": "集群描述",
+          "example": "My K8s Cluster"
+        },
+        "status": {
+          "type": "string",
+          "description": "集群状态",
+          "example": "Running"
+        },
+        "unvpcid": {
+          "type": "string",
+          "description": "集群私有网络名称",
+          "example": "vpc-xxxx"
+        },
+        "vpcid": {
+          "type": "number",
+          "description": "集群私有网络ID",
+          "example": "895"
+        },
+        "clustercidr": {
+          "type": "string",
+          "description": "集群容器和服务 IP 的 CIDR",
+          "example": "172.21.0.0/16"
+        },
+        "createdat": {
+          "type": "string",
+          "description": "创建时间",
+          "example": "2017-02-25 11:02:42"
+        },
+        "updatedat": {
+          "type": "string",
+          "description": "更新时间",
+          "example": "2017-03-24 11:13:01"
+        },
+        "nodestatus": {
+          "type": "string",
+          "description": "节点状态",
+          "example": "AllNormal"
+        },
+        "nodenum": {
+          "type": "number",
+          "description": "节点数量",
+          "example": 4
+        },
+        "os": {
+          "type": "string",
+          "description": "操作系统",
+          "example": "ubuntu16.04.1 LTSx86_64"
+        },
+        "totalcpu": {
+          "type": "number",
+          "description": "CPU总算力",
+          "example": "16"
+        },
+        "totalmem": {
+          "type": "number",
+          "description": "内存总量",
+          "example": 64
+        },
+        "regionid": {
+          "type": "number",
+          "description": "区域ID",
+          "example": 1
+        },
+        "k8sversion": {
+          "type": "string",
+          "description": "K8s版本信息",
+          "example": "1.7.2"
+        },
+        "openhttps": {
+          "type": "number",
+          "description": "",
+          "example": 0
+        },
+        "masterlbsubnetid": {
+          "type": "string",
+          "description": "",
+          "example": ""
+        },
+        "projectid": {
+          "type": "number",
+          "description": "",
+          "example": 0
+        },
+        "region": {
+          "type": "string",
+          "description": "所在区域名称",
+          "example": "sh"
+        }
+      }
     }
-  },
-  "externalDocs": {
-    "description": "频道ID及更多数据属性",
-    "url": "https://bitbucket.org/andy-zhang/bado/wiki/Home"
   }
 }

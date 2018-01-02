@@ -5,12 +5,13 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"net/http"
-	"io/ioutil"
 	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
 	"strconv"
 	"github.com/andy-zhangtao/DDog/server/etcd"
 	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/server/metadata"
+	"errors"
 )
 
 type Cluster struct {
@@ -40,11 +41,11 @@ func (this Cluster) SaveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
 
 	if save {
 		data, err := json.Marshal(cinfo.Data.Clusters)
-		if err != nil{
+		if err != nil {
 			return nil, err
 		}
-		err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdClusterInfo,string(data))
-		if err != nil{
+		err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdClusterInfo, string(data))
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -55,9 +56,15 @@ func (this Cluster) SaveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
 // QueryClusterInfo 查询集群列表信息
 // 列出此账户下所有的集群信息
 func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		server.ReturnError(w, err)
+	//data, err := ioutil.ReadAll(r.Body)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+
+	region := r.URL.Query().Get("region")
+	if region == "" {
+		server.ReturnError(w, errors.New("Region Can not be empty!"))
 		return
 	}
 
@@ -71,12 +78,16 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 		save = false
 	}
 
-	var ch Cluster
-
-	err = json.Unmarshal(data, &ch)
+	md, err := metadata.GetMetaData()
 	if err != nil {
 		server.ReturnError(w, err)
 		return
+	}
+
+	ch := Cluster{
+		SecretId:  md.Sid,
+		SecretKey: md.Skey,
+		Region:    region,
 	}
 
 	cinfo, err := ch.SaveClusterInfo(save)
@@ -85,7 +96,7 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = json.Marshal(cinfo)
+	data, err := json.Marshal(cinfo)
 	if err != nil {
 		server.ReturnError(w, err)
 		return
