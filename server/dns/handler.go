@@ -19,7 +19,12 @@ const (
 
 type DnsMeteData struct {
 	Key   string `json:"key"`
-	Value string `json:"value"`
+	Value vsvc   `json:"value"`
+}
+
+type vsvc struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
 }
 
 // SaveDNS 保存DNS数据
@@ -33,7 +38,13 @@ func SaveDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = etcd.Put(parseDomain(dmd.Key), dmd.Value)
+	value, err := json.Marshal(dmd.Value)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	err = etcd.Put(parseDomain(dmd.Key), string(value))
 	if err != nil {
 		server.ReturnError(w, err)
 		return
@@ -80,9 +91,19 @@ func GetDNS(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		value := data[parseDomain(domain)]
+
+		var v vsvc
+
+		err = json.Unmarshal([]byte(value),&v)
+		if err != nil {
+			server.ReturnError(w, err)
+			return
+		}
+
 		resp, _ = json.Marshal(&DnsMeteData{
 			Key:   domain,
-			Value: data[parseDomain(domain)],
+			Value: v,
 		})
 	} else {
 		var td []DnsMeteData
@@ -93,10 +114,18 @@ func GetDNS(w http.ResponseWriter, r *http.Request) {
 		}
 
 		for key, value := range data {
+			var v vsvc
+
+			err = json.Unmarshal([]byte(value),&v)
+			if err != nil {
+				server.ReturnError(w, err)
+				return
+			}
+
 			k := gg.ReverseWithSeg(key, "/", ".")
 			td = append(td, DnsMeteData{
 				Key:   k[0:len(k)-1],
-				Value: value,
+				Value: v,
 			})
 		}
 		resp, _ = json.Marshal(td)
@@ -122,7 +151,7 @@ func getDNS(r *http.Request, method int) (DnsMeteData, error) {
 			return dmd, errors.New("Key can not be empty!")
 		}
 
-		if dmd.Value == "" {
+		if dmd.Value.Host == "" {
 			return dmd, errors.New("Value can not be empty!")
 		}
 	case DeleMethod:

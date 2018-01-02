@@ -1,0 +1,400 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "DDog API List",
+    "version": "1.0.0",
+    "title": "DDOG API ",
+    "termsOfService": "http://localhost",
+    "contact": {
+      "email": "ztao@gmail.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "host": "localhost",
+  "basePath": "/v1",
+  "tags": [
+    {
+      "name": "cluster",
+      "description": "集群操作API"
+    },
+    {
+      "name":"dns",
+      "description": "DNS操作API"
+    },
+    {
+      "name":"svc",
+      "description": "服务操作API"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/cloud/cluster/info": {
+      "post": {
+        "tags": [
+          "cluster"
+        ],
+        "summary": "获取当前账户下所有的K8s集群列表",
+        "description": "获取集群列表信息",
+        "produces": [
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "查询所需的信息",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ClusterInfo"
+            }
+          },
+          {
+            "name": "save",
+            "in": "query",
+            "description": "是否需要保存",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "信息获取成功",
+            "schema": {
+              "type": "string",
+              "example": "http://cn-hbjz3-dx.acgvideo.com/vg8/0/e3/3965549-1-hd.mp4?expires=1507526400&platform=pc&ssig=qwzGdHIf6dJklgCPfEu6jQ&oi=1743518229&nfa=dqicF3m0tsCYAScRMi4sEg==&dynamic=1&hfa=2078920504&hfb=Yjk5ZmZjM2M1YzY4ZjAwYTMzMTIzYmIyNWY4ODJkNWI="
+            }
+          },
+          "500": {
+            "description": "地址获取失败"
+          }
+        }
+      }
+    },
+    "/dns/metadata":{
+      "get":{
+        "tags": [
+          "dns"
+        ],
+        "summary": "获取指定域名的DNS记录",
+        "description": "获取DNS记录",
+        "produces": [
+          "text/plain"
+        ],
+        "parameters": [
+          {
+            "in":"query",
+            "name":"domain",
+            "description": "域名",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in":"query",
+            "name": "fuzzy",
+            "description": "是否需要模糊查询",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200":{
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/DnsInfo"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "dns"
+        ],
+        "summary": "增加指定的域名DNS记录",
+        "description": "增加DNS记录",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "DNS数据",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DnsInfo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/dns/metadata/{domain}":{
+      "delete": {
+        "tags": [
+          "dns"
+        ],
+        "summary": "删除指定DNS记录",
+        "description": "删除DNS记录",
+        "parameters": [
+          {
+            "name": "domain",
+            "in":"path",
+            "description": "域名",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200":{
+            "description": "操作成功"
+          },
+          "500":{
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/cluster/nodes":{
+      "get":{
+        "tags": [
+          "cluster"
+        ],
+        "summary": "获取节点数据",
+        "description":"获取指定节点数据",
+        "parameters": [
+          {
+            "name": "clusterid",
+            "in":"query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200":{
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/NodeInfo"
+            }
+          }
+        }
+      }
+    },
+    "/svc/dns/a-record":{
+      "post":{
+        "tags": [
+          "dns"
+        ],
+        "summary": "增加A记录",
+        "description": "增加指定域名的A记录, 与POST/dns/metadata重复",
+        "parameters": [
+          {
+            "name":"body",
+            "in":"body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DnsInfo"
+            }
+          }
+        ],
+        "responses": {
+          "200":{
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/info/sample":{
+      "get": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "获取服务简要描述",
+        "description": "获取服务概述",
+        "responses": {
+          "200":{
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcInfo"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ClusterInfo": {
+      "type": "object",
+      "properties": {
+        "secret_id": {
+          "type": "string",
+          "description": "密钥ID",
+          "example": "123"
+        },
+        "secret_key": {
+          "type": "string",
+          "description": "密钥值",
+          "example": "xxddys==="
+        },
+        "region": {
+          "type": "string",
+          "description": "机房区域",
+          "example": "sh"
+        }
+      }
+    },
+    "DnsInfo":{
+      "type":"object",
+      "properties": {
+        "key":{
+          "type": "string",
+          "description": "域名",
+          "example": "zk.eqshow.cn"
+        },
+        "value":{
+          "$ref": "#/definitions/DNSValue"
+        }
+      }
+    },
+    "DNSValue":{
+      "type": "object",
+      "properties": {
+        "host":{
+          "type": "string",
+          "description": "IP地址",
+          "example": "172.0.0.3"
+        },
+        "port":{
+          "type": "integer",
+          "description": "服务端口",
+          "example": "80"
+        }
+      }
+    },
+    "NodeInfo":{
+      "type": "object",
+      "properties": {
+        "host":{
+          "type": "string",
+          "description": "IP地址",
+          "example": "172.0.0.3"
+        }
+      }
+    },
+    "SvcInfo":{
+      "type": "object",
+      "properties": {
+        "code":{
+          "type": "number",
+          "description": "响应码",
+          "example": 200
+        },
+        "message":{
+          "type": "string",
+          "description": "返回信息"
+        },
+        "codedesc":{
+          "type": "string",
+          "description": "响应码描述"
+        },
+        "data":{
+          "$ref": "#/definitions/SvcData"
+        }
+      }
+    },
+    "SvcData":{
+      "type": "object",
+      "properties": {
+        "totalcount":{
+          "type": "number",
+          "description": "服务个数",
+          "example": 1
+        },
+        "services":{
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SvcContent"
+          }
+        }
+      }
+    },
+    "SvcContent":{
+      "type": "object",
+      "properties": {
+        "servicename":{
+          "type": "string",
+          "description": "服务名称",
+          "example": "zk-cn"
+        },
+        "status":{
+          "type": "string",
+          "description": "服务状态",
+          "example": "Running"
+        },
+        "serviceip":{
+          "type": "string",
+          "description": "服务IP",
+          "example": "172.0.0.4"
+        },
+        "externalip":{
+          "type": "string",
+          "description": "对外服务IP",
+          "example": "192.0.0.4"
+        },
+        "lbid":{
+          "type": "string",
+          "description": "负载名称",
+          "example": "lb-cluster-1"
+        },
+        "lbstatus":{
+          "type": "string",
+          "description": "负载状态",
+          "example": "Running"
+        },
+        "accesstype":{
+          "type": "string",
+          "description": "访问状态",
+          "example": "Running"
+        },
+        "desiredreplicas":{
+          "type": "number",
+          "description": "预设副本个数",
+          "example": "3"
+        },
+        "currentreplicas":{
+          "type": "number",
+          "description": "当前副本个数",
+          "example": "2"
+        },
+        "createdat":{
+          "type": "string",
+          "description": "创建时间",
+          "example": ""
+        },
+        "namespace":{
+          "type": "string",
+          "description": "所处命名空间",
+          "example": "mynamespace"
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "频道ID及更多数据属性",
+    "url": "https://bitbucket.org/andy-zhang/bado/wiki/Home"
+  }
+}
