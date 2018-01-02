@@ -223,6 +223,29 @@
         "tags": [
           "svc"
         ],
+        "parameters": [
+          {
+            "name": "region",
+            "in":"query",
+            "required": true,
+            "type": "string",
+            "description": "机房所在区域"
+          },
+          {
+            "name": "clusterid",
+            "in":"query",
+            "required": true,
+            "type": "string",
+            "description": "集群名称"
+          },
+          {
+            "name": "namespace",
+            "in":"query",
+            "required": false,
+            "type": "string",
+            "description": "命名空间名称,默认为default"
+          }
+        ],
         "summary": "获取服务简要描述",
         "description": "获取服务概述",
         "responses": {
@@ -343,7 +366,7 @@
         "status":{
           "type": "string",
           "description": "服务状态",
-          "example": "Running"
+          "example": "Normal"
         },
         "serviceip":{
           "type": "string",
@@ -367,8 +390,8 @@
         },
         "accesstype":{
           "type": "string",
-          "description": "访问状态",
-          "example": "Running"
+          "description": "访问方式",
+          "example": "ClusterIP"
         },
         "desiredreplicas":{
           "type": "number",
@@ -383,7 +406,7 @@
         "createdat":{
           "type": "string",
           "description": "创建时间",
-          "example": ""
+          "example": "2017-12-25 11:02:42"
         },
         "namespace":{
           "type": "string",

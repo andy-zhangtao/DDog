@@ -48,3 +48,22 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 	bridge.GetMetaChan() <- 1
 	return
 }
+
+// GetMetaData 获取存储在etcd中的密钥数据
+func GetMetaData() (metaData, error){
+	var md metaData
+
+	if keys, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo,nil); err != nil{
+		return md, err
+	}else{
+		md.Sid = keys[_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo]
+	}
+
+	if keys, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo,nil); err != nil{
+		return md, err
+	}else{
+		md.Skey = keys[_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo]
+	}
+
+	return md, nil
+}
