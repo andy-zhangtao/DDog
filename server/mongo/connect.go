@@ -31,8 +31,20 @@ func init() {
 
 }
 
-func GetSession() *mgo.Session{
+func GetSession() *mgo.Session {
 	return session
 }
 
-//func Put()
+func getCloudMongo() *mgo.Database {
+	return session.DB(_const.CloudMongoDBName)
+}
+
+func MongoCloudMetadata() *mgo.Collection {
+	c := getCloudMongo()
+	return c.C(_const.CloudMongoCollection)
+}
+
+func SaveMetaData(metadata interface{}) error {
+	c := MongoCloudMetadata()
+	return c.Insert(&metadata)
+}
