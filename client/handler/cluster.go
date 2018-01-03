@@ -78,7 +78,7 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 		save = false
 	}
 
-	md, err := metadata.GetMetaData()
+	md, err := metadata.GetMetaData(region)
 	if err != nil {
 		server.ReturnError(w, err)
 		return

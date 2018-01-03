@@ -32,7 +32,7 @@ func init() {
 		log.Panic(err)
 	}
 
-	if username != "" || password != ""{
+	if username != "" || password != "" {
 		dialInfo := &mgo.DialInfo{
 			Addrs:    []string{endpoint},
 			Database: dbname,
@@ -44,7 +44,7 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
-	}else{
+	} else {
 		session, err = mgo.Dial(endpoint)
 	}
 
@@ -68,7 +68,20 @@ func SaveMetaData(metadata interface{}) error {
 	return c.Insert(&metadata)
 }
 
-func FindMetaDataByRegion(region string) (int, error){
+func FindMetaDataByRegion(region string) (int, error) {
 	c := MongoCloudMetadata()
-	return c.Find(bson.M{"region":region}).Count()
+	return c.Find(bson.M{"region": region}).Count()
+}
+
+func GetMetaDataByRegion(region string, metadata interface{}) (err error) {
+	c := MongoCloudMetadata()
+	err = c.Find(bson.M{"region": region}).One(metadata)
+	return
+}
+
+func GetALlMetaData() (m []interface{}, err error) {
+	c := MongoCloudMetadata()
+	//var m []interface{}
+	err = c.Find(nil).All(&m)
+	return
 }

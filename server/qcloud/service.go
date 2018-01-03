@@ -46,7 +46,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 		allnamespace = "0"
 	}
 
-	md, err := metadata.GetMetaData()
+	md, err := metadata.GetMetaData(region)
 	if err != nil{
 		server.ReturnError(w, err)
 		return
