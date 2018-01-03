@@ -23,6 +23,10 @@ var RegionMap = map[string]string{
 	"ap-shanghai": "sh",
 }
 
+var ReverseRegionMap = map[string]string{
+	"sh": "ap-shanghai",
+}
+
 func init() {
 	isDebug := os.Getenv("DDOG_DEBUG")
 	debug, err := strconv.ParseBool(isDebug)

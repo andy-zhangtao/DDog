@@ -112,3 +112,9 @@ func DeleteCluster(id string) error {
 	}
 	return nil
 }
+
+func GetClusterByRegion(region string) (m []interface{}, err error) {
+	c := MongoClusterCol()
+	err = c.Find(bson.M{"region": region}).All(&m)
+	return
+}

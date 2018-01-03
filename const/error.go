@@ -14,4 +14,5 @@ const (
 	EnvMongoDBNotFound     = "The " + EnvMongoDB + EnvNotFound
 	EnvRegionNotFound      = "The " + EnvRegion + EnvNotFound
 	MetaDataDupilcate      = "This Region MetaData Exist!"
+	RegionNotFound         = "Region Field Can't Be Empty!"
 )

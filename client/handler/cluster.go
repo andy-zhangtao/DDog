@@ -60,7 +60,7 @@ func (this Cluster) SaveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
 	return cinfo, nil
 }
 
-// QueryClusterInfo 查询集群列表信息
+// QueryClusterInfo 更新集群列表信息
 // 列出此账户下所有的集群信息
 func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 	//data, err := ioutil.ReadAll(r.Body)
@@ -110,5 +110,24 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+func GetClusterInfo(w http.ResponseWriter, r *http.Request) {
+	region := r.URL.Query().Get("region")
+	if region == "" {
+		server.ReturnError(w, errors.New(_const.RegionNotFound))
+		return
+	}
+
+	cs, err := mongo.GetClusterByRegion(_const.ReverseRegionMap[region])
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	data, err := json.Marshal(cs)
 	w.Write(data)
 }
