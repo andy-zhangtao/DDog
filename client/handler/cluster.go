@@ -8,10 +8,10 @@ import (
 	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
 	"strconv"
-	"github.com/andy-zhangtao/DDog/server/etcd"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/metadata"
 	"errors"
+	"github.com/andy-zhangtao/DDog/server/mongo"
 )
 
 type Cluster struct {
@@ -40,14 +40,21 @@ func (this Cluster) SaveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
 	}
 
 	if save {
-		data, err := json.Marshal(cinfo.Data.Clusters)
-		if err != nil {
-			return nil, err
+		//data, err := json.Marshal(cinfo.Data.Clusters)
+		//if err != nil {
+		//	return nil, err
+		//}
+
+		for _, c := range cinfo.Data.Clusters {
+			mongo.DeleteCluster(c.ClusterId)
+
+			err = mongo.SaveCluster(c)
+			if err != nil {
+				return nil, err
+			}
 		}
-		err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdClusterInfo, string(data))
-		if err != nil {
-			return nil, err
-		}
+		//err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdClusterInfo, string(data))
+
 	}
 
 	return cinfo, nil

@@ -1,6 +1,7 @@
 package _const
 
 const (
-	CloudMongoDBName     = "cloud"
-	CloudMongoCollection = "metadata"
+	CloudMongoDBName       = "cloud"
+	CloudMongoMeataDataCol = "metadata"
+	CloudMongoClusterCol   = "cluster"
 )

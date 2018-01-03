@@ -51,7 +51,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	log.Printf("Mongo Server[%s]\n", b.Version)
 }
 
@@ -63,30 +63,52 @@ func getCloudMongo() *mgo.Database {
 	return session.Clone().DB(_const.CloudMongoDBName)
 }
 
-func MongoCloudMetadata() *mgo.Collection {
+func MongoMetadataCol() *mgo.Collection {
 	c := getCloudMongo()
-	return c.C(_const.CloudMongoCollection)
+	return c.C(_const.CloudMongoMeataDataCol)
 }
 
 func SaveMetaData(metadata interface{}) error {
-	c := MongoCloudMetadata()
+	c := MongoMetadataCol()
 	return c.Insert(&metadata)
 }
 
 func FindMetaDataByRegion(region string) (int, error) {
-	c := MongoCloudMetadata()
+	c := MongoMetadataCol()
 	return c.Find(bson.M{"region": region}).Count()
 }
 
 func GetMetaDataByRegion(region string, metadata interface{}) (err error) {
-	c := MongoCloudMetadata()
+	c := MongoMetadataCol()
 	err = c.Find(bson.M{"region": region}).One(metadata)
 	return
 }
 
 func GetALlMetaData() (m []interface{}, err error) {
-	c := MongoCloudMetadata()
-	//var m []interface{}
+	c := MongoMetadataCol()
 	err = c.Find(nil).All(&m)
 	return
+}
+
+func MongoClusterCol() *mgo.Collection {
+	c := getCloudMongo()
+	return c.C(_const.CloudMongoClusterCol)
+}
+
+func SaveCluster(cluster interface{}) error {
+	c := MongoClusterCol()
+	return c.Insert(&cluster)
+}
+
+func DeleteCluster(id string) error {
+	c := MongoClusterCol()
+	change, err := c.RemoveAll(bson.M{"clusterid": id})
+	if err != nil {
+		return err
+	}
+
+	if change.Removed == 0 {
+		return errors.New("There is no match record!")
+	}
+	return nil
 }
