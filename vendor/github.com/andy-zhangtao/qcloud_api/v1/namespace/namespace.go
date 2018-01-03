@@ -26,6 +26,7 @@ type NSInfo_data_namespaces struct {
 	Description string `json:"description"`
 	Status      string `json:"status"`
 	CreatedAt   string `json:"createdat"`
+	ClusterID   string `json:"cluster_id"`
 }
 
 // http://json.golang.chinazt.cc/
@@ -48,7 +49,7 @@ func (this NSpace) SetDebug(isDebug bool) () {
 	debug = isDebug
 }
 
-func (this NSpace) QueryNSInfo()(*NSInfo, error) {
+func (this NSpace) QueryNSInfo() (*NSInfo, error) {
 	if this.ClusterId == "" {
 		return nil, errors.New("ClusterId Can not be empty!")
 	}
@@ -61,7 +62,7 @@ func (this NSpace) QueryNSInfo()(*NSInfo, error) {
 	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
 
 	if debug {
-		log.Printf("[获取命名空间信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]",public.API_URL + reqURL,this.SecretKey,signStr,sign)
+		log.Printf("[获取命名空间信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]", public.API_URL+reqURL, this.SecretKey, signStr, sign)
 	}
 
 	resp, err := http.Get(public.API_URL + reqURL)
