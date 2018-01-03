@@ -9,4 +9,6 @@ run: build
 	./$(name)
 
 release: *.go *.md
-	GOOS=linux GOARCH=amd64 go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d)" -a -o $(name)
+	docker build -t vikings/ddog .
+	mv ./ddog ./bin
+	docker rmi -f vikings/ddog

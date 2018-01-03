@@ -14,6 +14,12 @@ A tool for auto generate coredns configure file
    * 配置为/etc/resolv.conf
    * 配置为IP,例如: 10.0.0.1;10.0.0.2
    * 配置为IP+Port,例如: 10.0.0.1:54;10.0.0.2
+- DDOG_MONGO_DB: mongo数据库名称
+   
    
 以下变量若为空会使用默认值
 - DDOG_CONF_PATH: Corefile路径,默认为 /
+
+以下变量为可选项
+- DDOG_MONGO_NAME: mongo用户名 
+- DDOG_MONGO_PASSWD: mongo口令

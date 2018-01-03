@@ -30,7 +30,7 @@ func Go() {
 
 	w, err := getMetaData()
 	if err != nil {
-		log.Panicln(err)
+		log.Println(err)
 	}
 
 	for {
@@ -42,7 +42,7 @@ func Go() {
 
 		select {
 		case <-t.C:
-			if w.sid != "" {
+			if w != nil && w.sid != "" {
 				watch(w)
 			} else {
 				log.Println("当前MetaData数据为空")

@@ -7,11 +7,14 @@ import (
 )
 
 const (
-	EnvDomain   = "DDOG_DOMAIN"
-	EnvEtcd     = "DDOG_ETCD_ENDPOINT"
-	EnvUpStream = "DDOG_UP_STREAM"
-	EnvConfPath = "DDOG_CONF_PATH"
-	EnvMongo    = "DDOG_MONGO_ENDPOINT"
+	EnvDomain      = "DDOG_DOMAIN"
+	EnvEtcd        = "DDOG_ETCD_ENDPOINT"
+	EnvUpStream    = "DDOG_UP_STREAM"
+	EnvConfPath    = "DDOG_CONF_PATH"
+	EnvMongo       = "DDOG_MONGO_ENDPOINT"
+	EnvMongoName   = "DDOG_MONGO_NAME"
+	EnvMongoPasswd = "DDOG_MONGO_PASSWD"
+	EnvMongoDB     = "DDOG_MONGO_DB"
 )
 
 var DEBUG = false

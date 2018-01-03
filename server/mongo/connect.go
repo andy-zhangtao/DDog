@@ -9,11 +9,18 @@ import (
 )
 
 var endpoint = os.Getenv(_const.EnvMongo)
+var username = os.Getenv(_const.EnvMongoName)
+var password = os.Getenv(_const.EnvMongoPasswd)
+var dbname = os.Getenv(_const.EnvMongoDB)
 var session *mgo.Session
 
 func check() error {
 	if endpoint == "" {
 		return errors.New(_const.EnvMongoNotFound)
+	}
+
+	if dbname == "" {
+		return errors.New(_const.EnvMongoDBNotFound)
 	}
 	return nil
 }
@@ -24,9 +31,20 @@ func init() {
 		log.Panic(err)
 	}
 
-	session, err = mgo.Dial(endpoint)
-	if err != nil {
-		panic(err)
+	if username != "" || password != ""{
+		dialInfo := &mgo.DialInfo{
+			Addrs:    []string{endpoint},
+			Database: dbname,
+			Username: username,
+			Password: password,
+		}
+
+		session, err = mgo.DialWithInfo(dialInfo)
+		if err != nil {
+			panic(err)
+		}
+	}else{
+		session, err = mgo.Dial(endpoint)
 	}
 
 }

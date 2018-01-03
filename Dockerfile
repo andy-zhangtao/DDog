@@ -4,4 +4,4 @@ RUN apk --update add build-base
 ADD . /go/src/github.com/andy-zhangtao/DDog
 WORKDIR /go/src/github.com/andy-zhangtao/DDog
 #COPY /etc/localtime /etc/localtime
-RUN GOARCH=amd64 go build  -a -o bin/ddog
+RUN GOARCH=amd64 go build  -a -o ddog
