@@ -127,18 +127,11 @@ func SaveNamespace(namespace interface{}) error {
 	return MongoNamespaceCol().Insert(&namespace)
 }
 
-//func GetNamespaceByName(name string)(namespace interface{}, err error){
-//	c := MongoNamespaceCol()
-//	c.Find(bson.M{""})
-//}
-
 func DeleteNamespaceByName(clusterID, name string) error {
 	change, err := MongoNamespaceCol().RemoveAll(bson.M{"name": name, "clusterid": clusterID})
 	if err != nil {
 		return err
 	}
-
-	log.Println(change.Removed, change.Matched)
 	if change.Removed == 0 {
 		return errors.New("There is no match record!")
 	}
@@ -166,5 +159,49 @@ func GetAllNamespaceByCID(clusterID string) (ns []interface{}, err error) {
 
 func GetNamespaceByName(clusterID, name string) (ns interface{}, err error) {
 	err = MongoNamespaceCol().Find(bson.M{"clusterid": clusterID, "name": name}).One(&ns)
+	return
+}
+
+func MongoSVCCol() *mgo.Collection {
+	return getCloudMongo().C(_const.CloudMongoSVCCol)
+}
+
+func SaveService(svc interface{}) error {
+	return MongoSVCCol().Insert(&svc)
+}
+
+func DeleteSvcByName(ns, name string) error {
+	change, err := MongoSVCCol().RemoveAll(bson.M{"servicename": name, "namespace": ns})
+	if err != nil {
+		return err
+	}
+
+	log.Println(change.Removed, change.Matched)
+	if change.Removed == 0 {
+		return errors.New("There is no match record!")
+	}
+	return nil
+}
+
+func DeleteAllSvcByNs(ns string) error {
+	change, err := MongoSVCCol().RemoveAll(bson.M{"namespace": ns})
+	if err != nil {
+		return err
+	}
+
+	log.Println(change.Removed, change.Matched)
+	if change.Removed == 0 {
+		return errors.New("There is no match record!")
+	}
+	return nil
+}
+
+func GetAllSvcByNs(ns string) (svc []interface{}, err error) {
+	err = MongoSVCCol().Find(bson.M{"namespace": ns}).All(&svc)
+	return
+}
+
+func GetSvcByName(ns, name string) (svc interface{}, err error) {
+	err = MongoSVCCol().Find(bson.M{"servicename": name, "namespace": ns}).One(&svc)
 	return
 }

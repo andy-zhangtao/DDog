@@ -16,4 +16,5 @@ const (
 	MetaDataDupilcate      = "This Region MetaData Exist!"
 	RegionNotFound         = "Region Field Can't Be Empty!"
 	ClusterNotFound        = "ClusterID Field Cann't Be Empty!"
+	NamespaceNotFound      = "Namespace Field Cann't Be Empty!"
 )

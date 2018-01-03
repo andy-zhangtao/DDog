@@ -5,4 +5,5 @@ const (
 	CloudMongoMeataDataCol = "metadata"
 	CloudMongoClusterCol   = "cluster"
 	CloudMongoNamespaceCol = "namespace"
+	CloudMongoSVCCol       = "service"
 )

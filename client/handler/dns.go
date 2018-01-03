@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"log"
+	"github.com/andy-zhangtao/DDog/server/mongo"
 )
 
 type Svc struct {
@@ -62,6 +63,11 @@ func (this Svc) WatchDNS() error {
 			continue
 		}
 
+		err = mongo.SaveService(svc)
+		if err != nil {
+			return err
+		}
+		
 		s := vsvc{
 			Host: svc.ServiceIp,
 			Port: 80,
