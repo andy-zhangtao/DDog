@@ -47,7 +47,12 @@ func init() {
 	} else {
 		session, err = mgo.Dial(endpoint)
 	}
-
+	b, err := session.BuildInfo()
+	if err != nil {
+		panic(err)
+	}
+	
+	log.Printf("Mongo Server[%s]\n", b.Version)
 }
 
 func GetSession() *mgo.Session {
