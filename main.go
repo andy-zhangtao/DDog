@@ -37,6 +37,7 @@ func main() {
 	r.HandleFunc(getApiPath(_const.GetClusterInfo), handler.QueryClusterInfo).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetClusterInfo), handler.GetClusterInfo).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.GetNSInfo), handler.QueryNameSpace).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.GetNSInfo), handler.QueryNamespaceByName).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.GetSvcSampleInfo), qcloud.GetSampleSVCInfo).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.MetaData), metadata.Startup).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.MetaData), metadata.GetMetaDataWithHttp).Methods(http.MethodGet)

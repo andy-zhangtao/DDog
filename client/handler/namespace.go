@@ -12,6 +12,7 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"log"
 	"github.com/andy-zhangtao/DDog/server/mongo"
+	"errors"
 )
 
 type NameSpace struct {
@@ -85,6 +86,8 @@ func (this NameSpace) SaveNSInfo(save bool) (*ns.NSInfo, error) {
 		}
 
 		for _, ns := range ns.Data.Namespaces {
+			ns.ClusterID = this.ClusterID
+			mongo.DeleteNamespaceByName(ns.ClusterID, ns.Name)
 			err = mongo.SaveNamespace(ns)
 			if err != nil {
 				return nil, err
@@ -101,4 +104,44 @@ func (this NameSpace) SaveNSInfo(save bool) (*ns.NSInfo, error) {
 	}
 
 	return ns, nil
+}
+
+func QueryNamespaceByName(w http.ResponseWriter, r *http.Request) {
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		ns, err := mongo.GetAllNamespaceByCID(clusterid)
+		if err != nil {
+			server.ReturnError(w, err)
+			return
+		}
+
+		data, err := json.Marshal(ns)
+		if err != nil {
+			server.ReturnError(w, err)
+			return
+		}
+
+		w.Write(data)
+	} else {
+		ns, err := mongo.GetNamespaceByName(clusterid, name)
+		if err != nil {
+			server.ReturnError(w, err)
+			return
+		}
+
+		data, err := json.Marshal(ns)
+		if err != nil {
+			server.ReturnError(w, err)
+			return
+		}
+
+		w.Write(data)
+	}
+
 }

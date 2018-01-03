@@ -123,7 +123,7 @@ func MongoNamespaceCol() *mgo.Collection {
 	return getCloudMongo().C(_const.CloudMongoNamespaceCol)
 }
 
-func SaveNamespace(namespace interface{}) error{
+func SaveNamespace(namespace interface{}) error {
 	return MongoNamespaceCol().Insert(&namespace)
 }
 
@@ -132,4 +132,39 @@ func SaveNamespace(namespace interface{}) error{
 //	c.Find(bson.M{""})
 //}
 
-//func DeleteNamespace
+func DeleteNamespaceByName(clusterID, name string) error {
+	change, err := MongoNamespaceCol().RemoveAll(bson.M{"name": name, "clusterid": clusterID})
+	if err != nil {
+		return err
+	}
+
+	log.Println(change.Removed, change.Matched)
+	if change.Removed == 0 {
+		return errors.New("There is no match record!")
+	}
+	return nil
+
+}
+
+func DeleteAllNamespaceByCID(clusterID string) error {
+	change, err := MongoNamespaceCol().RemoveAll(bson.M{"cluster_id": clusterID})
+	if err != nil {
+		return err
+	}
+
+	log.Println(change.Removed, change.Matched)
+	if change.Removed == 0 {
+		return errors.New("There is no match record!")
+	}
+	return nil
+}
+
+func GetAllNamespaceByCID(clusterID string) (ns []interface{}, err error) {
+	err = MongoNamespaceCol().Find(bson.M{"clusterid": clusterID}).All(&ns)
+	return
+}
+
+func GetNamespaceByName(clusterID, name string) (ns interface{}, err error) {
+	err = MongoNamespaceCol().Find(bson.M{"clusterid": clusterID, "name": name}).One(&ns)
+	return
+}
