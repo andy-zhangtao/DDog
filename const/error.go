@@ -12,4 +12,5 @@ const (
 	EnvMongoNameNotFound   = "The " + EnvMongoName + EnvNotFound
 	EnvMongoPasswdNotFound = "The " + EnvMongoPasswd + EnvNotFound
 	EnvMongoDBNotFound     = "The " + EnvMongoDB + EnvNotFound
+	MetaDataDupilcate      = "This Region MetaData Exist!"
 )

@@ -9,6 +9,7 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/server/mongo"
+	"errors"
 )
 
 type metaData struct {
@@ -46,10 +47,17 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = mongo.SaveMetaData(md); err != nil {
+	if count, err := mongo.FindMetaDataByRegion(md.Region); err != nil{
+		server.ReturnError(w, err)
+		return
+	}else if count >0 {
+		server.ReturnError(w, errors.New(_const.MetaDataDupilcate))
+		return
+	}else if err = mongo.SaveMetaData(md); err != nil {
 		server.ReturnError(w, err)
 		return
 	}
+
 	bridge.GetMetaChan() <- 1
 	return
 }

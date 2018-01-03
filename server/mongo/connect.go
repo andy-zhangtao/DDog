@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var endpoint = os.Getenv(_const.EnvMongo)
@@ -54,7 +55,7 @@ func GetSession() *mgo.Session {
 }
 
 func getCloudMongo() *mgo.Database {
-	return session.DB(_const.CloudMongoDBName)
+	return session.Clone().DB(_const.CloudMongoDBName)
 }
 
 func MongoCloudMetadata() *mgo.Collection {
@@ -65,4 +66,9 @@ func MongoCloudMetadata() *mgo.Collection {
 func SaveMetaData(metadata interface{}) error {
 	c := MongoCloudMetadata()
 	return c.Insert(&metadata)
+}
+
+func FindMetaDataByRegion(region string) (int, error){
+	c := MongoCloudMetadata()
+	return c.Find(bson.M{"region":region}).Count()
 }
