@@ -11,6 +11,7 @@ const (
 	EnvEtcd     = "DDOG_ETCD_ENDPOINT"
 	EnvUpStream = "DDOG_UP_STREAM"
 	EnvConfPath = "DDOG_CONF_PATH"
+	EnvMongo    = "DDOG_MONGO_ENDPOINT"
 )
 
 var DEBUG = false

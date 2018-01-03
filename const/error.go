@@ -8,4 +8,5 @@ const (
 	EnvDomainNotFound   = "The " + EnvDomain + EnvNotFound
 	EnvEtcdNotFound     = "The " + EnvEtcd + EnvNotFound
 	EnvUpStreamNotFound = "The " + EnvUpStream + EnvNotFound
+	EnvMongoNotFound    = "The " + EnvMongo + EnvNotFound
 )
