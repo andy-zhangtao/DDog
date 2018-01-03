@@ -69,6 +69,24 @@
   revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
+  name = "github.com/gorilla/context"
+  packages = ["."]
+  revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
+  version = "v1.1"
+
+[[projects]]
+  name = "github.com/gorilla/handlers"
+  packages = ["."]
+  revision = "90663712d74cb411cbef281bc1e08c19d1a76145"
+  version = "v1.3.0"
+
+[[projects]]
+  name = "github.com/gorilla/mux"
+  packages = ["."]
+  revision = "7f08801859139f86dfafd1c296e2cba9a80d292e"
+  version = "v1.6.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/ugorji/go"
   packages = ["codec"]
@@ -160,6 +178,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e7af8c79661524cba5c6cf6f8e72e2df1a065c2aafb781c51bfd4736886d87e1"
+  inputs-digest = "02340b024e63f044e3127930ccc557ff29d2c2257a1733d3a83fd3d7d1748e17"
   solver-name = "gps-cdcl"
   solver-version = 1
