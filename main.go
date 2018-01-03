@@ -15,6 +15,7 @@ import (
 	"github.com/andy-zhangtao/DDog/watch"
 	"github.com/andy-zhangtao/DDog/server/metadata"
 	_ "github.com/andy-zhangtao/DDog/const"
+	"os"
 )
 
 var _VERSION_ = "unknown"
@@ -22,7 +23,11 @@ var _APIVERSION_ = "/v1"
 
 func main() {
 	log.Println(getVersion())
-	go watch.Go()
+	region := os.Getenv(_const.EnvRegion)
+	if region == "" {
+		log.Panic(_const.EnvRegionNotFound)
+	}
+	go watch.Go(region)
 	r := mux.NewRouter()
 	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.SaveDNS).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.DeleDNS).Methods(http.MethodDelete)

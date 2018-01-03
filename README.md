@@ -15,7 +15,7 @@ A tool for auto generate coredns configure file
    * 配置为IP,例如: 10.0.0.1;10.0.0.2
    * 配置为IP+Port,例如: 10.0.0.1:54;10.0.0.2
 - DDOG_MONGO_DB: mongo数据库名称
-   
+- DDOG_REGION: 集群所在区域   
    
 以下变量若为空会使用默认值
 - DDOG_CONF_PATH: Corefile路径,默认为 /

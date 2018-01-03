@@ -5,12 +5,10 @@ import (
 	"io/ioutil"
 	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
-	"github.com/andy-zhangtao/DDog/server/etcd"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"errors"
-	"log"
 )
 
 type metaData struct {
@@ -33,20 +31,20 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo, md.Sid); err != nil {
-		server.ReturnError(w, err)
-		return
-	}
-
-	if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo, md.Skey); err != nil {
-		server.ReturnError(w, err)
-		return
-	}
-
-	if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdRegionInfo, md.Region); err != nil {
-		server.ReturnError(w, err)
-		return
-	}
+	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo, md.Sid); err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo, md.Skey); err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdRegionInfo, md.Region); err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
 
 	if count, err := mongo.FindMetaDataByRegion(md.Region); err != nil {
 		server.ReturnError(w, err)
@@ -82,6 +80,9 @@ func GetMetaData(region string) (metaData, error) {
 	err := mongo.GetMetaDataByRegion(region, &md)
 	if err != nil {
 		return md, err
+	}
+	if md.Sid == "" || md.Skey == "" || md.Region == "" {
+		return md, errors.New(region + " Metadata 获取为空")
 	}
 	return md, nil
 }

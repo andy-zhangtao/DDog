@@ -15,6 +15,7 @@ const (
 	EnvMongoName   = "DDOG_MONGO_NAME"
 	EnvMongoPasswd = "DDOG_MONGO_PASSWD"
 	EnvMongoDB     = "DDOG_MONGO_DB"
+	EnvRegion      = "DDOG_REGION"
 )
 
 var DEBUG = false

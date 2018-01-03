@@ -7,13 +7,13 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"log"
 	"text/template"
-	"github.com/andy-zhangtao/DDog/server/etcd"
 	"strings"
 	"github.com/andy-zhangtao/DDog/client/handler"
 	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
 	"github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"time"
 	"github.com/andy-zhangtao/DDog/bridge"
+	"github.com/andy-zhangtao/DDog/server/metadata"
 )
 
 type watchdog struct {
@@ -22,13 +22,13 @@ type watchdog struct {
 	region []string
 }
 
-func Go() {
+func Go(region string) {
 	err := genConfigure()
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	w, err := getMetaData()
+	w, err := getMetaData(region)
 	if err != nil {
 		log.Println(err)
 	}
@@ -48,7 +48,7 @@ func Go() {
 				log.Println("当前MetaData数据为空")
 			}
 		case <-bridge.GetMetaChan():
-			w, err = getMetaData()
+			w, err = getMetaData(region)
 			if err != nil {
 				log.Printf("获取MetaData失败[%s]\n", err.Error())
 			}
@@ -201,27 +201,32 @@ func watchSVC(n namespace.NSInfo_data_namespaces, c cvm.ClusterInfo_data_cluster
 
 // getMetaData 读取密钥ID,密钥值和机房区域信息
 // 当三者发生变化时，需要重新调用来刷新数据
-func getMetaData() (*watchdog, error) {
+func getMetaData(region string) (*watchdog, error) {
 
-	sid, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo, nil)
+	md, err := metadata.GetMetaData(region)
 	if err != nil {
 		return nil, err
 	}
 
-	skey, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	region, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdRegionInfo, nil)
-	if err != nil {
-		return nil, err
-	}
+	//sid, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo, nil)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//skey, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo, nil)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//region, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdRegionInfo, nil)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	w := watchdog{
-		sid:    sid[_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo],
-		skey:   skey[_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo],
-		region: strings.Split(region[_const.CloudEtcdRootPath+_const.CloudEtcdRegionInfo], ";"),
+		sid:    md.Sid,
+		skey:   md.Skey,
+		region: []string{md.Region},
 	}
 
 	//if w.sid == "" {
