@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"net/url"
 )
 
 var debug = false
@@ -57,10 +58,10 @@ func (this NSpace) QueryNSInfo()(*NSInfo, error) {
 	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
 	signStr := "GETccs.api.qcloud.com/v2/index.php?" + this.sign
 	sign := public.GenerateSignature(this.SecretKey, signStr)
-	reqURL := this.sign + "&Signature=" + sign
+	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
 
 	if debug {
-		log.Println(public.API_URL + reqURL)
+		log.Printf("[获取命名空间信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]",public.API_URL + reqURL,this.SecretKey,signStr,sign)
 	}
 
 	resp, err := http.Get(public.API_URL + reqURL)

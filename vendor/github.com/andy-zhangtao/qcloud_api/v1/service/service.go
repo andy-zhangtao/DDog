@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"log"
+	"net/url"
 )
 
 var debug = false
+
 type Svc struct {
 	Pub          public.Public `json:"pub"`
 	ClusterId    string        `json:"cluster_id"`
@@ -72,10 +74,10 @@ func (this Svc) QuerySampleInfo() (*SvcSMData, error) {
 	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
 	signStr := "GETccs.api.qcloud.com/v2/index.php?" + this.sign
 	sign := public.GenerateSignature(this.SecretKey, signStr)
-	reqURL := this.sign + "&Signature=" + sign
+	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
 
 	if debug {
-		log.Println(public.API_URL + reqURL)
+		log.Printf("[获取服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
 	}
 
 	resp, err := http.Get(public.API_URL + reqURL)
@@ -98,6 +100,6 @@ func (this Svc) QuerySampleInfo() (*SvcSMData, error) {
 	return &ssmd, nil
 }
 
-func (this Svc) SetDebug(isDebug bool){
+func (this Svc) SetDebug(isDebug bool) {
 	debug = isDebug
 }

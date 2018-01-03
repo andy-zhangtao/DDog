@@ -21,7 +21,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "ade48093277bd7cfc651d7f5ee4ba51051019944"
+  revision = "1bb944235fe3405315b9095e4d38ce9976ca96d2"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -178,6 +178,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "02340b024e63f044e3127930ccc557ff29d2c2257a1733d3a83fd3d7d1748e17"
+  inputs-digest = "4947fef04e3b6b8a4d4d13dce362e568e68a647906e4d9dee57db4a811470bc4"
   solver-name = "gps-cdcl"
   solver-version = 1
