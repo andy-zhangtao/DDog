@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	ns "github.com/andy-zhangtao/qcloud_api/v1/namespace"
-	"github.com/andy-zhangtao/DDog/server/etcd"
 	"github.com/andy-zhangtao/DDog/const"
 	"log"
+	"github.com/andy-zhangtao/DDog/server/mongo"
 )
 
 type NameSpace struct {
@@ -80,17 +80,24 @@ func (this NameSpace) SaveNSInfo(save bool) (*ns.NSInfo, error) {
 	}
 
 	if save {
-		if (_const.DEBUG){
-			log.Printf("[SaveNSInfo]调用SDK获取到NameSpace数据为[%s]\n",ns.Data.Namespaces)
+		if (_const.DEBUG) {
+			log.Printf("[SaveNSInfo]调用SDK获取到NameSpace数据为[%s]\n", ns.Data.Namespaces)
 		}
-		data, err := json.Marshal(ns.Data.Namespaces)
-		if err != nil {
-			return nil, err
+
+		for _, ns := range ns.Data.Namespaces {
+			err = mongo.SaveNamespace(ns)
+			if err != nil {
+				return nil, err
+			}
 		}
-		err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdNameSpaceInfo, string(data))
-		if err != nil {
-			return nil, err
-		}
+		//data, err := json.Marshal(ns.Data.Namespaces)
+		//if err != nil {
+		//	return nil, err
+		//}
+		//err = etcd.Put(_const.CloudEtcdRootPath+"/"+c.Pub.Region+_const.CloudEtcdNameSpaceInfo, string(data))
+		//if err != nil {
+		//	return nil, err
+		//}
 	}
 
 	return ns, nil

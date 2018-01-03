@@ -118,3 +118,18 @@ func GetClusterByRegion(region string) (m []interface{}, err error) {
 	err = c.Find(bson.M{"region": region}).All(&m)
 	return
 }
+
+func MongoNamespaceCol() *mgo.Collection {
+	return getCloudMongo().C(_const.CloudMongoNamespaceCol)
+}
+
+func SaveNamespace(namespace interface{}) error{
+	return MongoNamespaceCol().Insert(&namespace)
+}
+
+//func GetNamespaceByName(name string)(namespace interface{}, err error){
+//	c := MongoNamespaceCol()
+//	c.Find(bson.M{""})
+//}
+
+//func DeleteNamespace
