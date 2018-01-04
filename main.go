@@ -42,6 +42,7 @@ func main() {
 	//r.HandleFunc(getApiPath(_const.GetSvcMoreInfo), qcloud.GetSampleSVCInfo).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.MetaData), metadata.Startup).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.MetaData), metadata.GetMetaDataWithHttp).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath(_const.NewNameSpace), qcloud.CreateNamespace).Methods(http.MethodPost)
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})

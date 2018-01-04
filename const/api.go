@@ -9,4 +9,5 @@ const (
 	GetSvcMoreInfo   = "/cloud/svc/info/more"
 	GetSvcSampleInfo = "/cloud/svc/info/sample"
 	MetaData         = "/cloud/metadata"
+	NewNameSpace     = "/cloud/namespace/create"
 )

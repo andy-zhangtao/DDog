@@ -176,7 +176,6 @@ func DeleteSvcByName(ns, name string) error {
 		return err
 	}
 
-	log.Println(change.Removed, change.Matched)
 	if change.Removed == 0 {
 		return errors.New("There is no match record!")
 	}

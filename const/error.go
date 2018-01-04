@@ -17,4 +17,5 @@ const (
 	RegionNotFound         = "Region Field Can't Be Empty!"
 	ClusterNotFound        = "ClusterID Field Cann't Be Empty!"
 	NamespaceNotFound      = "Namespace Field Cann't Be Empty!"
+	NameNotFound           = "Name Field Cann't Be Empty!"
 )
