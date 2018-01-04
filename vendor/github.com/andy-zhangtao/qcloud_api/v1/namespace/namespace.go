@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"github.com/andy-zhangtao/qcloud_api/const"
 	_constv1 "github.com/andy-zhangtao/qcloud_api/const/v1"
+	"fmt"
+	"strings"
 )
 
 var debug = false
@@ -20,6 +22,7 @@ type NSpace struct {
 	SecretKey string        `json:"secret_key"`
 	Name      string        `json:"name"`
 	Desc      string        `json:"desc"`
+	Rmname    []string      `json:"rmname"`
 	sign      string
 }
 
@@ -106,6 +109,11 @@ func (this NSpace) queryNSInfo() ([]string, map[string]string) {
 		req["description"] = this.Desc
 	}
 
+	if len(this.Rmname) > 0 {
+		field = append(field, "names")
+
+		req["names"] = fmt.Sprintf("[%s]", strings.Join(this.Rmname, ","))
+	}
 	return field, req
 }
 
@@ -158,13 +166,13 @@ func (this NSpace) CreateNamespace() error {
 }
 
 // DeleteNamespace 删除命名空间
-func (this NSpace) DeleteNamespace() error{
+func (this NSpace) DeleteNamespace() error {
 	if this.ClusterId == "" {
 		return errors.New(_const.ClusterIDEmpty)
 	}
 
-	if this.Name == "" {
-		return errors.New(_const.NamespaceNameEmpty)
+	if len(this.Rmname) == 0 {
+		return errors.New(_const.DeleteNameLengthZero)
 	}
 
 	field, reqmap := this.queryNSInfo()
