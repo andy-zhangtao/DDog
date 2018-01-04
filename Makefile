@@ -9,6 +9,5 @@ run: build
 	./$(name)
 
 release: *.go *.md
-	docker build -t vikings/ddog .
-	mv ./ddog ./bin
-	docker rmi -f vikings/ddog
+	docker run -it --rm -v ${PWD}:/go/src/github.com/andy-zhangtao/DDog vikings/golang:1.9-onbuild /go/src/github.com/andy-zhangtao/DDog ddog
+	ls -ltr bin/

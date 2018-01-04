@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"log"
+	"github.com/andy-zhangtao/DDog/server/mongo"
 )
 
 type Svc struct {
@@ -60,6 +61,11 @@ func (this Svc) WatchDNS() error {
 	for _, svc := range ssmd.Data.Services {
 		if svc.ServiceIp == "" {
 			continue
+		}
+		mongo.DeleteSvcByName(svc.Namespace, svc.ServiceName)
+		err = mongo.SaveService(svc)
+		if err != nil {
+			return err
 		}
 
 		s := vsvc{
