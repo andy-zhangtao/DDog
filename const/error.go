@@ -21,4 +21,5 @@ const (
 	ImageNotFounc          = "Img Field Cann't Be Empty!"
 	SVCNoExist             = "This svc doesn't exist! Please check namespace or svc"
 	IdxNotFound            = "The Idx Field Cann't Be Empty!"
+	SvcConfExist           = "The same name svc configure has exist!"
 )

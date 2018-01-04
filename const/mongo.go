@@ -7,4 +7,5 @@ const (
 	CloudMongoNamespaceCol = "namespace"
 	CloudMongoSVCCol       = "service"
 	CloudMongoContainerCol = "container"
+	CloudMongoSvcConfig    = "svc_config"
 )

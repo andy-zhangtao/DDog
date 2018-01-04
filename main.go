@@ -17,6 +17,7 @@ import (
 	_ "github.com/andy-zhangtao/DDog/const"
 	"os"
 	"github.com/andy-zhangtao/DDog/server/container"
+	"github.com/andy-zhangtao/DDog/server/svcconf"
 )
 
 var _VERSION_ = "unknown"
@@ -67,6 +68,9 @@ func metadataAPI(r *mux.Router) *mux.Router {
 }
 func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.GetSvcSampleInfo), handler.QueryService).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath(_const.NewSvcConfig), svcconf.CreateSvcConf).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.GetSvcConfig), svcconf.GetSvcConf).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath(_const.DeleteSvcConfig), svcconf.DeleteSvcConf).Methods(http.MethodPost)
 	return r
 }
 func namespaceAPI(r *mux.Router) *mux.Router {
