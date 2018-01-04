@@ -6,4 +6,5 @@ const (
 	CloudMongoClusterCol   = "cluster"
 	CloudMongoNamespaceCol = "namespace"
 	CloudMongoSVCCol       = "service"
+	CloudMongoContainerCol = "container"
 )

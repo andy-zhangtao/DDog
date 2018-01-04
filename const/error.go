@@ -18,4 +18,6 @@ const (
 	ClusterNotFound        = "ClusterID Field Cann't Be Empty!"
 	NamespaceNotFound      = "Namespace Field Cann't Be Empty!"
 	NameNotFound           = "Name Field Cann't Be Empty!"
+	ImageNotFounc          = "Img Field Cann't Be Empty!"
+	SVCNoExist             = "This svc doesn't exist! Please check namespace or svc"
 )

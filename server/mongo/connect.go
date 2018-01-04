@@ -188,7 +188,7 @@ func DeleteAllSvcByNs(ns string) error {
 		return err
 	}
 
-	log.Println(change.Removed, change.Matched)
+	//log.Println(change.Removed, change.Matched)
 	if change.Removed == 0 {
 		return errors.New("There is no match record!")
 	}
@@ -203,4 +203,40 @@ func GetAllSvcByNs(ns string) (svc []interface{}, err error) {
 func GetSvcByName(ns, name string) (svc interface{}, err error) {
 	err = MongoSVCCol().Find(bson.M{"servicename": name, "namespace": ns}).One(&svc)
 	return
+}
+
+func MongoContainerCol() *mgo.Collection {
+	return getCloudMongo().C(_const.CloudMongoContainerCol)
+}
+
+func SaveContainer(con interface{}) error {
+	return MongoContainerCol().Insert(&con)
+}
+
+func GetContainerByID(id string) (con interface{}, err error) {
+	err = MongoContainerCol().Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(&con)
+	return
+}
+
+func GetContaienrBySvc(svcname, ns string) (con []interface{}, err error) {
+	err = MongoContainerCol().Find(bson.M{"svc": svcname, "nsme": ns}).All(&con)
+	return
+}
+
+func DeleteContainerById(id string) (err error) {
+	err = MongoContainerCol().Remove(bson.M{"_id": bson.ObjectIdHex(id)})
+	return
+}
+
+func DeleteAllContainer(svcname, ns string) error {
+	change, err := MongoContainerCol().RemoveAll(bson.M{"svc": svcname, "nsme": ns})
+	if err != nil {
+		return err
+	}
+
+	//log.Println(change.Removed, change.Matched)
+	if change.Removed == 0 {
+		return errors.New("There is no match record!")
+	}
+	return nil
 }

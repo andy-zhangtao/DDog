@@ -10,4 +10,8 @@ const (
 	GetSvcSampleInfo = "/cloud/svc/info/sample"
 	MetaData         = "/cloud/metadata"
 	NewNameSpace     = "/cloud/namespace/create"
+	DeleteNameSpace  = "/cloud/namespace/delete"
+	NewContainer     = "/cloud/container/create"
+	GetContainer     = "/cloud/container/info"
+	DeleteContainer  = "/cloud/container/delete"
 )
