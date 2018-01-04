@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/url"
+	"fmt"
+	"github.com/andy-zhangtao/qcloud_api/const/v1"
 )
 
 var debug = false
@@ -19,6 +21,26 @@ type Svc struct {
 	Allnamespace string        `json:"allnamespace"`
 	SecretKey    string        `json:"secret_key"`
 	sign         string
+}
+
+type Service struct {
+	Pub         public.Public `json:"pub"`
+	ClusterId   string        `json:"cluster_id"`
+	ServiceName string        `json:"service_name"`
+	ServiceDesc string        `json:"service_desc"`
+	Replicas    int           `json:"replicas"`
+	AccessType  string        `json:"access_type"`
+	Namespace   string        `json:"namespace"`
+	Containers  []Containers  `json:"containers"`
+	SecretKey   string
+	sign        string
+}
+
+type Containers struct {
+	ContainerName string            `json:"container_name"`
+	Image         string            `json:"image"`
+	Envs          map[string]string `json:"envs"`
+	Command       string            `json:"command"`
 }
 
 type SvcData_data_services struct {
@@ -102,4 +124,104 @@ func (this Svc) QuerySampleInfo() (*SvcSMData, error) {
 
 func (this Svc) SetDebug(isDebug bool) {
 	debug = isDebug
+}
+
+func (this Service) CreateNewSerivce() (*SvcSMData, error) {
+	field, reqmap := this.createSvc()
+	pubMap := public.PublicParam("CreateClusterService", this.Pub.Region, this.Pub.SecretId)
+	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
+	signStr := "GET" + v1.QCloudApiEndpoint + this.sign
+	sign := public.GenerateSignature(this.SecretKey, signStr)
+	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
+
+	if debug {
+		log.Printf("[创建服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
+	}
+
+	resp, err := http.Get(public.API_URL + reqURL)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var ssmd SvcSMData
+
+	err = json.Unmarshal(data, &ssmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ssmd, nil
+}
+
+func (this Service) createSvc() ([]string, map[string]string) {
+	var field []string
+	req := make(map[string]string)
+
+	if this.ClusterId != "" {
+		field = append(field, "clusterId")
+		req["clusterId"] = this.ClusterId
+	}
+
+	if this.Namespace != "" {
+		field = append(field, "namespace")
+		req["namespace"] = this.Namespace
+	}
+
+	if this.ServiceName != "" {
+		field = append(field, "serviceName")
+		req["serviceName"] = this.ServiceName
+	}
+
+	if this.ServiceDesc != "" {
+		field = append(field, "serviceDesc")
+		req["serviceDesc"] = this.ServiceDesc
+	}
+
+	if this.Replicas > 0 {
+		field = append(field, "replicas")
+		req["replicas"] = strconv.Itoa(this.Replicas)
+	}
+
+	if this.AccessType != "" {
+		field = append(field, "accessType")
+		req["accessType"] = this.AccessType
+	}
+
+	for i, c := range this.Containers {
+		if c.ContainerName != "" {
+			key := fmt.Sprintf("containers.%d.containerName", i)
+			field = append(field, key)
+			req[key] = c.ContainerName
+		}
+
+		if c.Image != "" {
+			key := fmt.Sprintf("containers.%d.image", i)
+			field = append(field, key)
+			req[key] = c.Image
+		}
+
+		n := 0
+		for k := range c.Envs {
+			key := fmt.Sprintf("containers.%d.envs.%d.name", i, n)
+			field = append(field, key)
+			req[key] = url.QueryEscape(k)
+			key = fmt.Sprintf("containers.%d.envs.%d.value", i, n)
+			field = append(field, key)
+			req[key] = url.QueryEscape(c.Envs[k])
+			n++
+		}
+
+		if c.Command != "" {
+			key := fmt.Sprintf("containers.%d.command", i)
+			field = append(field, key)
+			req[key] = url.QueryEscape(c.Command)
+		}
+	}
+
+	return field, req
 }

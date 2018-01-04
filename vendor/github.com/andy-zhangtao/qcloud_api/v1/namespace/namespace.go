@@ -109,14 +109,19 @@ func (this NSpace) queryNSInfo() ([]string, map[string]string) {
 		req["description"] = this.Desc
 	}
 
-	if len(this.Rmname) > 0 {
-		field = append(field, "names")
-		for i, n := range this.Rmname {
-			this.Rmname[i] = "\"" + n + "\""
-		}
-		
-		req["names"] = fmt.Sprintf("[%s]", strings.Join(this.Rmname, ","))
+	for i, n := range this.Rmname{
+		key := fmt.Sprintf("names.%d",i)
+		field = append(field,key)
+		req[key] = n
 	}
+	//if len(this.Rmname) > 0 {
+	//	field = append(field, "names")
+	//	for i, n := range this.Rmname {
+	//		this.Rmname[i] = "\"" + n + "\""
+	//	}
+	//
+	//	req["names"] = fmt.Sprintf("[%s]", strings.Join(this.Rmname, ","))
+	//}
 	return field, req
 }
 
