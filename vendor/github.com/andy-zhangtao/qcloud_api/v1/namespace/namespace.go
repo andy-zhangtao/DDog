@@ -11,7 +11,6 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/const"
 	_constv1 "github.com/andy-zhangtao/qcloud_api/const/v1"
 	"fmt"
-	"strings"
 )
 
 var debug = false
@@ -109,9 +108,9 @@ func (this NSpace) queryNSInfo() ([]string, map[string]string) {
 		req["description"] = this.Desc
 	}
 
-	for i, n := range this.Rmname{
-		key := fmt.Sprintf("names.%d",i)
-		field = append(field,key)
+	for i, n := range this.Rmname {
+		key := fmt.Sprintf("names.%d", i)
+		field = append(field, key)
 		req[key] = n
 	}
 	//if len(this.Rmname) > 0 {
