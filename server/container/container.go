@@ -19,6 +19,7 @@ type Container struct {
 	Env  map[string]string `json:"env"`
 	Svc  string            `json:"svc"`
 	Nsme string            `json:"namespace"`
+	Idx  int               `json:"idx"`
 }
 
 func CreateContainer(w http.ResponseWriter, r *http.Request) {
@@ -131,6 +132,7 @@ func DeleteContainer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
 func checkContainer(con Container) error {
 	if con.Name == "" {
 		return errors.New(_const.NameNotFound)
@@ -148,5 +150,8 @@ func checkContainer(con Container) error {
 		return errors.New(_const.NamespaceNotFound)
 	}
 
+	if con.Idx == 0 {
+		return errors.New(_const.IdxNotFound)
+	}
 	return nil
 }

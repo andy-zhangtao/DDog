@@ -219,7 +219,7 @@ func GetContainerByID(id string) (con interface{}, err error) {
 }
 
 func GetContaienrBySvc(svcname, ns string) (con []interface{}, err error) {
-	err = MongoContainerCol().Find(bson.M{"svc": svcname, "nsme": ns}).All(&con)
+	err = MongoContainerCol().Find(bson.M{"svc": svcname, "nsme": ns}).Sort("-idx").All(&con)
 	return
 }
 
