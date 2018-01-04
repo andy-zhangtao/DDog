@@ -62,12 +62,12 @@ func (this Svc) WatchDNS() error {
 		if svc.ServiceIp == "" {
 			continue
 		}
-
+		mongo.DeleteSvcByName(svc.Namespace, svc.ServiceName)
 		err = mongo.SaveService(svc)
 		if err != nil {
 			return err
 		}
-		
+
 		s := vsvc{
 			Host: svc.ServiceIp,
 			Port: 80,
