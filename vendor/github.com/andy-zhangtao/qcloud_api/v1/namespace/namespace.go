@@ -156,3 +156,47 @@ func (this NSpace) CreateNamespace() error {
 
 	return nil
 }
+
+// DeleteNamespace 删除命名空间
+func (this NSpace) DeleteNamespace() error{
+	if this.ClusterId == "" {
+		return errors.New(_const.ClusterIDEmpty)
+	}
+
+	if this.Name == "" {
+		return errors.New(_const.NamespaceNameEmpty)
+	}
+
+	field, reqmap := this.queryNSInfo()
+	pubMap := public.PublicParam("DeleteClusterNamespace", this.Pub.Region, this.Pub.SecretId)
+	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
+	signStr := "GET" + _constv1.QCloudApiEndpoint + this.sign
+	sign := public.GenerateSignature(this.SecretKey, signStr)
+	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
+	if debug {
+		log.Printf("[删除命名空间]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]", public.API_URL+reqURL, this.SecretKey, signStr, sign)
+	}
+
+	resp, err := http.Get(public.API_URL + reqURL)
+	if err != nil {
+		return err
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	var ns NSInfo
+
+	err = json.Unmarshal(data, &ns)
+	if err != nil {
+		return err
+	}
+
+	if ns.Code != 0 {
+		return errors.New(ns.CodeDesc + ns.Message)
+	}
+
+	return nil
+}
