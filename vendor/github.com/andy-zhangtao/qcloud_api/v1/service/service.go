@@ -126,6 +126,10 @@ func (this Svc) SetDebug(isDebug bool) {
 	debug = isDebug
 }
 
+func (this Service) SetDebug(isDebug bool) {
+	debug = isDebug
+}
+
 func (this Service) CreateNewSerivce() (*SvcSMData, error) {
 	field, reqmap := this.createSvc()
 	pubMap := public.PublicParam("CreateClusterService", this.Pub.Region, this.Pub.SecretId)
