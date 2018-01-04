@@ -16,12 +16,14 @@
   branch = "master"
   name = "github.com/andy-zhangtao/qcloud_api"
   packages = [
+    "const",
+    "const/v1",
     "v1/cvm",
     "v1/namespace",
     "v1/public",
     "v1/service"
   ]
-  revision = "500dd6d925aa40e996a24521c98269f46be05259"
+  revision = "8ecbed6b19f6bdeee8c23503421ad70c3ba6618a"
 
 [[projects]]
   name = "github.com/coreos/etcd"

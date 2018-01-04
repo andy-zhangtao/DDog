@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"net/url"
+	"github.com/andy-zhangtao/qcloud_api/const"
+	_constv1 "github.com/andy-zhangtao/qcloud_api/const/v1"
 )
 
 var debug = false
@@ -16,6 +18,8 @@ type NSpace struct {
 	Pub       public.Public `json:"pub"`
 	ClusterId string        `json:"cluster_id"`
 	SecretKey string        `json:"secret_key"`
+	Name      string        `json:"name"`
+	Desc      string        `json:"desc"`
 	sign      string
 }
 
@@ -92,5 +96,63 @@ func (this NSpace) queryNSInfo() ([]string, map[string]string) {
 	field = append(field, "clusterId")
 	req["clusterId"] = this.ClusterId
 
+	if this.Name != "" {
+		field = append(field, "name")
+		req["name"] = this.Name
+	}
+
+	if this.Desc != "" {
+		field = append(field, "description")
+		req["description"] = this.Desc
+	}
+
 	return field, req
+}
+
+// CreateNamespace 创建命名空间
+func (this NSpace) CreateNamespace() error {
+	if this.ClusterId == "" {
+		return errors.New(_const.ClusterIDEmpty)
+	}
+
+	if this.Name == "" {
+		return errors.New(_const.NamespaceNameEmpty)
+	}
+
+	if this.Desc == "" {
+		this.Desc = _const.NSDefaultDesc
+	}
+
+	field, reqmap := this.queryNSInfo()
+	pubMap := public.PublicParam("CreateClusterNamespace", this.Pub.Region, this.Pub.SecretId)
+	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
+	signStr := "GET" + _constv1.QCloudApiEndpoint + this.sign
+	sign := public.GenerateSignature(this.SecretKey, signStr)
+	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
+	if debug {
+		log.Printf("[创建命名空间]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]", public.API_URL+reqURL, this.SecretKey, signStr, sign)
+	}
+
+	resp, err := http.Get(public.API_URL + reqURL)
+	if err != nil {
+		return err
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	var ns NSInfo
+
+	err = json.Unmarshal(data, &ns)
+	if err != nil {
+		return err
+	}
+
+	if ns.Code != 0 {
+		return errors.New(ns.CodeDesc + ns.Message)
+	}
+
+	return nil
 }
