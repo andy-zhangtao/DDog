@@ -142,35 +142,37 @@ func (this Service) SetDebug(isDebug bool) {
 func (this Service) CreateNewSerivce() (*SvcSMData, error) {
 	// 新建服务,不需要填写升级策略
 	this.Strategy = ""
-	field, reqmap := this.createSvc()
-	pubMap := public.PublicParam("CreateClusterService", this.Pub.Region, this.Pub.SecretId)
-	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
-	signStr := "GET" + v1.QCloudApiEndpoint + this.sign
-	sign := public.GenerateSignature(this.SecretKey, signStr)
-	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
-
-	if debug {
-		log.Printf("[创建服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
-	}
-
-	resp, err := http.Get(public.API_URL + reqURL)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var ssmd SvcSMData
-
-	err = json.Unmarshal(data, &ssmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ssmd, nil
+	//field, reqmap := this.createSvc()
+	//pubMap := public.PublicParam("CreateClusterService", this.Pub.Region, this.Pub.SecretId)
+	//this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
+	//signStr := "GET" + v1.QCloudApiEndpoint + this.sign
+	//sign := public.GenerateSignature(this.SecretKey, signStr)
+	//reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
+	//
+	//if debug {
+	//	log.Printf("[创建服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
+	//}
+	//
+	//resp, err := http.Get(public.API_URL + reqURL)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//data, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var ssmd SvcSMData
+	//
+	//err = json.Unmarshal(data, &ssmd)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//return &ssmd, nil
+	return
+	return this.generateRequest(0)
 }
 
 func (this Service) createSvc() ([]string, map[string]string) {
@@ -266,39 +268,44 @@ func (this Service) createSvc() ([]string, map[string]string) {
 }
 
 func (this Service) UpgradeService() (*SvcSMData, error) {
-	field, reqmap := this.createSvc()
-	pubMap := public.PublicParam("ModifyClusterService", this.Pub.Region, this.Pub.SecretId)
-	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
-	signStr := "GET" + v1.QCloudApiEndpoint + this.sign
-	sign := public.GenerateSignature(this.SecretKey, signStr)
-	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
-
-	if debug {
-		log.Printf("[升级服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
-	}
-
-	resp, err := http.Get(public.API_URL + reqURL)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var ssmd SvcSMData
-
-	err = json.Unmarshal(data, &ssmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ssmd, nil
+	//field, reqmap := this.createSvc()
+	//pubMap := public.PublicParam("ModifyClusterService", this.Pub.Region, this.Pub.SecretId)
+	//this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
+	//signStr := "GET" + v1.QCloudApiEndpoint + this.sign
+	//sign := public.GenerateSignature(this.SecretKey, signStr)
+	//reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
+	//
+	//if debug {
+	//	log.Printf("[升级服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
+	//}
+	//
+	//resp, err := http.Get(public.API_URL + reqURL)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//data, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var ssmd SvcSMData
+	//
+	//err = json.Unmarshal(data, &ssmd)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//return &ssmd, nil
+	return this.generateRequest(1)
 }
 
 func (this Service) DeleteService() (*SvcSMData, error) {
 	return this.generateRequest(2)
+}
+
+func (this Service) RedeployService() (*SvcSMData, error) {
+	return this.generateRequest(3)
 }
 
 func (this Service) generateRequest(kind int) (*SvcSMData, error) {
@@ -317,6 +324,10 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		//	删除
 		svcKind = "DeleteClusterService"
 		debugStr = "删除"
+	case 3:
+		//	重新部署
+		svcKind = "RedeployClusterService"
+		debugStr = "重新部署"
 	}
 
 	field, reqmap := this.createSvc()
