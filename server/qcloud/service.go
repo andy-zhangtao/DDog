@@ -15,6 +15,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/container"
 	"gopkg.in/mgo.v2/bson"
 	"log"
+	"strconv"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +97,12 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	if clusterid == "" {
 		server.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
+	}
+
+	up := r.URL.Query().Get("upgrade")
+	isUpgrade, err := strconv.ParseBool(up)
+	if err != nil{
+		isUpgrade = false
 	}
 
 	conf, err := mongo.GetSvcConfByID(id)
@@ -219,7 +226,14 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	q.Containers = cons
 
-	resp, err := q.CreateNewSerivce()
+	var resp *service.SvcSMData
+	if isUpgrade {
+		q.Strategy = "RollingUpdate"
+		resp, err = q.UpgradeService()
+	}else{
+		resp, err = q.CreateNewSerivce()
+	}
+
 	if err != nil {
 		server.ReturnError(w, err)
 		return
