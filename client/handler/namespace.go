@@ -3,7 +3,6 @@ package handler
 
 import (
 	"net/http"
-	"io/ioutil"
 	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"log"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"errors"
+	"github.com/andy-zhangtao/DDog/server/metadata"
 )
 
 type NameSpace struct {
@@ -23,20 +23,38 @@ type NameSpace struct {
 }
 
 func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		server.ReturnError(w, err)
+	//data, err := ioutil.ReadAll(r.Body)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+
+	//var ns NameSpace
+	//
+	//err = json.Unmarshal(data, &ns)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		server.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
-	var ns NameSpace
-
-	err = json.Unmarshal(data, &ns)
+	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
-		server.ReturnError(w, err)
+		server.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
+	ns := NameSpace{
+		SecretId:  md.Sid,
+		SecretKey: md.Skey,
+		Region:    md.Region,
+		ClusterID: clusterid,
+	}
 	isSave := r.URL.Query().Get("save")
 	if isSave == "" || isSave != "true" {
 		isSave = "false"
@@ -53,7 +71,7 @@ func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = json.Marshal(nsinfo)
+	data, err := json.Marshal(nsinfo)
 	if err != nil {
 		server.ReturnError(w, err)
 		return

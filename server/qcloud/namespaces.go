@@ -14,11 +14,11 @@ import (
 
 func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 
-	region := r.URL.Query().Get("region")
-	if region == "" {
-		server.ReturnError(w, errors.New(_const.RegionNotFound))
-		return
-	}
+	//region := r.URL.Query().Get("region")
+	//if region == "" {
+	//	server.ReturnError(w, errors.New(_const.RegionNotFound))
+	//	return
+	//}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
@@ -32,7 +32,7 @@ func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := metadata.GetMetaData(region)
+	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
 		server.ReturnError(w, errors.New(_const.RegionNotFound))
 		return
@@ -63,11 +63,11 @@ func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 }
 
 func Deletenamespace(w http.ResponseWriter, r *http.Request) {
-	region := r.URL.Query().Get("region")
-	if region == "" {
-		server.ReturnError(w, errors.New(_const.RegionNotFound))
-		return
-	}
+	//region := r.URL.Query().Get("region")
+	//if region == "" {
+	//	server.ReturnError(w, errors.New(_const.RegionNotFound))
+	//	return
+	//}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
@@ -81,7 +81,7 @@ func Deletenamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := metadata.GetMetaData(region)
+	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
 		server.ReturnError(w, errors.New(_const.RegionNotFound))
 		return

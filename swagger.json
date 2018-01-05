@@ -21,27 +21,94 @@
       "description": "集群操作API"
     },
     {
-      "name": "dns",
-      "description": "DNS操作API"
+      "name": "metadata",
+      "description": "元数据操作API"
     },
     {
       "name": "svc",
       "description": "服务操作API"
+    },
+    {
+      "name": "namespace",
+      "description": "命名空间操作API"
+    },
+    {
+      "name": "dns",
+      "description": "DNS操作API"
+    },
+    {
+      "name": "container",
+      "description": "容器操作API"
     }
   ],
   "schemes": [
     "http"
   ],
   "paths": {
+    "/cloud/cluster/nodes": {
+      "get": {
+        "tags": [
+          "cluster"
+        ],
+        "summary": "获取节点数据",
+        "description": "获取指定节点数据",
+        "parameters": [
+          {
+            "name": "clusterid",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/NodeInfo"
+            }
+          }
+        }
+      }
+    },
     "/cloud/cluster/info": {
       "get": {
         "tags": [
           "cluster"
         ],
         "summary": "获取当前账户下所有的K8s集群列表",
-        "description": "获取集群列表信息",
+        "description": "查询集群节点信息",
         "produces": [
           "text/plain"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "region",
+            "description": "集群所在区域",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "信息获取成功",
+            "schema": {
+              "$ref": "#/definitions/ClusterInfo"
+            }
+          },
+          "500": {
+            "description": "地址获取失败"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "cluster"
+        ],
+        "summary": "查询并更新集群节点信息",
+        "description": "更新集群节点信息",
+        "produces": [
+          "application/json"
         ],
         "parameters": [
           {
@@ -68,6 +135,548 @@
           },
           "500": {
             "description": "地址获取失败"
+          }
+        }
+      }
+    },
+    "/svc/dns/a-record": {
+      "post": {
+        "tags": [
+          "dns"
+        ],
+        "summary": "增加A记录",
+        "description": "增加指定域名的A记录, 与POST/dns/metadata重复",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DnsInfo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/metadata": {
+      "post": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "设定集群操作元数据",
+        "description": "设定操作集群所需的密钥信息和区域信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "元数据",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MetaData"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "设定成功"
+          },
+          "500": {
+            "description": "设定失败"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "metadata"
+        ],
+        "summary": "获取元数据",
+        "description": "获取指定区域的元数据",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "region",
+            "description": "区域名称",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/MetaData"
+            }
+          }
+        }
+      }
+    },
+    "/cloud/svc/info/sample": {
+      "get": {
+        "tags": [
+          "svc"
+        ],
+        "parameters": [
+          {
+            "name": "region",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "机房所在区域"
+          },
+          {
+            "name": "clusterid",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "description": "集群名称"
+          },
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "命名空间名称,默认为default"
+          }
+        ],
+        "summary": "获取服务简要描述",
+        "description": "获取服务概述",
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcInfo"
+            }
+          }
+        }
+      }
+    },
+    "/cloud/svcconf/create": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "新建服务配置信息",
+        "description": "新建用户服务配置信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "配置信息",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SvcConfig"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "创建成功"
+          },
+          "500": {
+            "description": "创建失败"
+          }
+        }
+      }
+    },
+    "/cloud/svcconf/info": {
+      "get": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "获取配置数据",
+        "description": "获取指定服务配置数据",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称,",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "description": "配置ID,如果存在ID，则直接查询此ID所对应的配置信息。如果不上送ID，则查询此命名空间下的所有配置信息",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcConfig"
+            }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svcconf/delete": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "删除配置数据",
+        "description": "删除指定服务配置数据",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称,",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "description": "配置ID,如果存在ID，则删除此ID所对应的配置信息。如果不上送ID，则删除此命名空间下的所有配置信息",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/upgrade": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "更改配置数据",
+        "description": "更改指定服务配置数据",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "description": "配置ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "配置项数据",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SvcConfig"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcInfo"
+            }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/run": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "创建服务实例",
+        "description": "执行/替换指定服务实例",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "svcid",
+            "description": "配置项ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "upgrade",
+            "description": "是否为替换,如果为true则会使用最新的配置数据创建服务实例。 默认为false",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcInfo"
+            }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/delete": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "删除服务实例",
+        "description": "删除指定服务实例",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "description": "配置ID",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/reinstall": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "重新部署服务实例",
+        "description": "重新部署指定服务实例",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "description": "配置ID",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/namespace/create": {
+      "post": {
+        "tags": [
+          "namespace"
+        ],
+        "summary": "创建新的命名空间",
+        "description": "创建新的命名空间",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "description": "命名空间名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "desc",
+            "description": "命名空间描述",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/namespace/delete": {
+      "post": {
+        "tags": [
+          "namespace"
+        ],
+        "summary": "删除命名空间",
+        "description": "删除命名空间",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "description": "命名空间名称",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/namespace/info": {
+      "post": {
+        "tags": [
+          "namespace"
+        ],
+        "summary": "更新指定命名空间数据",
+        "description": "同步指定的命名空间数据",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "save",
+            "description": "是否保存数据, 默认为false",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "namespace"
+        ],
+        "summary": "获取指定命名空间数据",
+        "description": "获取指定的命名空间数据",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "description": "命名空间名称，如果为空则返回此集群下所有命名空间数据",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/Namespace"
+            }
+          },
+          "500": {
+            "description": "操作失败"
           }
         }
       }
@@ -135,70 +744,21 @@
             "description": "操作失败"
           }
         }
-      }
-    },
-    "/dns/metadata/{domain}": {
+      },
       "delete": {
         "tags": [
           "dns"
         ],
-        "summary": "删除指定DNS记录",
+        "summary": "删除指定的域名DNS记录",
         "description": "删除DNS记录",
+        "produces": [
+          "application/json"
+        ],
         "parameters": [
           {
-            "name": "domain",
-            "in": "path",
-            "description": "域名",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "操作成功"
-          },
-          "500": {
-            "description": "操作失败"
-          }
-        }
-      }
-    },
-    "/cloud/cluster/nodes": {
-      "get": {
-        "tags": [
-          "cluster"
-        ],
-        "summary": "获取节点数据",
-        "description": "获取指定节点数据",
-        "parameters": [
-          {
-            "name": "clusterid",
-            "in": "query",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "操作成功",
-            "schema": {
-              "$ref": "#/definitions/NodeInfo"
-            }
-          }
-        }
-      }
-    },
-    "/svc/dns/a-record": {
-      "post": {
-        "tags": [
-          "dns"
-        ],
-        "summary": "增加A记录",
-        "description": "增加指定域名的A记录, 与POST/dns/metadata重复",
-        "parameters": [
-          {
-            "name": "body",
             "in": "body",
+            "name": "body",
+            "description": "DNS数据",
             "required": true,
             "schema": {
               "$ref": "#/definitions/DnsInfo"
@@ -215,42 +775,122 @@
         }
       }
     },
-    "/cloud/svc/info/sample": {
-      "get": {
+    "/cloud/container/create": {
+      "post": {
         "tags": [
-          "svc"
+          "container"
+        ],
+        "summary": "新建容器配置数据",
+        "description": "新建容器配置数据",
+        "produces": [
+          "application/json"
         ],
         "parameters": [
           {
-            "name": "region",
-            "in": "query",
+            "in": "body",
+            "name": "body",
+            "description": "容器数据",
             "required": true,
-            "type": "string",
-            "description": "机房所在区域"
-          },
-          {
-            "name": "clusterid",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "description": "集群名称"
-          },
-          {
-            "name": "namespace",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "description": "命名空间名称,默认为default"
+            "schema": {
+              "$ref": "#/definitions/Container"
+            }
           }
         ],
-        "summary": "获取服务简要描述",
-        "description": "获取服务概述",
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/container/info": {
+      "get": {
+        "tags": [
+          "namespace"
+        ],
+        "summary": "获取容器配置信息",
+        "description": "获取容器配置信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svc",
+            "description": "服务名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "cid",
+            "description": "容器ID,如果为空，则返回此服务下所有的容器数据",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "responses": {
           "200": {
             "description": "操作成功",
             "schema": {
-              "$ref": "#/definitions/SvcInfo"
+              "$ref": "#/definitions/Container"
             }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/container/delete": {
+      "post": {
+        "tags": [
+          "namespace"
+        ],
+        "summary": "删除容器配置信息",
+        "description": "删除容器配置信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svc",
+            "description": "服务名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "cid",
+            "description": "容器ID,如果为空，则删除此服务下所有的容器数据",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
           }
         }
       }
@@ -552,6 +1192,135 @@
           "description": "所在区域名称",
           "example": "sh"
         }
+      }
+    },
+    "SvcConfig": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "配置名称",
+          "example": "apitest"
+        },
+        "desc": {
+          "type": "string",
+          "description": "配置描述",
+          "example": "this is a desc"
+        },
+        "replicas": {
+          "type": "number",
+          "description": "服务实例个数, 默认为1",
+          "example": 1
+        },
+        "namespace": {
+          "type": "string",
+          "description": "服务所处命名空间名称",
+          "example": "ns-test"
+        },
+        "netconf": {
+          "$ref": "#/definitions/Netconfig"
+        }
+      }
+    },
+    "Netconfig": {
+      "type": "object",
+      "properties": {
+        "access_type": {
+          "type": "number",
+          "description": "网络访问类型。 0-集群内访问 1-外网负载 2-内网负载 默认为0",
+          "example": 0
+        },
+        "in_port": {
+          "type": "number",
+          "description": "容器内监听端口",
+          "example": 8000
+        },
+        "out_port": {
+          "type": "number",
+          "description": "服务负载监听端口",
+          "example": 8000
+        },
+        "protocol": {
+          "type": "number",
+          "description": "协议类型 0-TCP 1-UDP,默认为0",
+          "example": 0
+        }
+      }
+    },
+    "Namespace": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "命名空间名称",
+          "example": "apitest"
+        },
+        "description": {
+          "type": "string",
+          "description": "命名空间描述",
+          "example": "this is a desc"
+        },
+        "status": {
+          "type": "string",
+          "description": "命名空间当前状态",
+          "example": "Active"
+        },
+        "createdat": {
+          "type": "string",
+          "description": "命名空间创建时间",
+          "example": "2017-12-19 11:01:32"
+        },
+        "cluster_id": {
+          "type": "string",
+          "description": "所在的集群ID",
+          "example": "cls-rfje0azd"
+        }
+      }
+    },
+    "Container": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "容器名称",
+          "example": "apitest"
+        },
+        "img": {
+          "type": "string",
+          "description": "镜像名称",
+          "example": "hello-world"
+        },
+        "cmd": {
+          "type": "array",
+          "description": "命令参数",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "$ref": "#/definitions/ContainerEnv"
+        },
+        "svc": {
+          "type": "string",
+          "description": "所属服务配置名称",
+          "example": "svctest"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "所属命名空间名称",
+          "example": "nstest"
+        },
+        "idx": {
+          "type": "number",
+          "description": "容器在服务实例中的执行顺序",
+          "example": 1
+        }
+      }
+    },
+    "ContainerEnv": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
       }
     }
   }
