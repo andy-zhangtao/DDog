@@ -24,16 +24,17 @@ type Svc struct {
 }
 
 type Service struct {
-	Pub         public.Public `json:"pub"`
-	ClusterId   string        `json:"cluster_id"`
-	ServiceName string        `json:"service_name"`
-	ServiceDesc string        `json:"service_desc"`
-	Replicas    int           `json:"replicas"`
-	AccessType  string        `json:"access_type"`
-	Namespace   string        `json:"namespace"`
-	Containers  []Containers  `json:"containers"`
-	SecretKey   string
-	sign        string
+	Pub          public.Public `json:"pub"`
+	ClusterId    string        `json:"cluster_id"`
+	ServiceName  string        `json:"service_name"`
+	ServiceDesc  string        `json:"service_desc"`
+	Replicas     int           `json:"replicas"`
+	AccessType   string        `json:"access_type"`
+	Namespace    string        `json:"namespace"`
+	Containers   []Containers  `json:"containers"`
+	portMappings PortMappings  `json:"port_mappings"`
+	SecretKey    string
+	sign         string
 }
 
 type Containers struct {
@@ -41,6 +42,13 @@ type Containers struct {
 	Image         string            `json:"image"`
 	Envs          map[string]string `json:"envs"`
 	Command       string            `json:"command"`
+}
+
+type PortMappings struct {
+	LbPort        int    `json:"lb_port"`
+	ContainerPort int    `json:"container_port"`
+	NodePort      int    `json:"node_port"`
+	Protocol      string `json:"protocol"`
 }
 
 type SvcData_data_services struct {
@@ -227,5 +235,24 @@ func (this Service) createSvc() ([]string, map[string]string) {
 		}
 	}
 
+	if this.portMappings.LbPort > 0 {
+		field = append(field, "portMappings.0.lbPort")
+		req["portMappings.0.lbPort"] = strconv.Itoa(this.portMappings.LbPort)
+	}
+
+	if this.portMappings.ContainerPort > 0 {
+		field = append(field, "portMappings.0.containerPort")
+		req["portMappings.0.containerPort"] = strconv.Itoa(this.portMappings.ContainerPort)
+	}
+
+	if this.portMappings.NodePort > 0 {
+		field = append(field, "portMappings.0.nodePort")
+		req["portMappings.0.nodePort"] = strconv.Itoa(this.portMappings.NodePort)
+	}
+
+	if this.portMappings.Protocol != "" {
+		field = append(field, "portMappings.0.protocol")
+		req["portMappings.0.protocol"] = this.portMappings.Protocol
+	}
 	return field, req
 }
