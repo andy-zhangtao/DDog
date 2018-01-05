@@ -71,22 +71,11 @@ func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 		conf.Replicas = 1
 	}
 
-	if conf.Netconf.Protocol != 0 && conf.Netconf.Protocol != 1 {
-		server.ReturnError(w, errors.New(_const.LbProtocolError))
-		return
-	}
-
-	if conf.Netconf.InPort == 0 || conf.Netconf.OutPort == 0 {
-		server.ReturnError(w, errors.New(_const.LbPortError))
-		return
-	}
-
 	conf.Id = bson.NewObjectId()
 	if err = mongo.SaveSvcConfig(conf); err != nil {
 		server.ReturnError(w, err)
 		return
 	}
-
 	w.Write([]byte(conf.Id.Hex()))
 	return
 }
@@ -161,5 +150,105 @@ func checkConf(conf SvcConf) error {
 		return errors.New(_const.NamespaceNotFound)
 	}
 
+	if conf.Netconf.Protocol != 0 && conf.Netconf.Protocol != 1 {
+		return errors.New(_const.LbProtocolError)
+	}
+
+	if conf.Netconf.InPort == 0 || conf.Netconf.OutPort == 0 {
+		return errors.New(_const.LbPortError)
+	}
+
+	if conf.Netconf.AccessType != 0 && conf.Netconf.AccessType != 1 && conf.Netconf.AccessType != 2 {
+		return errors.New(_const.AccessTypeError)
+	}
+
 	return nil
+}
+
+func UpgradeSvcConf(w http.ResponseWriter, r *http.Request) {
+	cid := r.URL.Query().Get("id")
+	if cid == "" {
+		server.ReturnError(w, errors.New(_const.IDNotFound))
+		return
+	}
+
+	c, err := mongo.GetSvcConfByID(cid)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	conf, err := conver(c)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	var nc SvcConf
+
+	err = json.Unmarshal(data, &nc)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	if nc.Replicas > 0 {
+		conf.Replicas = nc.Replicas
+	}
+
+	if nc.Netconf.Protocol != 0 && nc.Netconf.Protocol != 1 {
+		server.ReturnError(w, errors.New(_const.LbProtocolError))
+		return
+	} else {
+		conf.Netconf.Protocol = nc.Netconf.Protocol
+	}
+
+	if nc.Netconf.InPort == 0 || nc.Netconf.OutPort == 0 {
+		server.ReturnError(w, errors.New(_const.LbPortError))
+		return
+	} else if nc.Netconf.InPort > 0 {
+		conf.Netconf.InPort = nc.Netconf.InPort
+	} else if nc.Netconf.OutPort > 0 {
+		conf.Netconf.OutPort = nc.Netconf.OutPort
+	}
+
+	if nc.Netconf.AccessType != 0 && nc.Netconf.AccessType != 1 && nc.Netconf.AccessType != 2 {
+		server.ReturnError(w, errors.New(_const.AccessTypeError))
+		return
+	} else {
+		conf.Netconf.AccessType = nc.Netconf.AccessType
+	}
+
+	err = mongo.DeleteSvcConfById(conf.Id.Hex())
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	err = mongo.SaveSvcConfig(conf)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+	w.Write([]byte(conf.Id.Hex()))
+	return
+}
+
+func conver(conf interface{}) (c *SvcConf, err error) {
+	data, err := bson.Marshal(conf)
+	if err != nil {
+		return
+	}
+	err = bson.Unmarshal(data, &c)
+	if err != nil {
+		return
+	}
+
+	return
 }
