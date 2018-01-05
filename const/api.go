@@ -19,4 +19,6 @@ const (
 	DeleteSvcConfig  = "/cloud/svcconf/delete"
 	RunService       = "/cloud/svc/run"
 	UpgradeService   = "/cloud/svc/upgrade"
+	DeleteService    = "/cloud/svc/delete"
+	ReinstallService = "/cloud/svc/reinstall"
 )

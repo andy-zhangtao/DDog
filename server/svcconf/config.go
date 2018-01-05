@@ -252,3 +252,22 @@ func conver(conf interface{}) (c *SvcConf, err error) {
 
 	return
 }
+
+func GetSvcConfByID(id string) (cf SvcConf, err error) {
+	conf, err := mongo.GetSvcConfByID(id)
+	if err != nil {
+		return
+	}
+
+	data, err := bson.Marshal(conf)
+	if err != nil {
+		return
+	}
+
+	err = bson.Unmarshal(data, &cf)
+	if err != nil {
+		return
+	}
+
+	return
+}

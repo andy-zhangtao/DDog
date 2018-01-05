@@ -73,6 +73,8 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.DeleteSvcConfig), svcconf.DeleteSvcConf).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.UpgradeService), svcconf.UpgradeSvcConf).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.RunService), qcloud.RunService).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.DeleteService), qcloud.DeleteService).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.ReinstallService), qcloud.ReinstallService).Methods(http.MethodPost)
 	return r
 }
 

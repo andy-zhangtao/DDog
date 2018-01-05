@@ -9,6 +9,8 @@ import (
 	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"errors"
+	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type metaData struct {
@@ -116,4 +118,31 @@ func GetMetaDataWithHttp(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 	}
 
+}
+
+// GetMdByClusterID 通过clusterid获取密钥数据
+// 返回密钥ID，密钥值和所在区域
+func GetMdByClusterID(clusterid string) (md metaData, err error) {
+	var cluster cvm.ClusterInfo_data_clusters
+
+	cs, err := mongo.GetClusterById(clusterid)
+	if err != nil {
+		return
+	}
+
+	data, err := bson.Marshal(cs)
+	if err != nil {
+		return
+	}
+
+	err = bson.Unmarshal(data, &cluster)
+	if err != nil {
+		return
+	}
+
+	md, err = GetMetaData(_const.RegionMap[cluster.Region])
+	if err != nil {
+		return
+	}
+	return
 }

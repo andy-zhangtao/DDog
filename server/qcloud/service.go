@@ -11,10 +11,8 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
-	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
 	"github.com/andy-zhangtao/DDog/server/container"
 	"gopkg.in/mgo.v2/bson"
-	"log"
 	"strconv"
 )
 
@@ -101,68 +99,73 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	up := r.URL.Query().Get("upgrade")
 	isUpgrade, err := strconv.ParseBool(up)
-	if err != nil{
+	if err != nil {
 		isUpgrade = false
 	}
 
-	conf, err := mongo.GetSvcConfByID(id)
+	cf, err := svcconf.GetSvcConfByID(id)
 	if err != nil {
 		server.ReturnError(w, err)
 		return
 	}
-
-	var cf svcconf.SvcConf
-	//var ok bool
-	//if cf, ok = conf.(svcconf.SvcConf); !ok {
-	//	server.ReturnError(w, errors.New("Get Svc Conf Error "+reflect.TypeOf(conf).String()+fmt.Sprintf("[%v]", conf)))
+	//conf, err := mongo.GetSvcConfByID(id)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//var cf svcconf.SvcConf
+	//
+	//data, err := bson.Marshal(conf)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//err = bson.Unmarshal(data, &cf)
+	//if err != nil {
+	//	server.ReturnError(w, err)
 	//	return
 	//}
 
-	data, err := bson.Marshal(conf)
+	//var cluster cvm.ClusterInfo_data_clusters
+	//
+	//cs, err := mongo.GetClusterById(clusterid)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//data, err = bson.Marshal(cs)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//err = bson.Unmarshal(data, &cluster)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	////log.Println(cluster)
+	//md, err := metadata.GetMetaData(_const.RegionMap[cluster.Region])
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+
+	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
 		server.ReturnError(w, err)
 		return
 	}
-
-	err = bson.Unmarshal(data, &cf)
-	if err != nil {
-		server.ReturnError(w, err)
-		return
-	}
-
-	var cluster cvm.ClusterInfo_data_clusters
-
-	cs, err := mongo.GetClusterById(clusterid)
-	if err != nil {
-		server.ReturnError(w, err)
-		return
-	}
-
-	data, err = bson.Marshal(cs)
-	if err != nil {
-		server.ReturnError(w, err)
-		return
-	}
-
-	err = bson.Unmarshal(data, &cluster)
-	if err != nil {
-		server.ReturnError(w, err)
-		return
-	}
-
-	log.Println(cluster)
-	md, err := metadata.GetMetaData(_const.RegionMap[cluster.Region])
-	if err != nil {
-		server.ReturnError(w, err)
-		return
-	}
-
 	q := service.Service{
 		Pub: public.Public{
 			SecretId: md.Sid,
 			Region:   md.Region,
 		},
-		ClusterId:   cluster.ClusterId,
+		ClusterId:   clusterid,
 		ServiceName: cf.Name,
 		ServiceDesc: cf.Desc,
 		Replicas:    cf.Replicas,
@@ -201,7 +204,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	for _, cn := range containers {
 		var cnns container.Container
-		data, err = bson.Marshal(cn)
+		data, err := bson.Marshal(cn)
 		if err != nil {
 			server.ReturnError(w, err)
 			return
@@ -212,11 +215,6 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			server.ReturnError(w, err)
 			return
 		}
-		//
-		//if cnns, ok = cn.(container.Container); !ok {
-		//	server.ReturnError(w, errors.New("Get Container Info Error "+reflect.TypeOf(conf).String()))
-		//	return
-		//}
 
 		cons = append(cons, service.Containers{
 			ContainerName: cnns.Name,
@@ -230,7 +228,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	if isUpgrade {
 		q.Strategy = "RollingUpdate"
 		resp, err = q.UpgradeService()
-	}else{
+	} else {
 		resp, err = q.CreateNewSerivce()
 	}
 
@@ -239,7 +237,152 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = json.Marshal(resp)
+	data, err := json.Marshal(resp)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+func DeleteService(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		server.ReturnError(w, errors.New(_const.IDNotFound))
+		return
+	}
+
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+
+	cf, err := svcconf.GetSvcConfByID(id)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+	//conf, err := mongo.GetSvcConfByID(id)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//var cf svcconf.SvcConf
+	//
+	//data, err := bson.Marshal(conf)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//err = bson.Unmarshal(data, &cf)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+
+	//var cluster cvm.ClusterInfo_data_clusters
+	//
+	//cs, err := mongo.GetClusterById(clusterid)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//data, err = bson.Marshal(cs)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//err = bson.Unmarshal(data, &cluster)
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//md, err := metadata.GetMetaData(_const.RegionMap[cluster.Region])
+	//if err != nil {
+	//	server.ReturnError(w, err)
+	//	return
+	//}
+	md, err := metadata.GetMdByClusterID(clusterid)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId:   clusterid,
+		ServiceName: cf.Name,
+		Namespace:   cf.Namespace,
+		SecretKey:   md.Skey,
+	}
+
+	resp, err := q.DeleteService()
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	data, err := json.Marshal(resp)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+func ReinstallService(w http.ResponseWriter, r *http.Request){
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		server.ReturnError(w, errors.New(_const.IDNotFound))
+		return
+	}
+
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+
+	cf, err := svcconf.GetSvcConfByID(id)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+	md, err := metadata.GetMdByClusterID(clusterid)
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId:   clusterid,
+		ServiceName: cf.Name,
+		Namespace:   cf.Namespace,
+		SecretKey:   md.Skey,
+	}
+
+	resp, err := q.RedeployService()
+	if err != nil {
+		server.ReturnError(w, err)
+		return
+	}
+
+	data, err := json.Marshal(resp)
 	if err != nil {
 		server.ReturnError(w, err)
 		return
