@@ -171,7 +171,6 @@ func (this Service) CreateNewSerivce() (*SvcSMData, error) {
 	//}
 	//
 	//return &ssmd, nil
-	return
 	return this.generateRequest(0)
 }
 
