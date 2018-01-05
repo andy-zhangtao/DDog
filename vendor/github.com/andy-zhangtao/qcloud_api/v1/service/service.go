@@ -32,7 +32,7 @@ type Service struct {
 	AccessType   string        `json:"access_type"`
 	Namespace    string        `json:"namespace"`
 	Containers   []Containers  `json:"containers"`
-	portMappings PortMappings  `json:"port_mappings"`
+	PortMappings PortMappings  `json:"port_mappings"`
 	SecretKey    string
 	sign         string
 }
