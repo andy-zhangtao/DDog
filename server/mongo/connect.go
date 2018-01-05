@@ -119,6 +119,10 @@ func GetClusterByRegion(region string) (m []interface{}, err error) {
 	return
 }
 
+func GetClusterById(id string) (ns interface{},err error){
+	err = MongoClusterCol().Find(bson.M{"clusterid":id}).One(&ns)
+	return
+}
 func MongoNamespaceCol() *mgo.Collection {
 	return getCloudMongo().C(_const.CloudMongoNamespaceCol)
 }

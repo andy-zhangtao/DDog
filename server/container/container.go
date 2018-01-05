@@ -42,7 +42,7 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sv, err := mongo.GetSvcByName(con.Nsme, con.Svc)
+	sv, err := mongo.GetSvcConfByName(con.Svc, con.Nsme)
 	if sv == nil {
 		server.ReturnError(w, errors.New(_const.SVCNoExist))
 		return
@@ -105,20 +105,19 @@ func GetContainer(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteContainer(w http.ResponseWriter, r *http.Request) {
-	ns := r.URL.Query().Get("namespace")
-	if ns == "" {
-		server.ReturnError(w, errors.New(_const.NamespaceNotFound))
-		return
-	}
-
-	svc := r.URL.Query().Get("svc")
-	if svc == "" {
-		server.ReturnError(w, errors.New(_const.HttpSvcEmpty))
-		return
-	}
-
 	id := r.URL.Query().Get("cid")
 	if id == "" {
+		ns := r.URL.Query().Get("namespace")
+		if ns == "" {
+			server.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
+
+		svc := r.URL.Query().Get("svc")
+		if svc == "" {
+			server.ReturnError(w, errors.New(_const.HttpSvcEmpty))
+			return
+		}
 		err := mongo.DeleteAllContainer(svc, ns)
 		if err != nil {
 			server.ReturnError(w, err)

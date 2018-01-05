@@ -22,4 +22,7 @@ const (
 	SVCNoExist             = "This svc doesn't exist! Please check namespace or svc"
 	IdxNotFound            = "The Idx Field Cann't Be Empty!"
 	SvcConfExist           = "The same name svc configure has exist!"
+	SvcIDNotFound          = "The SvcId Cann't Be Empty!"
+	LbProtocolError        = "The protocol type wrong. The value must be 0 or 1"
+	LbPortError            = "The Container Port(in_port) Error or LB Port(out_port) Error!"
 )

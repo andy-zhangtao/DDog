@@ -11,13 +11,32 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 )
 
+// SvcConf 服务配置信息
+// 默认情况下Replicas为1
 type SvcConf struct {
-	Id         bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Name       string        `json:"name"`
-	Desc       string        `json:"desc"`
-	Replicas   int           `json:"replicas"`
-	AccessType int           `json:"access_type"`
-	Namespace  string        `json:"namespace"`
+	Id        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	Name      string        `json:"name"`
+	Desc      string        `json:"desc"`
+	Replicas  int           `json:"replicas"`
+	Namespace string        `json:"namespace"`
+	Netconf   NetConfigure  `json:"netconf"`
+}
+
+// NetConfigure 服务配置信息
+// accessType 默认为ClusterIP:
+//     0 - ClusterIP
+//     1 - LoadBalancer
+//     2 - SvcLBTypeInner
+// Inport 容器监听端口
+// Outport 负载监听端口
+// protocol 协议类型 默认为TCP
+//     0 - TCP
+//     1 - UDP
+type NetConfigure struct {
+	AccessType int `json:"access_type"`
+	InPort     int `json:"in_port"`
+	OutPort    int `json:"out_port"`
+	Protocol   int `json:"protocol"`
 }
 
 func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +69,16 @@ func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 
 	if conf.Replicas == 0 {
 		conf.Replicas = 1
+	}
+
+	if conf.Netconf.Protocol != 0 && conf.Netconf.Protocol != 1 {
+		server.ReturnError(w, errors.New(_const.LbProtocolError))
+		return
+	}
+
+	if conf.Netconf.InPort == 0 || conf.Netconf.OutPort == 0 {
+		server.ReturnError(w, errors.New(_const.LbPortError))
+		return
 	}
 
 	conf.Id = bson.NewObjectId()
@@ -102,15 +131,15 @@ func GetSvcConf(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
-	nsme := r.URL.Query().Get("namespace")
-	if nsme == "" {
-		server.ReturnError(w, errors.New(_const.NamespaceNotFound))
-		return
-	}
 
-	w.Header().Set("Content-Type", "application/json")
+	//w.Header().Set("Content-Type", "application/json")
 	id := r.URL.Query().Get("id")
 	if id == "" {
+		nsme := r.URL.Query().Get("namespace")
+		if nsme == "" {
+			server.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
 		err := mongo.DeleteSvcConfByNs(nsme)
 		if err != nil {
 			server.ReturnError(w, err)
@@ -122,7 +151,6 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 			server.ReturnError(w, err)
 			return
 		}
-
 	}
 }
 func checkConf(conf SvcConf) error {

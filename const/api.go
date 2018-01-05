@@ -17,4 +17,5 @@ const (
 	NewSvcConfig     = "/cloud/svcconf/create"
 	GetSvcConfig     = "/cloud/svcconf/info"
 	DeleteSvcConfig  = "/cloud/svcconf/delete"
+	RunService       = "/cloud/svc/run"
 )

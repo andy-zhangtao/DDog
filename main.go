@@ -12,7 +12,6 @@ import (
 	"github.com/andy-zhangtao/DDog/server/qcloud"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/client/handler"
-	"github.com/andy-zhangtao/DDog/watch"
 	"github.com/andy-zhangtao/DDog/server/metadata"
 	_ "github.com/andy-zhangtao/DDog/const"
 	"os"
@@ -29,7 +28,7 @@ func main() {
 	if region == "" {
 		log.Panic(_const.EnvRegionNotFound)
 	}
-	go watch.Go(region)
+	//go watch.Go(region)
 	r := mux.NewRouter()
 	r = dnsAPI(r)
 	r = cloudAPI(r)
@@ -71,6 +70,7 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.NewSvcConfig), svcconf.CreateSvcConf).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetSvcConfig), svcconf.GetSvcConf).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.DeleteSvcConfig), svcconf.DeleteSvcConf).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.RunService), qcloud.RunService).Methods(http.MethodPost)
 	return r
 }
 func namespaceAPI(r *mux.Router) *mux.Router {
