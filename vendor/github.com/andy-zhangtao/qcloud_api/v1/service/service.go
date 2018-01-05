@@ -265,7 +265,7 @@ func (this Service) createSvc() ([]string, map[string]string) {
 	return field, req
 }
 
-func (this Service) UpgradeService() (*SvcSMData, error){
+func (this Service) UpgradeService() (*SvcSMData, error) {
 	field, reqmap := this.createSvc()
 	pubMap := public.PublicParam("ModifyClusterService", this.Pub.Region, this.Pub.SecretId)
 	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
@@ -275,6 +275,59 @@ func (this Service) UpgradeService() (*SvcSMData, error){
 
 	if debug {
 		log.Printf("[升级服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
+	}
+
+	resp, err := http.Get(public.API_URL + reqURL)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var ssmd SvcSMData
+
+	err = json.Unmarshal(data, &ssmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ssmd, nil
+}
+
+func (this Service) DeleteService() (*SvcSMData, error) {
+	return this.generateRequest(2)
+}
+
+func (this Service) generateRequest(kind int) (*SvcSMData, error) {
+	var svcKind string
+	var debugStr string
+	switch kind {
+	case 0:
+		//	创建
+		svcKind = "CreateClusterService"
+		debugStr = "创建"
+	case 1:
+		//	升级
+		svcKind = "ModifyClusterService"
+		debugStr = "升级"
+	case 2:
+		//	删除
+		svcKind = "DeleteClusterService"
+		debugStr = "删除"
+	}
+
+	field, reqmap := this.createSvc()
+	pubMap := public.PublicParam(svcKind, this.Pub.Region, this.Pub.SecretId)
+	this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
+	signStr := "GET" + v1.QCloudApiEndpoint + this.sign
+	sign := public.GenerateSignature(this.SecretKey, signStr)
+	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
+
+	if debug {
+		log.Printf("[%s服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", debugStr, public.API_URL+reqURL, this.SecretKey, signStr, sign)
 	}
 
 	resp, err := http.Get(public.API_URL + reqURL)
