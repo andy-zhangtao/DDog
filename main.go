@@ -65,6 +65,7 @@ func metadataAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.MetaData), metadata.GetMetaDataWithHttp).Methods(http.MethodGet)
 	return r
 }
+
 func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.GetSvcSampleInfo), handler.QueryService).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.NewSvcConfig), svcconf.CreateSvcConf).Methods(http.MethodPost)
@@ -74,6 +75,7 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.RunService), qcloud.RunService).Methods(http.MethodPost)
 	return r
 }
+
 func namespaceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.NewNameSpace), qcloud.CreateNamespace).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.DeleteNameSpace), qcloud.Deletenamespace).Methods(http.MethodGet)
