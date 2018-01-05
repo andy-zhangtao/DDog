@@ -23,7 +23,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "19886645c8b5fe038b5b4e462ba24486ee3c994c"
+  revision = "887502014c27fea1f79ff470b903c4d51f2c9249"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -106,7 +106,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "d866cfc389cec985d6fda2859936a575a55a3ab6"
+  revision = "42fe2e1c20de1054d3d30f82cc9fb5b41e2e3767"
 
 [[projects]]
   branch = "master"

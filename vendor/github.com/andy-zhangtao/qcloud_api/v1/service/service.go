@@ -235,24 +235,24 @@ func (this Service) createSvc() ([]string, map[string]string) {
 		}
 	}
 
-	if this.portMappings.LbPort > 0 {
+	if this.PortMappings.LbPort > 0 {
 		field = append(field, "portMappings.0.lbPort")
-		req["portMappings.0.lbPort"] = strconv.Itoa(this.portMappings.LbPort)
+		req["portMappings.0.lbPort"] = strconv.Itoa(this.PortMappings.LbPort)
 	}
 
-	if this.portMappings.ContainerPort > 0 {
+	if this.PortMappings.ContainerPort > 0 {
 		field = append(field, "portMappings.0.containerPort")
-		req["portMappings.0.containerPort"] = strconv.Itoa(this.portMappings.ContainerPort)
+		req["portMappings.0.containerPort"] = strconv.Itoa(this.PortMappings.ContainerPort)
 	}
 
-	if this.portMappings.NodePort > 0 {
+	if this.PortMappings.NodePort > 0 {
 		field = append(field, "portMappings.0.nodePort")
-		req["portMappings.0.nodePort"] = strconv.Itoa(this.portMappings.NodePort)
+		req["portMappings.0.nodePort"] = strconv.Itoa(this.PortMappings.NodePort)
 	}
 
-	if this.portMappings.Protocol != "" {
+	if this.PortMappings.Protocol != "" {
 		field = append(field, "portMappings.0.protocol")
-		req["portMappings.0.protocol"] = this.portMappings.Protocol
+		req["portMappings.0.protocol"] = this.PortMappings.Protocol
 	}
 	return field, req
 }
