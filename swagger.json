@@ -4,7 +4,7 @@
     "description": "DDog API List",
     "version": "1.0.0",
     "title": "DDOG API ",
-    "termsOfService": "http://localhost",
+    "termsOfService": "http://127.0.0.1:8000",
     "contact": {
       "email": "ztao@gmail.com"
     },
@@ -13,7 +13,7 @@
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
     }
   },
-  "host": "localhost",
+  "host": "127.0.0.1:8000",
   "basePath": "/v1",
   "tags": [
     {
