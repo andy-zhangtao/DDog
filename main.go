@@ -75,6 +75,8 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.RunService), qcloud.RunService).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.DeleteService), qcloud.DeleteService).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.ReinstallService), qcloud.ReinstallService).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.CheckSvcConfig), svcconf.CheckSvcConf).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.DeploySvcConfig), qcloud.DeployService).Methods(http.MethodPost)
 	return r
 }
 
@@ -83,8 +85,10 @@ func namespaceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.DeleteNameSpace), qcloud.Deletenamespace).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetNSInfo), handler.QueryNameSpace).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetNSInfo), handler.QueryNamespaceByName).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath(_const.CheckNameSpace), qcloud.CheckNamespace).Methods(http.MethodGet)
 	return r
 }
+
 func dnsAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.SaveDNS).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.DeleDNS).Methods(http.MethodDelete)
@@ -97,5 +101,6 @@ func containerAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.NewContainer), container.CreateContainer).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetContainer), container.GetContainer).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.DeleteContainer), container.DeleteContainer).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.UpgradeContainer), container.UpgradeContainer).Methods(http.MethodPost)
 	return r
 }

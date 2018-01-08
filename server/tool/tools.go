@@ -1,4 +1,4 @@
-package server
+package tool
 
 import (
 	"encoding/json"
@@ -24,3 +24,17 @@ func ReturnError(w http.ResponseWriter, err error) {
 		w.Write(data)
 	}
 }
+
+//func UnMarshaSvcConf(conf interface{}) (svcconf svcconf.SvcConf, err error) {
+//	data, err := bson.Marshal(conf)
+//	if err != nil {
+//		return
+//	}
+//
+//	err = bson.Unmarshal(data, &svcconf)
+//	if err != nil {
+//		return
+//	}
+//
+//	return
+//}

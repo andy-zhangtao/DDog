@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/andy-zhangtao/DDog/server"
 	"github.com/andy-zhangtao/DDog/server/etcd"
 	gg "github.com/andy-zhangtao/gogather/strings"
 	"strings"
+	"github.com/andy-zhangtao/DDog/server/tool"
 )
 
 const (
@@ -34,19 +34,19 @@ func SaveDNS(w http.ResponseWriter, r *http.Request) {
 
 	dmd, err := getDNS(r, SaveMethod)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	value, err := json.Marshal(dmd.Value)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	err = etcd.Put(parseDomain(dmd.Key), string(value))
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 }
@@ -56,13 +56,13 @@ func SaveDNS(w http.ResponseWriter, r *http.Request) {
 func DeleDNS(w http.ResponseWriter, r *http.Request) {
 	dmd, err := getDNS(r, DeleMethod)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	err = etcd.Dele(parseDomain(dmd.Key))
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 }
@@ -72,7 +72,7 @@ func DeleDNS(w http.ResponseWriter, r *http.Request) {
 func GetDNS(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
 	if domain == "" {
-		server.ReturnError(w, errors.New("Domain can not be empty"))
+		tool.ReturnError(w, errors.New("Domain can not be empty"))
 		return
 	}
 
@@ -87,7 +87,7 @@ func GetDNS(w http.ResponseWriter, r *http.Request) {
 	if !isFuzzy {
 		data, err := etcd.Get(parseDomain(domain), []string{})
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
@@ -95,9 +95,9 @@ func GetDNS(w http.ResponseWriter, r *http.Request) {
 
 		var v vsvc
 
-		err = json.Unmarshal([]byte(value),&v)
+		err = json.Unmarshal([]byte(value), &v)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
@@ -109,16 +109,16 @@ func GetDNS(w http.ResponseWriter, r *http.Request) {
 		var td []DnsMeteData
 		data, err := etcd.Get(parseDomain(domain), []string{"--from-key"})
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
 		for key, value := range data {
 			var v vsvc
 
-			err = json.Unmarshal([]byte(value),&v)
+			err = json.Unmarshal([]byte(value), &v)
 			if err != nil {
-				server.ReturnError(w, err)
+				tool.ReturnError(w, err)
 				return
 			}
 

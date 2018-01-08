@@ -8,11 +8,11 @@ import (
 	"github.com/andy-zhangtao/DDog/server/etcd"
 	"github.com/andy-zhangtao/gogather/strings"
 	"net/http"
-	"github.com/andy-zhangtao/DDog/server"
 	"io/ioutil"
 	"encoding/json"
 	"log"
 	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/andy-zhangtao/DDog/server/tool"
 )
 
 type Svc struct {
@@ -151,7 +151,7 @@ func (this Svc) ChangeDns() (bool, error) {
 func AddSvcDnsAR(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -159,18 +159,18 @@ func AddSvcDnsAR(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(data, &svc)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	isSuc, err := svc.ChangeDns()
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	if !isSuc {
-		server.ReturnError(w, errors.New(_const.SvcNotFound))
+		tool.ReturnError(w, errors.New(_const.SvcNotFound))
 		return
 	}
 

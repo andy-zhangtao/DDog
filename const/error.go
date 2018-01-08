@@ -17,6 +17,7 @@ const (
 	RegionNotFound         = "Region Field Cannot Be Empty!"
 	ClusterNotFound        = "ClusterID Field Cannot Be Empty!"
 	NamespaceNotFound      = "Namespace Field Cannot Be Empty!"
+	SvcConfNotFound        = "Svcname Field Cannot Be Empty!"
 	NameNotFound           = "Name Field Cannot Be Empty!"
 	ImageNotFounc          = "Img Field Cannot Be Empty!"
 	SVCNoExist             = "This svc doesn't exist! Please check namespace or svc"

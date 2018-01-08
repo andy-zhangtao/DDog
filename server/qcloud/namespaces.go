@@ -2,7 +2,7 @@ package qcloud
 
 import (
 	"net/http"
-	"github.com/andy-zhangtao/DDog/server"
+	"github.com/andy-zhangtao/DDog/server/tool"
 	"errors"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/metadata"
@@ -10,31 +10,34 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"net/url"
 	"strings"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 
 	//region := r.URL.Query().Get("region")
 	//if region == "" {
-	//	server.ReturnError(w, errors.New(_const.RegionNotFound))
+	//	tool.ReturnError(w, errors.New(_const.RegionNotFound))
 	//	return
 	//}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
 	name := r.URL.Query().Get("name")
 	if name == "" {
-		server.ReturnError(w, errors.New(_const.NameNotFound))
+		tool.ReturnError(w, errors.New(_const.NameNotFound))
 		return
 	}
 
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
-		server.ReturnError(w, errors.New(_const.RegionNotFound))
+		tool.ReturnError(w, errors.New(_const.RegionNotFound))
 		return
 	}
 
@@ -55,7 +58,7 @@ func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = q.CreateNamespace(); err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -65,25 +68,25 @@ func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 func Deletenamespace(w http.ResponseWriter, r *http.Request) {
 	//region := r.URL.Query().Get("region")
 	//if region == "" {
-	//	server.ReturnError(w, errors.New(_const.RegionNotFound))
+	//	tool.ReturnError(w, errors.New(_const.RegionNotFound))
 	//	return
 	//}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
 	name := r.URL.Query().Get("name")
 	if name == "" {
-		server.ReturnError(w, errors.New(_const.NameNotFound))
+		tool.ReturnError(w, errors.New(_const.NameNotFound))
 		return
 	}
 
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
-		server.ReturnError(w, errors.New(_const.RegionNotFound))
+		tool.ReturnError(w, errors.New(_const.RegionNotFound))
 		return
 	}
 
@@ -98,7 +101,89 @@ func Deletenamespace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = q.DeleteNamespace(); err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
+		return
+	}
+
+	return
+}
+
+func CheckNamespace(w http.ResponseWriter, r *http.Request) {
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		tool.ReturnError(w, errors.New(_const.NameNotFound))
+		return
+	}
+
+	nsi, err := mongo.GetNamespaceByName(clusterid, name)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	ns, err := UnMarshalNamespace(nsi)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	rm := _const.RespMsg{
+		Code: 1000,
+		Msg:  "Namespace Exist",
+	}
+
+	if ns.ClusterID == "" {
+		md, err := metadata.GetMdByClusterID(clusterid)
+		if err != nil {
+			tool.ReturnError(w, errors.New(_const.RegionNotFound))
+			return
+		}
+
+		q := namespace.NSpace{
+			Pub: public.Public{
+				Region:   md.Region,
+				SecretId: md.Sid,
+			},
+			SecretKey: md.Skey,
+			ClusterId: clusterid,
+			Name:      url.QueryEscape(name),
+			Desc:      url.QueryEscape("create-by-ddog"),
+		}
+
+		if err = q.CreateNamespace(); err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+
+		rm.Code = 1001
+		rm.Msg = "Create New Namespace"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	data, err := json.Marshal(&rm)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	w.Write(data)
+
+}
+
+func UnMarshalNamespace(ns interface{}) (namespace namespace.NSInfo_data_namespaces, err error) {
+	data, err := bson.Marshal(ns)
+	if err != nil {
+		return
+	}
+
+	err = bson.Unmarshal(data, &namespace)
+	if err != nil {
 		return
 	}
 

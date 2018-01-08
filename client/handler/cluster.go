@@ -5,13 +5,13 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"net/http"
-	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
 	"strconv"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/metadata"
 	"errors"
 	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/andy-zhangtao/DDog/server/tool"
 )
 
 type Cluster struct {
@@ -65,13 +65,13 @@ func (this Cluster) SaveClusterInfo(save bool) (*cvm.ClusterInfo, error) {
 func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 	//data, err := ioutil.ReadAll(r.Body)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 
 	region := r.URL.Query().Get("region")
 	if region == "" {
-		server.ReturnError(w, errors.New("Region Can not be empty!"))
+		tool.ReturnError(w, errors.New("Region Can not be empty!"))
 		return
 	}
 
@@ -87,7 +87,7 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 
 	md, err := metadata.GetMetaData(region)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -99,13 +99,13 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 
 	cinfo, err := ch.SaveClusterInfo(save)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	data, err := json.Marshal(cinfo)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -116,13 +116,13 @@ func QueryClusterInfo(w http.ResponseWriter, r *http.Request) {
 func GetClusterInfo(w http.ResponseWriter, r *http.Request) {
 	region := r.URL.Query().Get("region")
 	if region == "" {
-		server.ReturnError(w, errors.New(_const.RegionNotFound))
+		tool.ReturnError(w, errors.New(_const.RegionNotFound))
 		return
 	}
 
 	cs, err := mongo.GetClusterByRegion(_const.ReverseRegionMap[region])
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
-	"github.com/andy-zhangtao/DDog/server"
+	"github.com/andy-zhangtao/DDog/server/tool"
 	"errors"
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/server/metadata"
@@ -14,30 +14,31 @@ import (
 	"github.com/andy-zhangtao/DDog/server/container"
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
+	"strings"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	//sid := r.Header.Get("secretId")
 	//if sid == "" {
-	//	server.ReturnError(w, errors.New("SecretId Can not be empty"))
+	//	tool.ReturnError(w, errors.New("SecretId Can not be empty"))
 	//	return
 	//}
 	//
 	//key := r.Header.Get("secretKey")
 	//if key == "" {
-	//	server.ReturnError(w, errors.New("SecretKey Can not be empty"))
+	//	tool.ReturnError(w, errors.New("SecretKey Can not be empty"))
 	//	return
 	//}
 
 	region := r.URL.Query().Get("region")
 	if region == "" {
-		server.ReturnError(w, errors.New("Region Can not be empty"))
+		tool.ReturnError(w, errors.New("Region Can not be empty"))
 		return
 	}
 
 	cid := r.URL.Query().Get("clusterid")
 	if cid == "" {
-		server.ReturnError(w, errors.New("Clusterid Can not be empty"))
+		tool.ReturnError(w, errors.New("Clusterid Can not be empty"))
 		return
 	}
 
@@ -53,7 +54,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	md, err := metadata.GetMetaData(region)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -70,13 +71,13 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	service, err := q.QuerySampleInfo()
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	data, err := json.Marshal(service)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -85,15 +86,27 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func RunService(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("svcid")
-	if id == "" {
-		server.ReturnError(w, errors.New(_const.SvcIDNotFound))
+	//id := r.URL.Query().Get("svcid")
+	//if id == "" {
+	//	tool.ReturnError(w, errors.New(_const.SvcIDNotFound))
+	//	return
+	//}
+
+	name := r.URL.Query().Get("svcname")
+	if name == "" {
+		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+		return
+	}
+
+	nsme := r.URL.Query().Get("namespace")
+	if nsme == "" {
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 		return
 	}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
@@ -103,14 +116,20 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		isUpgrade = false
 	}
 
-	cf, err := svcconf.GetSvcConfByID(id)
+	cf, err := svcconf.GetSvcConfByName(name, nsme)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
+
+	//cf, err := svcconf.GetSvcConfByID(id)
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
 	//conf, err := mongo.GetSvcConfByID(id)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
@@ -118,13 +137,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	//
 	//data, err := bson.Marshal(conf)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//err = bson.Unmarshal(data, &cf)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 
@@ -132,32 +151,32 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	//
 	//cs, err := mongo.GetClusterById(clusterid)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//data, err = bson.Marshal(cs)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//err = bson.Unmarshal(data, &cluster)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	////log.Println(cluster)
 	//md, err := metadata.GetMetaData(_const.RegionMap[cluster.Region])
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 	q := service.Service{
@@ -198,7 +217,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	containers, err := mongo.GetContaienrBySvc(cf.Name, cf.Namespace)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -206,13 +225,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		var cnns container.Container
 		data, err := bson.Marshal(cn)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
 		err = bson.Unmarshal(data, &cnns)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
@@ -233,13 +252,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	data, err := json.Marshal(resp)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -250,24 +269,24 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 func DeleteService(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		server.ReturnError(w, errors.New(_const.IDNotFound))
+		tool.ReturnError(w, errors.New(_const.IDNotFound))
 		return
 	}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
 	cf, err := svcconf.GetSvcConfByID(id)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 	//conf, err := mongo.GetSvcConfByID(id)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
@@ -275,13 +294,13 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 	//
 	//data, err := bson.Marshal(conf)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//err = bson.Unmarshal(data, &cf)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 
@@ -289,30 +308,30 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 	//
 	//cs, err := mongo.GetClusterById(clusterid)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//data, err = bson.Marshal(cs)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//err = bson.Unmarshal(data, &cluster)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//md, err := metadata.GetMetaData(_const.RegionMap[cluster.Region])
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 	q := service.Service{
@@ -328,13 +347,13 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := q.DeleteService()
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	data, err := json.Marshal(resp)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -342,27 +361,27 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func ReinstallService(w http.ResponseWriter, r *http.Request){
+func ReinstallService(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
-		server.ReturnError(w, errors.New(_const.IDNotFound))
+		tool.ReturnError(w, errors.New(_const.IDNotFound))
 		return
 	}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
 	cf, err := svcconf.GetSvcConfByID(id)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 	q := service.Service{
@@ -378,16 +397,80 @@ func ReinstallService(w http.ResponseWriter, r *http.Request){
 
 	resp, err := q.RedeployService()
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	data, err := json.Marshal(resp)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
+}
+
+func DeployService(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("svcname")
+	if name == "" {
+		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+		return
+	}
+
+	nsme := r.URL.Query().Get("namespace")
+	if nsme == "" {
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+		return
+	}
+
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+
+	cf, err := svcconf.GetSvcConfByName(name, nsme)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	md, err := metadata.GetMdByClusterID(clusterid)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+	q := service.Svc{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId: clusterid,
+		Namespace: cf.Namespace,
+		SecretKey: md.Skey,
+	}
+	q.SetDebug(true)
+	resp, err := q.QuerySampleInfo()
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	isUpgrade := false
+	for _, r := range resp.Data.Services {
+		if strings.Compare(r.ServiceName, cf.Name) == 0 {
+			isUpgrade = true
+			break
+		}
+	}
+
+	if isUpgrade {
+		r.URL.Query().Set("isupgrade", "true")
+	} else {
+		r.URL.Query().Set("isupgrade", "false")
+	}
+
+	RunService(w, r)
+
 }

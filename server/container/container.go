@@ -3,12 +3,13 @@ package container
 import (
 	"net/http"
 	"io/ioutil"
-	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
 	"errors"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"gopkg.in/mgo.v2/bson"
+	"strconv"
+	"github.com/andy-zhangtao/DDog/server/tool"
 )
 
 type Container struct {
@@ -26,31 +27,31 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	var con Container
 	err = json.Unmarshal(data, &con)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	if err = checkContainer(con); err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	sv, err := mongo.GetSvcConfByName(con.Svc, con.Nsme)
 	if sv == nil {
-		server.ReturnError(w, errors.New(_const.SVCNoExist))
+		tool.ReturnError(w, errors.New(_const.SVCNoExist))
 		return
 	}
 
 	con.ID = bson.NewObjectId()
 	if err = mongo.SaveContainer(con); err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -61,13 +62,13 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 func GetContainer(w http.ResponseWriter, r *http.Request) {
 	ns := r.URL.Query().Get("namespace")
 	if ns == "" {
-		server.ReturnError(w, errors.New(_const.NamespaceNotFound))
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 		return
 	}
 
 	svc := r.URL.Query().Get("svc")
 	if svc == "" {
-		server.ReturnError(w, errors.New(_const.HttpSvcEmpty))
+		tool.ReturnError(w, errors.New(_const.HttpSvcEmpty))
 		return
 	}
 
@@ -76,13 +77,13 @@ func GetContainer(w http.ResponseWriter, r *http.Request) {
 	if id == "" {
 		con, err := mongo.GetContaienrBySvc(svc, ns)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
 		data, err := json.Marshal(con)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
@@ -90,13 +91,13 @@ func GetContainer(w http.ResponseWriter, r *http.Request) {
 	} else {
 		con, err := mongo.GetContainerByID(id)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
 		data, err := json.Marshal(con)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
@@ -109,24 +110,24 @@ func DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	if id == "" {
 		ns := r.URL.Query().Get("namespace")
 		if ns == "" {
-			server.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 			return
 		}
 
 		svc := r.URL.Query().Get("svc")
 		if svc == "" {
-			server.ReturnError(w, errors.New(_const.HttpSvcEmpty))
+			tool.ReturnError(w, errors.New(_const.HttpSvcEmpty))
 			return
 		}
 		err := mongo.DeleteAllContainer(svc, ns)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 	} else {
 		err := mongo.DeleteContainerById(id)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 	}
@@ -150,7 +151,56 @@ func checkContainer(con Container) error {
 	}
 
 	if con.Idx == 0 {
-		return errors.New(_const.IdxNotFound)
+		con.Idx = 1
 	}
 	return nil
+}
+
+func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	var con Container
+	err = json.Unmarshal(data, &con)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if err = checkContainer(con); err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	sv, err := mongo.GetSvcConfByName(con.Svc, con.Nsme)
+	if sv == nil {
+		tool.ReturnError(w, errors.New(_const.SVCNoExist))
+		return
+	}
+
+	rmall := r.URL.Query().Get("rmall")
+	isRmall, err := strconv.ParseBool(rmall)
+	if err != nil {
+		isRmall = false
+	}
+
+	if isRmall {
+		err := mongo.DeleteAllContainer(con.Svc, con.Nsme)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+	}
+	con.ID = bson.NewObjectId()
+	if err = mongo.SaveContainer(con); err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	w.Write([]byte(con.ID.Hex()))
+	return
 }

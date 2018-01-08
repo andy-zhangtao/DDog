@@ -3,7 +3,6 @@ package handler
 
 import (
 	"net/http"
-	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
 	"strconv"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
@@ -13,6 +12,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"errors"
 	"github.com/andy-zhangtao/DDog/server/metadata"
+	"github.com/andy-zhangtao/DDog/server/tool"
 )
 
 type NameSpace struct {
@@ -25,7 +25,7 @@ type NameSpace struct {
 func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
 	//data, err := ioutil.ReadAll(r.Body)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 
@@ -33,19 +33,19 @@ func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
 	//
 	//err = json.Unmarshal(data, &ns)
 	//if err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
@@ -67,13 +67,13 @@ func QueryNameSpace(w http.ResponseWriter, r *http.Request) {
 
 	nsinfo, err := ns.SaveNSInfo(save)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	data, err := json.Marshal(nsinfo)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -127,7 +127,7 @@ func (this NameSpace) SaveNSInfo(save bool) (*ns.NSInfo, error) {
 func QueryNamespaceByName(w http.ResponseWriter, r *http.Request) {
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
-		server.ReturnError(w, errors.New(_const.ClusterNotFound))
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -135,13 +135,13 @@ func QueryNamespaceByName(w http.ResponseWriter, r *http.Request) {
 	if name == "" {
 		ns, err := mongo.GetAllNamespaceByCID(clusterid)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
 		data, err := json.Marshal(ns)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
@@ -149,13 +149,13 @@ func QueryNamespaceByName(w http.ResponseWriter, r *http.Request) {
 	} else {
 		ns, err := mongo.GetNamespaceByName(clusterid, name)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 
 		data, err := json.Marshal(ns)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 

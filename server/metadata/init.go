@@ -3,7 +3,6 @@ package metadata
 import (
 	"net/http"
 	"io/ioutil"
-	"github.com/andy-zhangtao/DDog/server"
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/bridge"
@@ -11,6 +10,7 @@ import (
 	"errors"
 	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/andy-zhangtao/DDog/server/tool"
 )
 
 type metaData struct {
@@ -22,40 +22,40 @@ type metaData struct {
 func Startup(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	var md metaData
 	err = json.Unmarshal(data, &md)
 	if err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
 	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo, md.Sid); err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo, md.Skey); err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 	//
 	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdRegionInfo, md.Region); err != nil {
-	//	server.ReturnError(w, err)
+	//	tool.ReturnError(w, err)
 	//	return
 	//}
 
 	if count, err := mongo.FindMetaDataByRegion(md.Region); err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	} else if count > 0 {
-		server.ReturnError(w, errors.New(_const.MetaDataDupilcate))
+		tool.ReturnError(w, errors.New(_const.MetaDataDupilcate))
 		return
 	} else if err = mongo.SaveMetaData(md); err != nil {
-		server.ReturnError(w, err)
+		tool.ReturnError(w, err)
 		return
 	}
 
@@ -95,24 +95,24 @@ func GetMetaDataWithHttp(w http.ResponseWriter, r *http.Request) {
 	if region != "" {
 		md, err := GetMetaData(region)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 		data, err := json.Marshal(&md)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 		w.Write(data)
 	} else {
 		mds, err := mongo.GetALlMetaData()
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 		data, err := json.Marshal(mds)
 		if err != nil {
-			server.ReturnError(w, err)
+			tool.ReturnError(w, err)
 			return
 		}
 		w.Write(data)

@@ -411,6 +411,86 @@
         }
       }
     },
+    "/cloud/svcconf/check": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "确认服务配置信息是否存在",
+        "description": "如果服务配置信息已存在，则更新其数据。 如果不存在则创建新配置信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "配置信息",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SvcConfig"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "schema": {
+              "$ref": "#/definitions/UpgradeMsg"
+            }
+          },
+          "500": {
+            "description": "创建失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/deploy": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "部署服务实例",
+        "description": "如果K8s服务实例已存在，则更新配置。 如果不存在，则创建",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "svcname",
+            "description": "服务配置名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcInfo"
+            }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
     "/cloud/svc/run": {
       "post": {
         "tags": [
@@ -681,6 +761,52 @@
         }
       }
     },
+    "/cloud/namespace/check": {
+      "post": {
+        "tags": [
+          "namespace"
+        ],
+        "summary": "确认命名空间是否存在",
+        "description": "如果不存在则直接创建",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "description": "命名空间名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "desc",
+            "description": "命名空间描述",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/UpgradeMsg"
+            }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
     "/dns/metadata": {
       "get": {
         "tags": [
@@ -883,6 +1009,44 @@
             "description": "容器ID,如果为空，则删除此服务下所有的容器数据",
             "required": false,
             "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/contianer/upgrade": {
+      "post": {
+        "tags": [
+          "container"
+        ],
+        "summary": "更新容器配置数据",
+        "description": "如果选择更新，则删除同一服务配置下的所有容器配置信息。否则追加本条配置信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "容器数据",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Container"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rmall",
+            "description": "是否更新所在服务配置下的其它容器信息",
+            "type": "boolean",
+            "required": true
           }
         ],
         "responses": {
@@ -1321,6 +1485,21 @@
       "type": "object",
       "additionalProperties": {
         "type": "string"
+      }
+    },
+    "UpgradeMsg": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "number",
+          "description": "响应码 1000:更新成功 1001:创建成功",
+          "example": "1000"
+        },
+        "msg": {
+          "type": "string",
+          "description": "响应描述",
+          "example": "SvcConfig Upgrade"
+        }
       }
     }
   }
