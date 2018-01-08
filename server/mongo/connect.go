@@ -296,11 +296,11 @@ func GetSvcConfGroupByName(name, ns string) (scg interface{}, err error) {
 	return
 }
 
-func SaveSvcConfGroup(scg interface{})error{
+func SaveSvcConfGroup(scg interface{}) error {
 	return MongoSvcConfGroup().Insert(&scg)
 }
 
-func DeleteSvcConfGroup(id string) (err error){
-	err = MongoSvcConfGroup().Remove(bson.M{"_id":bson.ObjectIdHex(id)})
+func DeleteSvcConfGroup(id string) (err error) {
+	err = MongoSvcConfGroup().Remove(bson.M{"_id": bson.ObjectIdHex(id)})
 	return
 }

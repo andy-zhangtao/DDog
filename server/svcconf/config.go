@@ -415,27 +415,22 @@ func AddSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 		tool.ReturnError(w, errors.New(_const.IdxVlaueError))
 	}
 
-	svcconf, err := mongo.GetSvcConfByName(svcname, namespace)
+	_, err = mongo.GetSvcConfByName(svcname, namespace)
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			tool.ReturnError(w, errors.New(_const.SvcNotFound))
+			return
+		}
 		tool.ReturnError(w, err)
 		return
 	}
 
-	nsccf, err := conver(svcconf)
+	scg, err := mongo.GetSvcConfGroupByName(name, namespace)
 	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-
-	if nsccf.Id == "" {
-		tool.ReturnError(w, errors.New(_const.SvcNotFound))
-		return
-	}
-
-	scg, err := mongo.GetSvcConfByName(name, namespace)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
+		if !strings.Contains(err.Error(), "not found") {
+			tool.ReturnError(w, err)
+			return
+		}
 	}
 
 	nscg, err := unmarshal(scg)
@@ -451,13 +446,19 @@ func AddSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 	nscg.Name = name
 	nscg.Namespace = namespace
 	nscg.Clusterid = clustid
-	if nscg.SvcGroup[svcname] > 0 {
+	sfMap := nscg.SvcGroup
+	if len(sfMap) == 0 {
+		sfMap = make(map[string]int)
+	}
+
+	if sfMap[svcname] > 0 {
 		tool.ReturnError(w, errors.New(_const.SvcHasExist))
 		return
 	} else {
-		nscg.SvcGroup[svcname] = dx
+		sfMap[svcname] = dx
 	}
 
+	nscg.SvcGroup = sfMap
 	mongo.DeleteSvcConfGroup(nscg.Id.Hex())
 	if err = mongo.SaveSvcConfGroup(nscg); err != nil {
 		tool.ReturnError(w, err)
@@ -539,6 +540,9 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 
 }
 func unmarshal(scg interface{}) (nscf SvcConfGroup, err error) {
+	if scg == nil {
+		return
+	}
 	data, err := bson.Marshal(scg)
 	if err != nil {
 		return
