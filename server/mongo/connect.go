@@ -136,6 +136,7 @@ func DeleteNamespaceByName(clusterID, name string) error {
 	if err != nil {
 		return err
 	}
+
 	if change.Removed == 0 {
 		return errors.New("There is no match record!")
 	}

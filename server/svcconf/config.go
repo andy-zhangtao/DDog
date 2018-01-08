@@ -9,6 +9,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/server/mongo"
+	"strings"
 )
 
 // SvcConf 服务配置信息
@@ -150,6 +151,8 @@ func checkConf(conf SvcConf) error {
 		return errors.New(_const.NamespaceNotFound)
 	}
 
+	conf.Name = strings.Replace(strings.ToLower(conf.Name), " ", "-", -1)
+	conf.Namespace = strings.Replace(strings.ToLower(conf.Namespace), " ", "-", -1)
 	if conf.Netconf.Protocol != 0 && conf.Netconf.Protocol != 1 {
 		return errors.New(_const.LbProtocolError)
 	}
@@ -329,9 +332,9 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		}
 		rm.Code = 1001
 		rm.Msg = "Create New SvcConfig"
-	}else{
+	} else {
 		nc, err := conver(cf)
-		if err != nil{
+		if err != nil {
 			tool.ReturnError(w, err)
 			return
 		}

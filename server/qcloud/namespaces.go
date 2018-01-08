@@ -65,6 +65,11 @@ func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = mongo.SaveNamespace(q)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
 	return
 }
 
@@ -109,6 +114,11 @@ func Deletenamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = mongo.DeleteNamespaceByName(q.ClusterId, name)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
 	return
 }
 
@@ -125,50 +135,61 @@ func CheckNamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nsi, err := mongo.GetNamespaceByName(clusterid, name)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-
-	ns, err := UnMarshalNamespace(nsi)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-
 	rm := _const.RespMsg{
 		Code: 1000,
 		Msg:  "Namespace Exist",
 	}
 
 	name = strings.Replace(strings.ToLower(name), " ", "-", -1)
-	if ns.ClusterID == "" {
-		md, err := metadata.GetMdByClusterID(clusterid)
-		if err != nil {
-			tool.ReturnError(w, errors.New(_const.RegionNotFound))
-			return
-		}
+	_, err := mongo.GetNamespaceByName(clusterid, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			md, err := metadata.GetMdByClusterID(clusterid)
+			if err != nil {
+				tool.ReturnError(w, errors.New(_const.RegionNotFound))
+				return
+			}
 
-		q := namespace.NSpace{
-			Pub: public.Public{
-				Region:   md.Region,
-				SecretId: md.Sid,
-			},
-			SecretKey: md.Skey,
-			ClusterId: clusterid,
-			Name:      url.QueryEscape(name),
-			Desc:      url.QueryEscape("create-by-ddog"),
-		}
+			q := namespace.NSpace{
+				Pub: public.Public{
+					Region:   md.Region,
+					SecretId: md.Sid,
+				},
+				SecretKey: md.Skey,
+				ClusterId: clusterid,
+				Name:      url.QueryEscape(name),
+				Desc:      url.QueryEscape("create-by-ddog"),
+			}
 
-		if err = q.CreateNamespace(); err != nil {
+			q.SetDebug(_const.DEBUG)
+			if err = q.CreateNamespace(); err != nil {
+				tool.ReturnError(w, err)
+				return
+			}
+
+			err = mongo.SaveNamespace(q)
+			if err != nil {
+				tool.ReturnError(w, err)
+				return
+			}
+			rm.Code = 1001
+			rm.Msg = "Create New Namespace"
+		} else {
 			tool.ReturnError(w, err)
 			return
 		}
-
-		rm.Code = 1001
-		rm.Msg = "Create New Namespace"
 	}
+
+	//ns, err := UnMarshalNamespace(nsi)
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//name = strings.Replace(strings.ToLower(name), " ", "-", -1)
+	//if ns.ClusterID == "" {
+	//
+	//}
 
 	w.Header().Set("Content-Type", "application/json")
 	data, err := json.Marshal(&rm)

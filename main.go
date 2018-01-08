@@ -85,7 +85,7 @@ func namespaceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.DeleteNameSpace), qcloud.Deletenamespace).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetNSInfo), handler.QueryNameSpace).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetNSInfo), handler.QueryNamespaceByName).Methods(http.MethodGet)
-	r.HandleFunc(getApiPath(_const.CheckNameSpace), qcloud.CheckNamespace).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath(_const.CheckNameSpace), qcloud.CheckNamespace).Methods(http.MethodPost)
 	return r
 }
 

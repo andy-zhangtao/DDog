@@ -1498,7 +1498,7 @@
         "msg": {
           "type": "string",
           "description": "响应描述",
-          "example": "SvcConfig Upgrade"
+          "example": ""
         }
       }
     }
