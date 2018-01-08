@@ -22,10 +22,12 @@ const (
 	ImageNotFounc          = "Img Field Cannot Be Empty!"
 	SVCNoExist             = "This svc doesn't exist! Please check namespace or svc"
 	IdxNotFound            = "The Idx Field Cannot Be Empty!"
+	IdxVlaueError          = "The Idx Must Be Great Than Zero!"
 	SvcConfExist           = "The same name svc configure has exist!"
 	SvcIDNotFound          = "The SvcId Cannot Be Empty!"
 	LbProtocolError        = "The protocol type wrong. The value must be 0 or 1"
 	LbPortError            = "The Container Port(in_port) Error or LB Port(out_port) Error!"
 	AccessTypeError        = "The AccessType Error. The value must in 0,1 and 2"
 	IDNotFound             = "The ID Field Cannot Be Empty!"
+	SvcHasExist            = "The Svc Has Exist In This Group!"
 )

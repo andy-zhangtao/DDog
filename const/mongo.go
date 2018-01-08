@@ -8,4 +8,5 @@ const (
 	CloudMongoSVCCol       = "service"
 	CloudMongoContainerCol = "container"
 	CloudMongoSvcConfig    = "svc_config"
+	CloudMonogSvcConfGroup = "svc_config_group"
 )

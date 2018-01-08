@@ -25,6 +25,9 @@ const (
 	UpgradeService   = "/cloud/svc/upgrade"
 	DeleteService    = "/cloud/svc/delete"
 	ReinstallService = "/cloud/svc/reinstall"
+	AddSvcGroup      = "/cluod/svc/group/add"
+	GetSvcGroup      = "/cloud/svc/group/info"
+	DeleSvcGroup     = "/cloud/svc/group/delete"
 )
 
 type RespMsg struct {

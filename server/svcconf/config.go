@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"strings"
+	"strconv"
 )
 
 // SvcConf 服务配置信息
@@ -38,6 +39,16 @@ type NetConfigure struct {
 	InPort     int `json:"in_port"`
 	OutPort    int `json:"out_port"`
 	Protocol   int `json:"protocol"`
+}
+
+// SvcConfGroup 服务群组配置信息
+// 作为自己的软服务编排(以业务场景为主,进行的服务编排.不依赖于k8s的服务编排)
+type SvcConfGroup struct {
+	Id        bson.ObjectId  `json:"id,omitempty" bson:"_id,omitempty"`
+	SvcGroup  map[string]int `json:"svc_group"`
+	Namespace string         `json:"namespace"`
+	Clusterid string         `json:"clusterid"`
+	Name      string         `json:"name"`
 }
 
 func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
@@ -360,5 +371,166 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(data)
+	return
+}
+
+func AddSvcConfGroup(w http.ResponseWriter, r *http.Request) {
+	svcname := r.URL.Query().Get("svcname")
+	if svcname == "" {
+		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+		return
+	}
+
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		tool.ReturnError(w, errors.New(_const.NameNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+		return
+	}
+
+	clustid := r.URL.Query().Get("clusterid")
+	if clustid == "" {
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+
+	idx := r.URL.Query().Get("idx")
+	if idx == "" {
+		tool.ReturnError(w, errors.New(_const.IdxNotFound))
+		return
+	}
+
+	dx, err := strconv.Atoi(idx)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if dx == 0 {
+		tool.ReturnError(w, errors.New(_const.IdxVlaueError))
+	}
+
+	scg, err := mongo.GetSvcConfByName(name, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	nscg, err := unmarshal(scg)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if nscg.Id == "" {
+		nscg.Id = bson.NewObjectId()
+	}
+
+	nscg.Name = name
+	nscg.Namespace = namespace
+	nscg.Clusterid = clustid
+	if nscg.SvcGroup[svcname] > 0 {
+		tool.ReturnError(w, errors.New(_const.SvcHasExist))
+		return
+	} else {
+		nscg.SvcGroup[svcname] = dx
+	}
+
+	mongo.DeleteSvcConfGroup(nscg.Id.Hex())
+	if err = mongo.SaveSvcConfGroup(nscg); err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	return
+}
+
+func GetSvcConfGroup(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		tool.ReturnError(w, errors.New(_const.NameNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+		return
+	}
+
+	scg, err := mongo.GetSvcConfGroupByName(name, namespace)
+	if namespace == "" {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	data, err := json.Marshal(&scg)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		tool.ReturnError(w, errors.New(_const.NameNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+		return
+	}
+
+	scg, err := mongo.GetSvcConfGroupByName(name, namespace)
+	if namespace == "" {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	nscg, err := unmarshal(scg)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	err = mongo.DeleteSvcConfGroup(nscg.Id.Hex())
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+	svcname := r.URL.Query().Get("svcname")
+	if svcname != "" {
+		delete(nscg.SvcGroup, svcname)
+		if err = mongo.SaveSvcConfGroup(nscg); err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+	}
+
+	return
+
+}
+func unmarshal(scg interface{}) (nscf SvcConfGroup, err error) {
+	data, err := bson.Marshal(scg)
+	if err != nil {
+		return
+	}
+
+	err = bson.Unmarshal(data, &nscf)
+	if err != nil {
+		return
+	}
+
 	return
 }

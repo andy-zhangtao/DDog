@@ -119,8 +119,8 @@ func GetClusterByRegion(region string) (m []interface{}, err error) {
 	return
 }
 
-func GetClusterById(id string) (ns interface{},err error){
-	err = MongoClusterCol().Find(bson.M{"clusterid":id}).One(&ns)
+func GetClusterById(id string) (ns interface{}, err error) {
+	err = MongoClusterCol().Find(bson.M{"clusterid": id}).One(&ns)
 	return
 }
 func MongoNamespaceCol() *mgo.Collection {
@@ -285,4 +285,22 @@ func DeleteSvcConfByNs(ns string) error {
 		return errors.New("There is no match record!")
 	}
 	return nil
+}
+
+func MongoSvcConfGroup() *mgo.Collection {
+	return getCloudMongo().C(_const.CloudMonogSvcConfGroup)
+}
+
+func GetSvcConfGroupByName(name, ns string) (scg interface{}, err error) {
+	err = MongoSvcConfGroup().Find(bson.M{"name": name, "namespace": ns}).One(&scg)
+	return
+}
+
+func SaveSvcConfGroup(scg interface{})error{
+	return MongoSvcConfGroup().Insert(&scg)
+}
+
+func DeleteSvcConfGroup(id string) (err error){
+	err = MongoSvcConfGroup().Remove(bson.M{"_id":bson.ObjectIdHex(id)})
+	return
 }

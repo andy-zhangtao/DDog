@@ -37,7 +37,7 @@ func main() {
 	r = serviceAPI(r)
 	r = namespaceAPI(r)
 	r = containerAPI(r)
-
+	r = svcorAPI(r)
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
@@ -102,5 +102,12 @@ func containerAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.GetContainer), container.GetContainer).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.DeleteContainer), container.DeleteContainer).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.UpgradeContainer), container.UpgradeContainer).Methods(http.MethodPost)
+	return r
+}
+
+func svcorAPI(r *mux.Router) *mux.Router {
+	r.HandleFunc(getApiPath(_const.AddSvcGroup), svcconf.AddSvcConfGroup).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.GetSvcGroup), svcconf.GetSvcConfGroup).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath(_const.DeleSvcGroup), svcconf.DeleteSvcConfGroup).Methods(http.MethodPost)
 	return r
 }
