@@ -809,7 +809,7 @@
     "/cloud/container/info": {
       "get": {
         "tags": [
-          "namespace"
+          "container"
         ],
         "summary": "获取容器配置信息",
         "description": "获取容器配置信息",
@@ -855,7 +855,7 @@
     "/cloud/container/delete": {
       "post": {
         "tags": [
-          "namespace"
+          "container"
         ],
         "summary": "删除容器配置信息",
         "description": "删除容器配置信息",
