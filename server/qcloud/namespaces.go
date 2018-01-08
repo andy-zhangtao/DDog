@@ -93,6 +93,7 @@ func Deletenamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	name = strings.Replace(strings.ToLower(name), " ", "-", -1)
 	q := namespace.NSpace{
 		Pub: public.Public{
 			Region:   md.Region,
@@ -141,6 +142,7 @@ func CheckNamespace(w http.ResponseWriter, r *http.Request) {
 		Msg:  "Namespace Exist",
 	}
 
+	name = strings.Replace(strings.ToLower(name), " ", "-", -1)
 	if ns.ClusterID == "" {
 		md, err := metadata.GetMdByClusterID(clusterid)
 		if err != nil {
