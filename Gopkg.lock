@@ -10,7 +10,7 @@
     "time",
     "zsort"
   ]
-  revision = "335f6c2d254d46f6cd55a137c7d8aba13971f126"
+  revision = "aa1e80597beac0958bb4ea40d944b2aaca7056ff"
 
 [[projects]]
   branch = "master"
@@ -106,7 +106,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "42fe2e1c20de1054d3d30f82cc9fb5b41e2e3767"
+  revision = "434ec0c7fe3742c984919a691b2018a6e9694425"
 
 [[projects]]
   branch = "master"
