@@ -415,6 +415,23 @@ func AddSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 		tool.ReturnError(w, errors.New(_const.IdxVlaueError))
 	}
 
+	svcconf, err := mongo.GetSvcConfByName(svcname, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	nsccf, err := conver(svcconf)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if nsccf.Id == "" {
+		tool.ReturnError(w, errors.New(_const.SvcNotFound))
+		return
+	}
+
 	scg, err := mongo.GetSvcConfByName(name, namespace)
 	if err != nil {
 		tool.ReturnError(w, err)

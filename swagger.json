@@ -39,6 +39,10 @@
     {
       "name": "container",
       "description": "容器操作API"
+    },
+    {
+      "name": "svcor",
+      "description": "服务编排API"
     }
   ],
   "schemes": [
@@ -596,6 +600,145 @@
             "name": "id",
             "description": "配置ID",
             "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cluod/svc/group/add": {
+      "post": {
+        "tags": [
+          "svcor"
+        ],
+        "summary": "增加服务编排",
+        "description": "创建一条新的服务编排信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "description": "服务编排配置名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "服务所在命名空间",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svcname",
+            "description": "服务名称,必须已经提前创建",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "idx",
+            "description": "服务执行顺序",
+            "required": true,
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/group/info": {
+      "get": {
+        "tags": [
+          "svcor"
+        ],
+        "summary": "获取指定服务编排",
+        "description": "根据命名空间和编排名称获取服务编排信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "description": "服务编排配置名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "服务所在命名空间",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcGroup"
+            }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/group/delete": {
+      "post": {
+        "tags": [
+          "svcor"
+        ],
+        "summary": "删除服务编排数据",
+        "description": "删除一条服务编排信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "name",
+            "description": "服务编排配置名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "服务所在命名空间",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svcname",
+            "description": "如果不提供，则删除此编排信息。 如果提供，则只删除这条服务依赖数据",
+            "required": false,
             "type": "string"
           }
         ],
@@ -1500,6 +1643,38 @@
           "description": "响应描述",
           "example": ""
         }
+      }
+    },
+    "SvcGroup": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "type": "string",
+          "description": "编排ID"
+        },
+        "svc_group": {
+          "$ref": "#/definitions/SvcGroupInfo"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "命名空间"
+        },
+        "clusterid": {
+          "type": "string",
+          "description": "集群ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "编排名称"
+        }
+      }
+    },
+    "SvcGroupInfo": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "description": "服务执行顺序",
+        "example": 1
       }
     }
   }
