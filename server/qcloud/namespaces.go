@@ -46,6 +46,7 @@ func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 		desc = "create-by-ddog"
 	}
 
+	name = strings.Replace(strings.ToLower(name), " ", "-", -1)
 	q := namespace.NSpace{
 		Pub: public.Public{
 			Region:   md.Region,
@@ -56,6 +57,8 @@ func CreateNamespace(w http.ResponseWriter, r *http.Request) {
 		Name:      url.QueryEscape(name),
 		Desc:      url.QueryEscape(desc),
 	}
+
+	q.SetDebug(_const.DEBUG)
 
 	if err = q.CreateNamespace(); err != nil {
 		tool.ReturnError(w, err)
