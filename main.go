@@ -109,5 +109,6 @@ func svcorAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.AddSvcGroup), svcconf.AddSvcConfGroup).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetSvcGroup), svcconf.GetSvcConfGroup).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.DeleSvcGroup), svcconf.DeleteSvcConfGroup).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.RunSvcGroup), qcloud.RunSvcGroup).Methods(http.MethodPost)
 	return r
 }

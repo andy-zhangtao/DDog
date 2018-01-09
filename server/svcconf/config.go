@@ -11,6 +11,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"strings"
 	"strconv"
+	"log"
 )
 
 // SvcConf 服务配置信息
@@ -433,7 +434,7 @@ func AddSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	nscg, err := unmarshal(scg)
+	nscg, err := Unmarshal(scg)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -469,32 +470,56 @@ func AddSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSvcConfGroup(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
-	if name == "" {
-		tool.ReturnError(w, errors.New(_const.NameNotFound))
-		return
-	}
-
 	namespace := r.URL.Query().Get("namespace")
 	if namespace == "" {
 		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 		return
 	}
 
-	scg, err := mongo.GetSvcConfGroupByName(name, namespace)
-	if namespace == "" {
-		tool.ReturnError(w, err)
-		return
-	}
-
-	data, err := json.Marshal(&scg)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
+	name := r.URL.Query().Get("name")
+	if _const.DEBUG {
+		log.Printf("[GetSvcConfGroup] namespace:[%s] name:[%s] \n", namespace, name)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(data)
+	if name == "" {
+		scg, err := mongo.GetAllSvcConfGroupByNs(namespace)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+
+		data, err := json.Marshal(&scg)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+
+		if _const.DEBUG {
+			log.Printf("[GetSvcConfGroup] Http Response [%s] \n", string(data))
+		}
+
+		tool.ReturnResp(w, data)
+	} else {
+		scg, err := mongo.GetSvcConfGroupByName(name, namespace)
+		if err != nil && !tool.IsNotFound(err) {
+			tool.ReturnError(w, err)
+			return
+		}
+
+		data, err := json.Marshal(&scg)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+
+		if _const.DEBUG {
+			log.Printf("[GetSvcConfGroup] Http Response [%s] \n", string(data))
+		}
+
+		tool.ReturnResp(w, data)
+	}
+
 }
 
 func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
@@ -516,7 +541,7 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nscg, err := unmarshal(scg)
+	nscg, err := Unmarshal(scg)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -539,7 +564,7 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 	return
 
 }
-func unmarshal(scg interface{}) (nscf SvcConfGroup, err error) {
+func Unmarshal(scg interface{}) (nscf SvcConfGroup, err error) {
 	if scg == nil {
 		return
 	}

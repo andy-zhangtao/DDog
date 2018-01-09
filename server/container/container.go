@@ -10,6 +10,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"log"
 )
 
 type Container struct {
@@ -38,9 +39,17 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _const.DEBUG {
+		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
+	}
+
 	if err = checkContainer(con); err != nil {
 		tool.ReturnError(w, err)
 		return
+	}
+
+	if _const.DEBUG {
+		log.Printf("[CreateContainer] Check Container Data :[%v] \n", con)
 	}
 
 	sv, err := mongo.GetSvcConfByName(con.Svc, con.Nsme)

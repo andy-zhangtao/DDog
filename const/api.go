@@ -28,9 +28,5 @@ const (
 	AddSvcGroup      = "/cluod/svc/group/add"
 	GetSvcGroup      = "/cloud/svc/group/info"
 	DeleSvcGroup     = "/cloud/svc/group/delete"
+	RunSvcGroup      = "/cloud/svc/group/run"
 )
-
-type RespMsg struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-}

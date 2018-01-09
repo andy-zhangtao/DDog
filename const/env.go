@@ -27,6 +27,16 @@ var ReverseRegionMap = map[string]string{
 	"sh": "ap-shanghai",
 }
 
+type RespMsg struct {
+	Code int         `json:"code"`
+	Msg  string      `json:"msg"`
+	Data interface{} `json:"data"`
+}
+
+const OperationSucc = "Operation Succ!"
+const OperationFaile = "Operation Faile!"
+const DataNotFound = OperationSucc + " But donot find any data!"
+
 func init() {
 	isDebug := os.Getenv("DDOG_DEBUG")
 	debug, err := strconv.ParseBool(isDebug)

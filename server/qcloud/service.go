@@ -15,6 +15,9 @@ import (
 	"strconv"
 	"strings"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/andy-zhangtao/gogather/zsort"
+	"log"
+	"io/ioutil"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
@@ -263,6 +266,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("EQXC-Run-Svc", "200")
 	w.Write(data)
 }
 
@@ -473,4 +477,67 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 
 	RunService(w, r)
 
+}
+
+func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+		return
+	}
+
+	svcConfGroup := r.URL.Query().Get("svcgroup")
+	if svcConfGroup == "" {
+		tool.ReturnError(w, errors.New(_const.SvcGroupNotFound))
+		return
+	}
+
+	if _const.DEBUG {
+		log.Printf("[RunSvcGroup]clusterid:[%s]namespace:[%s]svcgroup:[%s]\n", clusterid, namespace, svcConfGroup)
+	}
+
+	sg, err := mongo.GetSvcConfGroupByName(svcConfGroup, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	svcg, err := svcconf.Unmarshal(sg)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if _const.DEBUG {
+		log.Printf("[RunSvcGroup]svcg:[%v]\n", svcg)
+	}
+
+	svcPair := zsort.SortByValue(svcg.SvcGroup)
+	rawQuery := r.URL.RawQuery
+
+	for i := len(svcPair) - 1; i >= 0; i -- {
+
+		r.URL.RawQuery = rawQuery + "&svcname=" + svcPair[i].Key
+
+		if _const.DEBUG {
+			log.Printf("[RunSvcGroup]Deploy svcname :[%s] All header:[%v] \n", svcPair[i].Key, r.URL.Query())
+		}
+
+		w.Header().Del("EQXC-Run-Svc")
+		DeployService(w, r)
+		if _const.DEBUG {
+			log.Printf("[RunSvcGroup]Deploy svcname :[%s] Response:[%v] \n", svcPair[i].Key, w.Header())
+		}
+
+		if w.Header().Get("EQXC-Run-Svc") != "200" {
+			return
+		}
+
+	}
 }

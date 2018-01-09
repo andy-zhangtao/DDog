@@ -685,7 +685,7 @@
             "in": "query",
             "name": "name",
             "description": "服务编排配置名称",
-            "required": true,
+            "required": false,
             "type": "string"
           },
           {
@@ -700,7 +700,7 @@
           "200": {
             "description": "操作成功",
             "schema": {
-              "$ref": "#/definitions/SvcGroup"
+              "$ref": "#/definitions/UpgradeMsg"
             }
           },
           "500": {
@@ -739,6 +739,49 @@
             "name": "svcname",
             "description": "如果不提供，则删除此编排信息。 如果提供，则只删除这条服务依赖数据",
             "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/group/run": {
+      "post": {
+        "tags": [
+          "svcor"
+        ],
+        "summary": "执行服务编排",
+        "description": "执行设定好的服务编排",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群节点名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "服务所在命名空间",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svcgroup",
+            "description": "服务编排名称",
+            "required": true,
             "type": "string"
           }
         ],
@@ -1635,13 +1678,17 @@
       "properties": {
         "code": {
           "type": "number",
-          "description": "响应码 1000:更新成功 1001:创建成功",
+          "description": "响应码 0:没有匹配数据 1000:操作成功 1001:操作失败",
           "example": "1000"
         },
         "msg": {
           "type": "string",
           "description": "响应描述",
           "example": ""
+        },
+        "data": {
+          "type": "string",
+          "description": "返回的响应数据, 依据所调用的接口不同，返回不同的数据结构"
         }
       }
     },
