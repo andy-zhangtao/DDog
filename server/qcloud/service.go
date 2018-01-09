@@ -17,7 +17,6 @@ import (
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/andy-zhangtao/gogather/zsort"
 	"log"
-	"io/ioutil"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
@@ -271,11 +270,6 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteService(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		tool.ReturnError(w, errors.New(_const.IDNotFound))
-		return
-	}
 
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
@@ -283,56 +277,32 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cf, err := svcconf.GetSvcConfByID(id)
+	var cf svcconf.SvcConf
+	var err error
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		name := r.URL.Query().Get("svcname")
+		if name == "" {
+			tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+			return
+		}
+
+		nsme := r.URL.Query().Get("namespace")
+		if nsme == "" {
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
+
+		cf, err = svcconf.GetSvcConfByName(name, nsme)
+	} else {
+		cf, err = svcconf.GetSvcConfByID(id)
+	}
+
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
-	//conf, err := mongo.GetSvcConfByID(id)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//var cf svcconf.SvcConf
-	//
-	//data, err := bson.Marshal(conf)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//err = bson.Unmarshal(data, &cf)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
 
-	//var cluster cvm.ClusterInfo_data_clusters
-	//
-	//cs, err := mongo.GetClusterById(clusterid)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//data, err = bson.Marshal(cs)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//err = bson.Unmarshal(data, &cluster)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//md, err := metadata.GetMetaData(_const.RegionMap[cluster.Region])
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -362,6 +332,7 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("EQXC-Run-Svc", "200")
 	w.Write(data)
 }
 
@@ -520,6 +491,11 @@ func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 
 	svcPair := zsort.SortByValue(svcg.SvcGroup)
 	rawQuery := r.URL.RawQuery
+	nd := strings.Index(rawQuery, "&svcname=")
+	if nd > 0 {
+		//clear query path
+		rawQuery = rawQuery[:nd]
+	}
 
 	for i := len(svcPair) - 1; i >= 0; i -- {
 
@@ -539,5 +515,77 @@ func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	}
+}
+
+func ReinstallSvcGroup(w http.ResponseWriter, r *http.Request) {
+	UninstallSvcGroup(w, r)
+	RunSvcGroup(w, r)
+}
+
+func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+		return
+	}
+
+	svcConfGroup := r.URL.Query().Get("svcgroup")
+	if svcConfGroup == "" {
+		tool.ReturnError(w, errors.New(_const.SvcGroupNotFound))
+		return
+	}
+
+	if _const.DEBUG {
+		log.Printf("[UninstallSvcGroup]clusterid:[%s]namespace:[%s]svcgroup:[%s]\n", clusterid, namespace, svcConfGroup)
+	}
+
+	sg, err := mongo.GetSvcConfGroupByName(svcConfGroup, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	svcg, err := svcconf.Unmarshal(sg)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if _const.DEBUG {
+		log.Printf("[UninstallSvcGroup]svcg:[%v]\n", svcg)
+	}
+
+	svcPair := zsort.SortByValue(svcg.SvcGroup)
+	rawQuery := r.URL.RawQuery
+
+	nd := strings.Index(rawQuery, "&svcname=")
+	if nd > 0 {
+		//clear query path
+		rawQuery = rawQuery[:nd]
+	}
+
+	for i := len(svcPair) - 1; i >= 0; i -- {
+		r.URL.RawQuery = rawQuery + "&svcname=" + svcPair[i].Key
+
+		if _const.DEBUG {
+			log.Printf("[UninstallSvcGroup]Delete svcname :[%s] All header:[%v] \n", svcPair[i].Key, r.URL.Query())
+		}
+
+		w.Header().Del("EQXC-Run-Svc")
+		DeleteService(w, r)
+		if _const.DEBUG {
+			log.Printf("[UninstallSvcGroup]Delete svcname :[%s] Response:[%v] \n", svcPair[i].Key, w.Header())
+		}
+
+		if w.Header().Get("EQXC-Run-Svc") != "200" {
+			return
+		}
 	}
 }

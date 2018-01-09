@@ -795,6 +795,92 @@
         }
       }
     },
+    "/cloud/svc/group/reinstall": {
+      "post": {
+        "tags": [
+          "svcor"
+        ],
+        "summary": "重新部署服务编排",
+        "description": "重新部署设定好的服务编排,此操作将会重启服务编排中设定好的所有服务",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群节点名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "服务所在命名空间",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svcgroup",
+            "description": "服务编排名称",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/group/uninsall": {
+      "post": {
+        "tags": [
+          "svcor"
+        ],
+        "summary": "卸载服务编排",
+        "description": "卸载设定好的服务编排,此操作将会删除服务编排中设定好的所有服务",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群节点名称",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "服务所在命名空间",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svcgroup",
+            "description": "服务编排名称",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
     "/cloud/namespace/create": {
       "post": {
         "tags": [
