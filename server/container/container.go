@@ -58,14 +58,26 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	con.ID = bson.NewObjectId()
-	if err = mongo.SaveContainer(con); err != nil {
-		tool.ReturnError(w, err)
+	_, err = mongo.GetContaienrByName(con.Name, con.Svc, con.Nsme)
+	if err != nil {
+		if !tool.IsNotFound(err) {
+			tool.ReturnError(w, err)
+			return
+		}
+	}
+
+	if tool.IsNotFound(err) {
+		con.ID = bson.NewObjectId()
+		if err = mongo.SaveContainer(con); err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+
+		w.Write([]byte(con.ID.Hex()))
 		return
 	}
 
-	w.Write([]byte(con.ID.Hex()))
-	return
+	tool.ReturnError(w, errors.New(_const.ConConfExist))
 }
 
 func GetContainer(w http.ResponseWriter, r *http.Request) {

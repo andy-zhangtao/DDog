@@ -44,7 +44,10 @@ func ReturnError(w http.ResponseWriter, err error) {
 
 // IsNotFound 判断返回的错误是否是数据库无记录
 func IsNotFound(err error) bool {
-	return strings.Contains(err.Error(), "not found")
+	if err != nil{
+		return strings.Contains(err.Error(), "not found")
+	}
+	return false
 }
 
 func ReturnResp(w http.ResponseWriter, data []byte) {

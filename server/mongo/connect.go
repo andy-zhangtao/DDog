@@ -218,6 +218,11 @@ func SaveContainer(con interface{}) error {
 	return MongoContainerCol().Insert(&con)
 }
 
+func GetContaienrByName(conName, svcName, nsme string) (con interface{}, err error) {
+	err = MongoContainerCol().Find(bson.M{"name": conName, "svc": svcName, "nsme": nsme}).One(&con)
+	return
+}
+
 func GetContainerByID(id string) (con interface{}, err error) {
 	err = MongoContainerCol().Find(bson.M{"_id": bson.ObjectIdHex(id)}).One(&con)
 	return
@@ -297,8 +302,8 @@ func GetSvcConfGroupByName(name, ns string) (scg interface{}, err error) {
 }
 
 // GetAllSvcConfGroupByNs 获取指定命名空间下的所有服务编排数据
-func GetAllSvcConfGroupByNs(ns string)(scg []interface{}, err error){
-	err = MongoSvcConfGroup().Find(bson.M{"namespace":ns}).All(&scg)
+func GetAllSvcConfGroupByNs(ns string) (scg []interface{}, err error) {
+	err = MongoSvcConfGroup().Find(bson.M{"namespace": ns}).All(&scg)
 	return
 }
 
