@@ -638,6 +638,56 @@
         }
       }
     },
+    "/cloud/svc/status": {
+      "get": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "查询服务实例状态",
+        "description": "查询指定服务实例的简要状态",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clusterid",
+            "description": "集群ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svcname",
+            "description": "服务名称, 当提供服务名称时必须提供命名空间",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "description": "配置ID,当提供服务名称时此项可不提供",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
     "/cluod/svc/group/add": {
       "post": {
         "tags": [

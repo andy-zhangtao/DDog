@@ -20,55 +20,60 @@ import (
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
-	//sid := r.Header.Get("secretId")
-	//if sid == "" {
-	//	tool.ReturnError(w, errors.New("SecretId Can not be empty"))
-	//	return
-	//}
-	//
-	//key := r.Header.Get("secretKey")
-	//if key == "" {
-	//	tool.ReturnError(w, errors.New("SecretKey Can not be empty"))
-	//	return
-	//}
-
-	region := r.URL.Query().Get("region")
-	if region == "" {
-		tool.ReturnError(w, errors.New("Region Can not be empty"))
+	clusterid := r.URL.Query().Get("clusterid")
+	if clusterid == "" {
+		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
-	cid := r.URL.Query().Get("clusterid")
-	if cid == "" {
-		tool.ReturnError(w, errors.New("Clusterid Can not be empty"))
-		return
+	var id string
+	var cf svcconf.SvcConf
+	var err error
+	var nsme string
+	name := r.URL.Query().Get("svcname")
+	if name != "" {
+		//	如果上传服务名称，则直接重新部署此服务
+		nsme = r.URL.Query().Get("namespace")
+		if nsme == ""{
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
+	}else{
+		id = r.URL.Query().Get("id")
+		if id == "" {
+			tool.ReturnError(w, errors.New(_const.IDNotFound))
+			return
+		}
+		cf, err = svcconf.GetSvcConfByID(id)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	}
 
-	namespace := r.URL.Query().Get("namespace")
-	if namespace == "" {
-		namespace = "default"
+	if name == ""{
+		name = cf.Name
+	}
+	if nsme == ""{
+		nsme = cf.Namespace
 	}
 
-	allnamespace := r.URL.Query().Get("allnamespace")
-	if allnamespace == "" {
-		allnamespace = "0"
-	}
-
-	md, err := metadata.GetMetaData(region)
+	name = strings.TrimSpace(name)
+	nsme = strings.TrimSpace(nsme)
+	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
-
 	q := service.Svc{
 		Pub: public.Public{
-			Region:   region,
 			SecretId: md.Sid,
+			Region:   md.Region,
 		},
-		ClusterId:    cid,
-		Namespace:    namespace,
-		Allnamespace: allnamespace,
-		SecretKey:    md.Skey,
+		ClusterId:   clusterid,
+		//ServiceName: name,
+		Namespace:   nsme,
+		SecretKey:   md.Skey,
 	}
 
 	service, err := q.QuerySampleInfo()
@@ -77,10 +82,16 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := json.Marshal(service)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
+	var data []byte
+	for _, svc := range service.Data.Services{
+		if svc.ServiceName == name {
+			data, err = json.Marshal(svc)
+			if err != nil {
+				tool.ReturnError(w, err)
+				return
+			}
+			break
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

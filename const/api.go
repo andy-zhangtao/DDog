@@ -21,6 +21,7 @@ const (
 	GetSvcConfig      = "/cloud/svcconf/info"
 	DeleteSvcConfig   = "/cloud/svcconf/delete"
 	CheckSvcConfig    = "/cloud/svcconf/check"
+	QuerySvcStatus    = "/cloud/svc/status"
 	RunService        = "/cloud/svc/run"
 	UpgradeService    = "/cloud/svc/upgrade"
 	DeleteService     = "/cloud/svc/delete"
