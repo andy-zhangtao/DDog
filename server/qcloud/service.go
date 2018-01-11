@@ -337,23 +337,44 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReinstallService(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		tool.ReturnError(w, errors.New(_const.IDNotFound))
-		return
-	}
-
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
 		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
 		return
 	}
 
-	cf, err := svcconf.GetSvcConfByID(id)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
+	var id string
+	var cf svcconf.SvcConf
+	var err error
+	var nsme string
+	name := r.URL.Query().Get("svcname")
+	if name != "" {
+		//	如果上传服务名称，则直接重新部署此服务
+		nsme = r.URL.Query().Get("namespace")
+		if nsme == ""{
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
+	}else{
+		id = r.URL.Query().Get("id")
+		if id == "" {
+			tool.ReturnError(w, errors.New(_const.IDNotFound))
+			return
+		}
+		cf, err = svcconf.GetSvcConfByID(id)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	}
+
+	if name == ""{
+		name = cf.Name
+	}
+	if nsme == ""{
+		nsme = cf.Namespace
+	}
+
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -365,8 +386,8 @@ func ReinstallService(w http.ResponseWriter, r *http.Request) {
 			Region:   md.Region,
 		},
 		ClusterId:   clusterid,
-		ServiceName: cf.Name,
-		Namespace:   cf.Namespace,
+		ServiceName: name,
+		Namespace:   nsme,
 		SecretKey:   md.Skey,
 	}
 

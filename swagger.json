@@ -608,9 +608,23 @@
           },
           {
             "in": "query",
+            "name": "svcname",
+            "description": "服务名称, 当提供服务名称时必须提供命名空间",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "id",
-            "description": "配置ID",
-            "required": true,
+            "description": "配置ID,当提供服务名称时此项可不提供",
+            "required": false,
             "type": "string"
           }
         ],

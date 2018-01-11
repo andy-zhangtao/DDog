@@ -58,6 +58,7 @@ func ping(w http.ResponseWriter, r *http.Request) {
 
 func cloudAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc("/_ping", ping).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath("/_ping"), ping).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.GetNodeInfo), qcloud.GetClusterNodes).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.GetClusterInfo), handler.QueryClusterInfo).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.GetClusterInfo), handler.GetClusterInfo).Methods(http.MethodGet)
