@@ -9,5 +9,5 @@ run: build
 	./$(name)
 
 release: *.go *.md
-	docker run -it --rm -v ${PWD}:/go/src/github.com/andy-zhangtao/DDog vikings/golang:1.9-onbuild /go/src/github.com/andy-zhangtao/DDog ddog
+	docker run -it --rm -v ${PWD}:/go/src/github.com/andy-zhangtao/DDog vikings/golang:1.9-onbuild /go/src/github.com/andy-zhangtao/DDog ddog -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)"
 	ls -ltr bin/
