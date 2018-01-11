@@ -10,13 +10,14 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
-	"github.com/andy-zhangtao/DDog/server/container"
+
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
 	"strings"
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/andy-zhangtao/gogather/zsort"
 	"log"
+	"github.com/andy-zhangtao/DDog/model/container"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {

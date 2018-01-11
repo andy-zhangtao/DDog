@@ -11,18 +11,10 @@ import (
 	"strconv"
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"log"
+	"github.com/andy-zhangtao/DDog/model/container"
 )
 
-type Container struct {
-	ID   bson.ObjectId     `json:"id,omitempty" bson:"_id,omitempty"`
-	Name string            `json:"name"`
-	Img  string            `json:"img"`
-	Cmd  []string          `json:"cmd"`
-	Env  map[string]string `json:"env"`
-	Svc  string            `json:"svc"`
-	Nsme string            `json:"namespace"`
-	Idx  int               `json:"idx"`
-}
+
 
 func CreateContainer(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
@@ -32,7 +24,7 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var con Container
+	var con container.Container
 	err = json.Unmarshal(data, &con)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -58,15 +50,22 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = mongo.GetContaienrByName(con.Name, con.Svc, con.Nsme)
-	if err != nil {
-		if !tool.IsNotFound(err) {
-			tool.ReturnError(w, err)
-			return
-		}
+	tcon , err := container.GetContainerByName(con.Name, con.Svc, con.Nsme)
+	if err != nil{
+		tool.ReturnError(w, err)
+		return
 	}
 
-	if tool.IsNotFound(err) {
+
+	//_, err = mongo.GetContaienrByName(con.Name, con.Svc, con.Nsme)
+	//if err != nil {
+	//	if !tool.IsNotFound(err) {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//}
+
+	if tcon == nil {
 		con.ID = bson.NewObjectId()
 		if err = mongo.SaveContainer(con); err != nil {
 			tool.ReturnError(w, err)
@@ -154,7 +153,7 @@ func DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkContainer(con Container) error {
+func checkContainer(con container.Container) error {
 	if con.Name == "" {
 		return errors.New(_const.NameNotFound)
 	}
@@ -185,7 +184,7 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var con Container
+	var con container.Container
 	err = json.Unmarshal(data, &con)
 	if err != nil {
 		tool.ReturnError(w, err)
