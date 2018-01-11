@@ -56,23 +56,8 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-	//_, err = mongo.GetContaienrByName(con.Name, con.Svc, con.Nsme)
-	//if err != nil {
-	//	if !tool.IsNotFound(err) {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//}
-
 	if tcon == nil {
-		con.ID = bson.NewObjectId()
-		if err = mongo.SaveContainer(con); err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-
-		w.Write([]byte(con.ID.Hex()))
+		container.SaveContainer(&con)
 		return
 	}
 

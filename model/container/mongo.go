@@ -35,6 +35,13 @@ func GetContainerByName(conname, svcname, namespace string) (con *Container, err
 	return
 }
 
+func SaveContainer(con *Container)(err error){
+	con.ID = bson.NewObjectId()
+	if err = mongo.SaveContainer(con); err != nil {
+		return
+	}
+	return
+}
 func unmarshal(icon interface{}) (con *Container, err error) {
 	if icon == nil {
 		return
