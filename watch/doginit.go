@@ -23,10 +23,10 @@ type watchdog struct {
 }
 
 func Go(region string) {
-	err := genConfigure()
-	if err != nil {
-		log.Panicln(err)
-	}
+	//err := genConfigure()
+	//if err != nil {
+	//	log.Panicln(err)
+	//}
 
 	w, err := getMetaData(region)
 	if err != nil {
