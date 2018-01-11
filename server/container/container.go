@@ -14,8 +14,6 @@ import (
 	"github.com/andy-zhangtao/DDog/model/container"
 )
 
-
-
 func CreateContainer(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
