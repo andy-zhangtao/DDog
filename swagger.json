@@ -49,6 +49,17 @@
     "http"
   ],
   "paths": {
+    "/_ping": {
+      "get": {
+        "summary": "测试网络链接",
+        "description": "获取网络状态信息和版本信息",
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          }
+        }
+      }
+    },
     "/cloud/cluster/nodes": {
       "get": {
         "tags": [
@@ -214,7 +225,7 @@
             "in": "query",
             "name": "region",
             "description": "区域名称",
-            "required": true,
+            "required": false,
             "type": "string"
           }
         ],
