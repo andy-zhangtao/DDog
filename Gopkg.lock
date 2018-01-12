@@ -10,7 +10,7 @@
     "time",
     "zsort"
   ]
-  revision = "95b3a831d64af3b9644a541127017a18db6ac78d"
+  revision = "45a287f34b300f3d00973aefbb3e1dd3dc205ad9"
 
 [[projects]]
   branch = "master"
