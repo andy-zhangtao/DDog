@@ -73,10 +73,10 @@ func TestGetMetaDataWithHttp(t *testing.T) {
 }
 
 func TestGetMdByClusterID(t *testing.T) {
-	_const.RegionMap["l"]="local"
+	_const.RegionMap["l"] = "local"
 	c := make(map[string]string)
-	c["clusterid"]="cid"
-	c["region"]="l"
+	c["clusterid"] = "cid"
+	c["region"] = "l"
 	mongo.SaveCluster(c)
 
 	md, err := GetMdByClusterID("cid")
@@ -86,4 +86,5 @@ func TestGetMdByClusterID(t *testing.T) {
 	assert.Equal(t, "123", md.Sid, "Get respones error!")
 	assert.Equal(t, "456", md.Skey, "Get respones error!")
 	assert.Equal(t, "local", md.Region, "Get respones error!")
+
 }
