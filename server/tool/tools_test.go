@@ -4,34 +4,8 @@ import (
 	"testing"
 	"errors"
 	"github.com/stretchr/testify/assert"
-	"net/http"
+	"github.com/andy-zhangtao/go-unit-test-suite/http-ut"
 )
-
-type TestResponseWriter struct {
-	headerMap   http.Header
-	inputLength int
-	input       []byte
-	statusCode  int
-}
-
-func (trw *TestResponseWriter) Header() http.Header {
-	if trw.headerMap == nil {
-		trw.headerMap = http.Header{}
-	}
-
-	return trw.headerMap
-}
-
-func (trw *TestResponseWriter) Write(input []byte) (int, error) {
-	trw.input = input
-	trw.inputLength = len(trw.input)
-	return trw.inputLength, nil
-}
-
-func (trw *TestResponseWriter) WriteHeader(code int) {
-	trw.statusCode = code
-	return
-}
 
 func TestIsNotFound(t *testing.T) {
 	err := errors.New("Here is a error")
@@ -45,22 +19,22 @@ func TestIsNotFound(t *testing.T) {
 }
 
 func TestReturnError(t *testing.T) {
-	w := new(TestResponseWriter)
+	w := new(http_ut.TestResponseWriter)
 	err := errors.New("This is a err")
 	ReturnError(w, err)
 
-	assert.Equal(t, "application/json", w.headerMap.Get("Content-Type"), "The header Content-Type wrong!")
-	assert.Equal(t, "500", w.headerMap.Get("EQXC-Run-Svc"), "The header Content-Type wrong!")
-	assert.Equal(t, 500, w.statusCode, "The status code should be 500")
+	assert.Equal(t, "application/json", w.HeaderMap.Get("Content-Type"), "The header Content-Type wrong!")
+	assert.Equal(t, "500", w.HeaderMap.Get("EQXC-Run-Svc"), "The header Content-Type wrong!")
+	assert.Equal(t, 500, w.StatusCode, "The status code should be 500")
 
-	assert.Equal(t,"{\"code\":500,\"msg\":\"This is a err\"}",string(w.input),"Return data error")
+	assert.Equal(t, "{\"code\":500,\"msg\":\"This is a err\"}", string(w.Input), "Return data error")
 }
 
 func TestReturnResp(t *testing.T) {
-	w := new(TestResponseWriter)
+	w := new(http_ut.TestResponseWriter)
 	ReturnResp(w, []byte("null"))
 
-	assert.Equal(t,"{\"code\":0,\"msg\":\"Operation Succ! But donot find any data!\",\"data\":\"null\"}",string(w.input),"Return data error")
+	assert.Equal(t, "{\"code\":0,\"msg\":\"Operation Succ! But donot find any data!\",\"data\":\"null\"}", string(w.Input), "Return data error")
 	ReturnResp(w, []byte("OK"))
-	assert.Equal(t,"{\"code\":1000,\"msg\":\"Operation Succ!\",\"data\":\"OK\"}",string(w.input),"Return data error")
+	assert.Equal(t, "{\"code\":1000,\"msg\":\"Operation Succ!\",\"data\":\"OK\"}", string(w.Input), "Return data error")
 }

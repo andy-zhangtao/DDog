@@ -73,9 +73,13 @@ func SaveMetaData(metadata interface{}) error {
 	return c.Insert(&metadata)
 }
 
-func FindMetaDataByRegion(region string) (int, error) {
-	c := MongoMetadataCol()
-	return c.Find(bson.M{"region": region}).Count()
+func DeleteMetaData(id string) (err error) {
+	return MongoMetadataCol().Remove(bson.M{"_id": bson.ObjectIdHex(id)})
+}
+
+func FindMetaDataByRegion(region string) (md interface{}, err error) {
+	err = MongoMetadataCol().Find(bson.M{"region": region}).One(&md)
+	return
 }
 
 func GetMetaDataByRegion(region string, metadata interface{}) (err error) {

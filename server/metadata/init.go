@@ -5,20 +5,15 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/const"
-	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"errors"
-	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
-	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/andy-zhangtao/DDog/bridge"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/DDog/model/cluster"
 )
 
-type metaData struct {
-	Sid    string `json:"secret_id"`
-	Skey   string `json:"secret_key"`
-	Region string `json:"region"`
-}
-
+// Startup 初始化MetaData数据
 func Startup(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -26,35 +21,20 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var md metaData
+	var md metadata.MetaData
 	err = json.Unmarshal(data, &md)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
-	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo, md.Sid); err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo, md.Skey); err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//if err = etcd.Put(_const.CloudEtcdRootPath+_const.CloudEtcdRegionInfo, md.Region); err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-
-	if count, err := mongo.FindMetaDataByRegion(md.Region); err != nil {
+	if md, err := metadata.GetMetaDataByRegion(md.Region); err != nil {
 		tool.ReturnError(w, err)
 		return
-	} else if count > 0 {
+	} else if md.Sid != "" {
 		tool.ReturnError(w, errors.New(_const.MetaDataDupilcate))
 		return
-	} else if err = mongo.SaveMetaData(md); err != nil {
+	} else if err = metadata.SaveMetaData(*md); err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
@@ -64,29 +44,19 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetMetaData 获取存储在etcd中的密钥数据
-func GetMetaData(region string) (metaData, error) {
-	var md metaData
+func GetMetaData(region string) (metadata.MetaData, error) {
+	//var md metadata.MetaData
 
-	//if keys, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo, nil); err != nil {
-	//	return md, err
-	//} else {
-	//	md.Sid = keys[_const.CloudEtcdRootPath+_const.CloudEtcdSidInfo]
-	//}
-	//
-	//if keys, err := etcd.Get(_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo, nil); err != nil {
-	//	return md, err
-	//} else {
-	//	md.Skey = keys[_const.CloudEtcdRootPath+_const.CloudEtcdSkeyInfo]
-	//}
-
-	err := mongo.GetMetaDataByRegion(region, &md)
+	md, err := metadata.GetMetaDataByRegion(region)
+	//err := mongo.GetMetaDataByRegion(region, &md)
 	if err != nil {
-		return md, err
+		return *md, err
 	}
-	if md.Sid == "" || md.Skey == "" || md.Region == "" {
-		return md, errors.New(region + " Metadata 获取为空")
+	if md.Sid == "" {
+		return *md, errors.New(region + " Metadata 获取为空")
 	}
-	return md, nil
+
+	return *md, nil
 }
 
 func GetMetaDataWithHttp(w http.ResponseWriter, r *http.Request) {
@@ -122,20 +92,25 @@ func GetMetaDataWithHttp(w http.ResponseWriter, r *http.Request) {
 
 // GetMdByClusterID 通过clusterid获取密钥数据
 // 返回密钥ID，密钥值和所在区域
-func GetMdByClusterID(clusterid string) (md metaData, err error) {
-	var cluster cvm.ClusterInfo_data_clusters
+func GetMdByClusterID(clusterid string) (md metadata.MetaData, err error) {
+	//var cluster cvm.ClusterInfo_data_clusters
+	//
+	//cs, err := mongo.GetClusterById(clusterid)
+	//if err != nil {
+	//	return
+	//}
+	//
+	//data, err := bson.Marshal(cs)
+	//if err != nil {
+	//	return
+	//}
+	//
+	//err = bson.Unmarshal(data, &cluster)
+	//if err != nil {
+	//	return
+	//}
 
-	cs, err := mongo.GetClusterById(clusterid)
-	if err != nil {
-		return
-	}
-
-	data, err := bson.Marshal(cs)
-	if err != nil {
-		return
-	}
-
-	err = bson.Unmarshal(data, &cluster)
+	cluster, err := cluster.GetClusterByID(clusterid)
 	if err != nil {
 		return
 	}
@@ -144,5 +119,39 @@ func GetMdByClusterID(clusterid string) (md metaData, err error) {
 	if err != nil {
 		return
 	}
+	return
+}
+
+func UpdataMetadata(w http.ResponseWriter, r *http.Request) {
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	var md metadata.MetaData
+	err = json.Unmarshal(data, &md)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	tmd, err := metadata.GetMetaDataByRegion(md.Region)
+	if err != nil {
+		if !tool.IsNotFound(err) {
+			tool.ReturnError(w, err)
+			return
+		} else if err = mongo.SaveMetaData(md); err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+	} else if tmd.Sid != "" {
+		if err = metadata.DelteMetaData(*tmd); err != nil {
+			tool.ReturnError(w, err)
+		}
+		return
+	}
+
+	bridge.GetMetaChan() <- 1
 	return
 }
