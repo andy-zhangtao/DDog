@@ -10,7 +10,7 @@
     "time",
     "zsort"
   ]
-  revision = "aa1e80597beac0958bb4ea40d944b2aaca7056ff"
+  revision = "95b3a831d64af3b9644a541127017a18db6ac78d"
 
 [[projects]]
   branch = "master"
@@ -23,7 +23,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "88abd1c2cc73ccb0b45591caa4c30e6a1aa549e7"
+  revision = "33cc72fc3eea65539710d3ceeb341fe9dd280788"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -39,8 +39,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "d3c2acf09011e89d61a8b3ec0f844411e200abb5"
-  version = "v3.3.0-rc.1"
+  revision = "9e079d8f02af4f1fabcd015994d60051d22024f3"
+  version = "v3.3.0-rc.2"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -106,7 +106,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "434ec0c7fe3742c984919a691b2018a6e9694425"
+  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [[projects]]
   branch = "master"
@@ -162,8 +162,8 @@
     "tap",
     "transport"
   ]
-  revision = "f3955b8e9e244dd4dd4bc4f7b7a23a8445400a76"
-  version = "v1.9.0"
+  revision = "7cea4cc846bcf00cbb27595b07da5de875ef7de9"
+  version = "v1.9.1"
 
 [[projects]]
   branch = "v2"

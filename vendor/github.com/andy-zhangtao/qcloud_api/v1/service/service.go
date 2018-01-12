@@ -73,6 +73,7 @@ type SvcSMData struct {
 	Code     int          `json:"code"`
 	Message  string       `json:"message"`
 	CodeDesc string       `json:"codedesc"`
+	Url      string       `json:"request"`
 	Data     SvcData_data `json:"data"`
 }
 
@@ -355,6 +356,10 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	err = json.Unmarshal(data, &ssmd)
 	if err != nil {
 		return nil, err
+	}
+
+	if ssmd.Code != 0 {
+		ssmd.Url = public.API_URL + reqURL
 	}
 
 	return &ssmd, nil

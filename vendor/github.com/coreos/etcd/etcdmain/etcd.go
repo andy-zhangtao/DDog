@@ -40,7 +40,6 @@ import (
 	"github.com/coreos/etcd/version"
 
 	"github.com/coreos/pkg/capnslog"
-	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 )
 
@@ -179,10 +178,6 @@ func startEtcdOrProxyV2() {
 
 // startEtcd runs StartEtcd in addition to hooks needed for standalone etcd.
 func startEtcd(cfg *embed.Config) (<-chan struct{}, <-chan error, error) {
-	if cfg.Metrics == "extensive" {
-		grpc_prometheus.EnableHandlingTimeHistogram()
-	}
-
 	e, err := embed.StartEtcd(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -392,6 +387,9 @@ func checkSupportArch() {
 	if runtime.GOARCH == "amd64" || runtime.GOARCH == "ppc64le" {
 		return
 	}
+	// unsupported arch only configured via environment variable
+	// so unset here to not parse through flag
+	defer os.Unsetenv("ETCD_UNSUPPORTED_ARCH")
 	if env, ok := os.LookupEnv("ETCD_UNSUPPORTED_ARCH"); ok && env == runtime.GOARCH {
 		plog.Warningf("running etcd on unsupported architecture %q since ETCD_UNSUPPORTED_ARCH is set", env)
 		return

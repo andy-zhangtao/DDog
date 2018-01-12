@@ -32,7 +32,7 @@ type NSInfo_data_namespaces struct {
 	Description string `json:"description"`
 	Status      string `json:"status"`
 	CreatedAt   string `json:"createdat"`
-	ClusterID   string `json:"cluster_id"`
+	ClusterID   string `json:"clusterid"`
 }
 
 // http://json.golang.chinazt.cc/
