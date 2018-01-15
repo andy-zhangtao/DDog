@@ -1725,11 +1725,14 @@
         },
         "namespace": {
           "type": "string",
-          "description": "服务所处命名空间名称",
+          "description": "服务所处命名空间名称,默认为devenv",
           "example": "ns-test"
         },
         "netconf": {
-          "$ref": "#/definitions/Netconfig"
+          "type":"array",
+          "items": {
+            "$ref": "#/definitions/Netconfig"
+          }
         }
       }
     },
@@ -1748,7 +1751,7 @@
         },
         "out_port": {
           "type": "number",
-          "description": "服务负载监听端口",
+          "description": "服务负载监听端口,端口冲突时会累加",
           "example": 8000
         },
         "protocol": {
@@ -1793,7 +1796,7 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "容器名称",
+          "description": "容器名称,如果为空则默认取镜像名",
           "example": "apitest"
         },
         "img": {
