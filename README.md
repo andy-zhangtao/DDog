@@ -13,6 +13,8 @@ A tool for auto generate coredns configure file
 - DDOG_REGION: 集群所在区域   
 - DDOG_MONGO_ENDPOINT: mongo链接信息
 - DDOG_ETCD_ENDPOINT：ETCD链接信息
+- DDOG_GOBLIN_ENDPOINT: Goblin地址 (与docker daemon进行交互,解析镜像网络信息)
+- DDOG_NAME_SPACE: 默认命名空间
    
 以下变量为可选项
 - DDOG_MONGO_NAME: mongo用户名 

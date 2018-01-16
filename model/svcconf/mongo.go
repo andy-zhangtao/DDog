@@ -117,6 +117,9 @@ func SaveSvcConf(scf *SvcConf) error {
 }
 
 func UpdateSvcConf(scf *SvcConf) error {
-	mongo.DeleteSvcConfById(scf.Id.Hex())
+	err := mongo.DeleteSvcConfById(scf.Id.Hex())
+	if err != nil{
+		return err
+	}
 	return SaveSvcConf(scf)
 }

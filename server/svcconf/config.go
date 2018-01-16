@@ -14,6 +14,7 @@ import (
 	"log"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"encoding/base64"
+	"fmt"
 )
 
 func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +34,7 @@ func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = checkConf(conf); err != nil {
+	if err = checkConf(&conf); err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
@@ -97,7 +98,8 @@ func GetSvcConf(w http.ResponseWriter, r *http.Request) {
 }
 func QuerySvcConf(w http.ResponseWriter, r *http.Request) {
 	type scs struct {
-		Status int `json:"status"`
+		Status int           `json:"status"`
+		Port   []map[int]int `json:"port"`
 	}
 	svc := r.URL.Query().Get("svc")
 	if svc == "" {
@@ -117,9 +119,17 @@ func QuerySvcConf(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var s scs
+	var p []map[int]int
 
 	s.Status = scf.Status
 
+	for _, f := range scf.Netconf {
+		port := make(map[int]int)
+		port[f.InPort] = f.OutPort
+		p = append(p, port)
+	}
+
+	s.Port = p
 	data, err := json.Marshal(&s)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -152,10 +162,11 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-func checkConf(conf svcconf.SvcConf) error {
+func checkConf(conf *svcconf.SvcConf) error {
 	if conf.Name == "" {
 		return errors.New(_const.NameNotFound)
 	}
+
 	if conf.Namespace == "" {
 		conf.Namespace = _const.DefaultNameSpace
 	}
@@ -166,6 +177,7 @@ func checkConf(conf svcconf.SvcConf) error {
 
 	conf.Name = strings.Replace(strings.ToLower(conf.Name), " ", "-", -1)
 	conf.Namespace = strings.Replace(strings.ToLower(conf.Namespace), " ", "-", -1)
+
 	if len(conf.Netconf) > 0 {
 		for _, n := range conf.Netconf {
 			if n.Protocol != 0 && n.Protocol != 1 {
@@ -370,7 +382,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = checkConf(conf); err != nil {
+	if err = checkConf(&conf); err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
@@ -380,21 +392,10 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		Msg:  "SvcConfig Upgrade",
 	}
 
+	fmt.Println(conf)
 	cf, err := mongo.GetSvcConfByName(conf.Name, conf.Namespace)
 	if cf == nil {
-		//if conf.Replicas == 0 {
-		//	conf.Replicas = 1
-		//}
-		//
-		//if conf.Namespace == "" {
-		//	conf.Namespace = _const.DefaultNameSpace
-		//}
-		//
-		//if conf.Desc == "" {
-		//	conf.Desc = "Create-by-ddog"
-		//}
-
-		err = checkConf(conf)
+		err = checkConf(&conf)
 		if err != nil {
 			tool.ReturnError(w, err)
 			return

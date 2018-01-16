@@ -9,18 +9,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"net/url"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
 )
 
-var svc = SvcConf{
+var svc = svcconf.SvcConf{
 	Name:      "SVCCONF",
 	Desc:      "SVCCONF",
 	Replicas:  2,
 	Namespace: "SVC_NSME",
-	Netconf: NetConfigure{
-		AccessType: 2,
-		InPort:     9000,
-		OutPort:    8000,
-		Protocol:   1,
+	Netconf: []svcconf.NetConfigure{
+		svcconf.NetConfigure{AccessType: 2,
+			InPort: 9000,
+			OutPort: 8000,
+			Protocol: 1,},
 	},
 }
 
@@ -52,7 +53,7 @@ func TestGetSvcConf(t *testing.T) {
 	GetSvcConf(w, r)
 
 	assert.Equal(t, 0, w.StatusCode, "The status code should be 0")
-	var c SvcConf
+	var c svcconf.SvcConf
 	json.Unmarshal(w.Input, &c)
 
 	assert.Equal(t, svc.Name, c.Name, "The name error")
@@ -61,7 +62,7 @@ func TestGetSvcConf(t *testing.T) {
 	r.URL = new(url.URL)
 	r.URL.RawQuery = "namespace=SVC_NSME"
 	GetSvcConf(w, r)
-	var cs []SvcConf
+	var cs []svcconf.SvcConf
 	json.Unmarshal(w.Input, &cs)
 
 	assert.Equal(t, 0, w.StatusCode, "The status code should be 0")
@@ -85,7 +86,7 @@ func TestUpgradeSvcConf(t *testing.T) {
 	assert.Equal(t, 0, w.StatusCode, "The status code should be 0")
 
 	GetSvcConf(w, r)
-	var c SvcConf
+	var c svcconf.SvcConf
 	json.Unmarshal(w.Input, &c)
 	assert.Equal(t, 9, c.Replicas, "The repllicas should be 9")
 }

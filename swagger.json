@@ -1933,6 +1933,12 @@
         "status": {
           "type": "number",
           "description": "网络解析状态 0-解析成功 1-准备解析 2-开始解析 3-解析失败"
+        },
+        "port":{
+          "type":"array",
+          "items": {
+            "$ref":"#/definitions/ContainerEnv"
+          }
         }
       }
     }

@@ -37,7 +37,7 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
 	}
 
-	if err = checkContainer(con); err != nil {
+	if err = checkContainer(&con); err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
@@ -52,31 +52,6 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//if len(sv.Netconf) == 0 {
-
-	var callback = func(err error) {
-		fmt.Println("========", err, sv)
-		if err != nil {
-			sv.Status = 3
-		} else {
-			sv.Status = 0
-		}
-		svcconf.UpdateSvcConf(sv)
-		return
-	}
-	sv.Status = 1
-	go func(callback func(error)) {
-		img := base64.StdEncoding.EncodeToString([]byte(con.Img))
-		err := tool.InspectImgInfo(con.Svc, con.Nsme, img, callback)
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	}(callback)
-	sv.Status = 2
-	svcconf.UpdateSvcConf(sv)
-	//}
-
 	tcon, err := container.GetContainerByName(con.Name, con.Svc, con.Nsme)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -84,11 +59,37 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if tcon == nil {
+		var callback = func(err error) {
+			fmt.Println("svc conf", err)
+			if err != nil {
+				sv.Status = 3
+			} else {
+				sv.Status = 0
+			}
+			svcconf.UpdateSvcConf(sv)
+			return
+		}
+		sv.Status = 1
+		go func(callback func(error)) {
+			img := base64.StdEncoding.EncodeToString([]byte(con.Img))
+			err := tool.InspectImgInfo(con.Svc, con.Nsme, img, callback)
+			if err != nil {
+				tool.ReturnError(w, err)
+				return
+			}
+		}(callback)
+		sv.Status = 2
+		fmt.Printf("svc conf [%v]\n", sv)
+		err = svcconf.UpdateSvcConf(sv)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 		container.SaveContainer(&con)
 		return
+	} else {
+		tool.ReturnError(w, errors.New(_const.ConConfExist))
 	}
-
-	tool.ReturnError(w, errors.New(_const.ConConfExist))
 }
 
 func GetContainer(w http.ResponseWriter, r *http.Request) {
@@ -165,7 +166,7 @@ func DeleteContainer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func checkContainer(con container.Container) error {
+func checkContainer(con *container.Container) error {
 
 	if con.Img == "" {
 		return errors.New(_const.ImageNotFounc)
@@ -212,7 +213,7 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = checkContainer(con); err != nil {
+	if err = checkContainer(&con); err != nil {
 		tool.ReturnError(w, err)
 		return
 	}

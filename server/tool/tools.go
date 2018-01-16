@@ -115,7 +115,8 @@ func InspectImgInfo(svcname, namespace, imgname string, callback func(error)) er
 		errChan <- nil
 
 	}()
+	err := <-errChan
 	fmt.Println("==Ready to invoke callback")
-	callback(<-errChan)
+	callback(err)
 	return nil
 }

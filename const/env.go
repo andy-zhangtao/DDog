@@ -55,6 +55,7 @@ func init() {
 		DefaultNameSpace = "default"
 	}
 
+	log.Printf("默认命名空间[%s]\n",DefaultNameSpace)
 	if DEBUG {
 		log.Println("启动DEBUG模式")
 	} else {
