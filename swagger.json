@@ -349,6 +349,45 @@
         }
       }
     },
+    "/cloud/svcconf/status": {
+      "get": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "获取配置数据当前状态",
+        "description": "获取当前配置的网络解析状态",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "namespace",
+            "description": "命名空间名称,若为空，则使用默认空间",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "svc",
+            "description": "服务配置名称",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "schema": {
+              "$ref": "#/definitions/SvcConfStatus"
+            }
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
     "/cloud/svcconf/delete": {
       "post": {
         "tags": [
@@ -1729,7 +1768,7 @@
           "example": "ns-test"
         },
         "netconf": {
-          "type":"array",
+          "type": "array",
           "items": {
             "$ref": "#/definitions/Netconfig"
           }
@@ -1886,6 +1925,15 @@
         "type": "number",
         "description": "服务执行顺序",
         "example": 1
+      }
+    },
+    "SvcConfStatus": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "number",
+          "description": "网络解析状态 0-解析成功 1-准备解析 2-开始解析 3-解析失败"
+        }
       }
     }
   }

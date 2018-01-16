@@ -9,7 +9,6 @@ import (
 	"github.com/andy-zhangtao/DDog/server/metadata"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/mongo"
-	"github.com/andy-zhangtao/DDog/server/svcconf"
 
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
@@ -18,6 +17,7 @@ import (
 	"github.com/andy-zhangtao/gogather/zsort"
 	"log"
 	"github.com/andy-zhangtao/DDog/model/container"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
@@ -28,18 +28,18 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var id string
-	var cf svcconf.SvcConf
+	var cf *svcconf.SvcConf
 	var err error
 	var nsme string
 	name := r.URL.Query().Get("svcname")
 	if name != "" {
 		//	如果上传服务名称，则直接重新部署此服务
 		nsme = r.URL.Query().Get("namespace")
-		if nsme == ""{
+		if nsme == "" {
 			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 			return
 		}
-	}else{
+	} else {
 		id = r.URL.Query().Get("id")
 		if id == "" {
 			tool.ReturnError(w, errors.New(_const.IDNotFound))
@@ -52,10 +52,10 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if name == ""{
+	if name == "" {
 		name = cf.Name
 	}
-	if nsme == ""{
+	if nsme == "" {
 		nsme = cf.Namespace
 	}
 
@@ -71,10 +71,10 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 			SecretId: md.Sid,
 			Region:   md.Region,
 		},
-		ClusterId:   clusterid,
+		ClusterId: clusterid,
 		//ServiceName: name,
-		Namespace:   nsme,
-		SecretKey:   md.Skey,
+		Namespace: nsme,
+		SecretKey: md.Skey,
 	}
 
 	service, err := q.QuerySampleInfo()
@@ -84,7 +84,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data []byte
-	for _, svc := range service.Data.Services{
+	for _, svc := range service.Data.Services {
 		if svc.ServiceName == name {
 			data, err = json.Marshal(svc)
 			if err != nil {
@@ -136,58 +136,6 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//cf, err := svcconf.GetSvcConfByID(id)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//conf, err := mongo.GetSvcConfByID(id)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//var cf svcconf.SvcConf
-	//
-	//data, err := bson.Marshal(conf)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//err = bson.Unmarshal(data, &cf)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-
-	//var cluster cvm.ClusterInfo_data_clusters
-	//
-	//cs, err := mongo.GetClusterById(clusterid)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//data, err = bson.Marshal(cs)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//err = bson.Unmarshal(data, &cluster)
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	////log.Println(cluster)
-	//md, err := metadata.GetMetaData(_const.RegionMap[cluster.Region])
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-
 	md, err := metadata.GetMdByClusterID(clusterid)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -204,21 +152,25 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		Replicas:    cf.Replicas,
 		Namespace:   cf.Namespace,
 		SecretKey:   md.Skey,
-		PortMappings: service.PortMappings{
-			LbPort:        cf.Netconf.OutPort,
-			ContainerPort: cf.Netconf.InPort,
-		},
+		//PortMappings: service.PortMappings{
+		//	LbPort:        cf.Netconf.OutPort,
+		//	ContainerPort: cf.Netconf.InPort,
+		//},
 	}
 
-	switch cf.Netconf.Protocol {
-	case 0:
-		q.PortMappings.Protocol = "TCP"
-	case 1:
-		q.PortMappings.Protocol = "UDP"
+	var pm []service.PortMappings
+	for _, n := range cf.Netconf {
+		p := service.PortMappings{}
+		switch n.Protocol {
+		case 0:
+			p.Protocol = "TCP"
+		case 1:
+			p.Protocol = "UDP"
+		}
 	}
-
+	q.PortMappings = pm
 	q.SetDebug(true)
-	switch cf.Netconf.AccessType {
+	switch cf.Netconf[0].AccessType {
 	case 0:
 		q.AccessType = "ClusterIP"
 	case 1:
@@ -289,7 +241,7 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cf svcconf.SvcConf
+	var cf *svcconf.SvcConf
 	var err error
 	id := r.URL.Query().Get("id")
 	if id == "" {
@@ -356,18 +308,18 @@ func ReinstallService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var id string
-	var cf svcconf.SvcConf
+	var cf *svcconf.SvcConf
 	var err error
 	var nsme string
 	name := r.URL.Query().Get("svcname")
 	if name != "" {
 		//	如果上传服务名称，则直接重新部署此服务
 		nsme = r.URL.Query().Get("namespace")
-		if nsme == ""{
+		if nsme == "" {
 			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 			return
 		}
-	}else{
+	} else {
 		id = r.URL.Query().Get("id")
 		if id == "" {
 			tool.ReturnError(w, errors.New(_const.IDNotFound))
@@ -380,10 +332,10 @@ func ReinstallService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if name == ""{
+	if name == "" {
 		name = cf.Name
 	}
-	if nsme == ""{
+	if nsme == "" {
 		nsme = cf.Namespace
 	}
 

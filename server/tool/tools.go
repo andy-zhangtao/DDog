@@ -5,6 +5,10 @@ import (
 	"net/http"
 	"strings"
 	"github.com/andy-zhangtao/DDog/const"
+	"os"
+	"fmt"
+	"errors"
+	"io/ioutil"
 )
 
 type HttpError struct {
@@ -48,7 +52,7 @@ func ReturnError(w http.ResponseWriter, err error) {
 
 // IsNotFound 判断返回的错误是否是数据库无记录
 func IsNotFound(err error) bool {
-	if err != nil{
+	if err != nil {
 		return strings.Contains(err.Error(), "not found")
 	}
 	return false
@@ -77,4 +81,41 @@ func ReturnResp(w http.ResponseWriter, data []byte) {
 	}
 
 	w.Write(d)
+}
+
+// InspectImgInfo 获取镜像信息
+// svcname 服务配置名称，用于回调时确定服务配置
+// namespace 命名空间名称, 回调时使用
+// imgname 镜像名称,用于检索镜像数据
+func InspectImgInfo(svcname, namespace, imgname string, callback func(error)) error {
+	goblin := os.Getenv(_const.EnvGoblin)
+	if goblin == "" {
+		return errors.New(fmt.Sprintf("[%s]Empty!\n", _const.EnvGoblin))
+	}
+
+	errChan := make(chan error)
+	
+	go func() {
+		path := fmt.Sprintf("http://%s/v1/inspect?svc=%s&namespace=%s&img=%s", goblin, svcname, namespace, imgname)
+		fmt.Printf("Invoke[%s]\n ", path)
+		resp, err := http.Get(path)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		if resp.StatusCode != 200 {
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				errChan <- errors.New(fmt.Sprintf("Goblin Resp [%d] [%s] \n", resp.StatusCode, err))
+			}
+			errChan <- errors.New(fmt.Sprintf("Goblin Resp [%d] [%s] \n", resp.StatusCode, string(body)))
+			return
+		}
+		errChan <- nil
+
+	}()
+	fmt.Println("==Ready to invoke callback")
+	callback(<-errChan)
+	return nil
 }

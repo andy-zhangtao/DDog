@@ -16,9 +16,13 @@ const (
 	EnvMongoPasswd = "DDOG_MONGO_PASSWD"
 	EnvMongoDB     = "DDOG_MONGO_DB"
 	EnvRegion      = "DDOG_REGION"
+	EnvDefaultNS   = "DDOG_NAME_SPACE"
+	EnvGoblin      = "DDOG_GOBLIN_ENDPOINT"
 )
 
 var DEBUG = false
+var DefaultNameSpace string
+
 var RegionMap = map[string]string{
 	"ap-shanghai": "sh",
 }
@@ -44,6 +48,11 @@ func init() {
 		DEBUG = false
 	} else {
 		DEBUG = debug
+	}
+
+	DefaultNameSpace = os.Getenv(EnvDefaultNS)
+	if DefaultNameSpace == "" {
+		DefaultNameSpace = "default"
 	}
 
 	if DEBUG {

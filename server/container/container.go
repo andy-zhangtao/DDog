@@ -12,6 +12,10 @@ import (
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"log"
 	"github.com/andy-zhangtao/DDog/model/container"
+	"strings"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"encoding/base64"
+	"fmt"
 )
 
 func CreateContainer(w http.ResponseWriter, r *http.Request) {
@@ -42,14 +46,39 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CreateContainer] Check Container Data :[%v] \n", con)
 	}
 
-	sv, err := mongo.GetSvcConfByName(con.Svc, con.Nsme)
+	sv, err := svcconf.GetSvcConfByName(con.Svc, con.Nsme)
 	if sv == nil {
 		tool.ReturnError(w, errors.New(_const.SVCNoExist))
 		return
 	}
 
-	tcon , err := container.GetContainerByName(con.Name, con.Svc, con.Nsme)
-	if err != nil{
+	//if len(sv.Netconf) == 0 {
+
+	var callback = func(err error) {
+		fmt.Println("========", err, sv)
+		if err != nil {
+			sv.Status = 3
+		} else {
+			sv.Status = 0
+		}
+		svcconf.UpdateSvcConf(sv)
+		return
+	}
+	sv.Status = 1
+	go func(callback func(error)) {
+		img := base64.StdEncoding.EncodeToString([]byte(con.Img))
+		err := tool.InspectImgInfo(con.Svc, con.Nsme, img, callback)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+	}(callback)
+	sv.Status = 2
+	svcconf.UpdateSvcConf(sv)
+	//}
+
+	tcon, err := container.GetContainerByName(con.Name, con.Svc, con.Nsme)
+	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
@@ -137,12 +166,20 @@ func DeleteContainer(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkContainer(con container.Container) error {
-	if con.Name == "" {
-		return errors.New(_const.NameNotFound)
-	}
 
 	if con.Img == "" {
 		return errors.New(_const.ImageNotFounc)
+	}
+
+	if con.Name == "" {
+		img := strings.Split(con.Img, "/")
+		if len(img) == 1 {
+			con.Name = img[0]
+		} else if len(img) == 2 {
+			con.Name = img[1]
+		} else if len(img) == 3 {
+			con.Name = img[2]
+		}
 	}
 
 	if con.Svc == "" {
@@ -150,12 +187,13 @@ func checkContainer(con container.Container) error {
 	}
 
 	if con.Nsme == "" {
-		return errors.New(_const.NamespaceNotFound)
+		con.Nsme = _const.DefaultNameSpace
 	}
 
 	if con.Idx == 0 {
 		con.Idx = 1
 	}
+
 	return nil
 }
 

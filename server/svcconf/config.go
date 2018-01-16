@@ -12,45 +12,9 @@ import (
 	"strings"
 	"strconv"
 	"log"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"encoding/base64"
 )
-
-// SvcConf 服务配置信息
-// 默认情况下Replicas为1
-type SvcConf struct {
-	Id        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Name      string        `json:"name"`
-	Desc      string        `json:"desc"`
-	Replicas  int           `json:"replicas"`
-	Namespace string        `json:"namespace"`
-	Netconf   NetConfigure  `json:"netconf"`
-}
-
-// NetConfigure 服务配置信息
-// accessType 默认为ClusterIP:
-//     0 - ClusterIP
-//     1 - LoadBalancer
-//     2 - SvcLBTypeInner
-// Inport 容器监听端口
-// Outport 负载监听端口
-// protocol 协议类型 默认为TCP
-//     0 - TCP
-//     1 - UDP
-type NetConfigure struct {
-	AccessType int `json:"access_type"`
-	InPort     int `json:"in_port"`
-	OutPort    int `json:"out_port"`
-	Protocol   int `json:"protocol"`
-}
-
-// SvcConfGroup 服务群组配置信息
-// 作为自己的软服务编排(以业务场景为主,进行的服务编排.不依赖于k8s的服务编排)
-type SvcConfGroup struct {
-	Id        bson.ObjectId  `json:"id,omitempty" bson:"_id,omitempty"`
-	SvcGroup  map[string]int `json:"svc_group"`
-	Namespace string         `json:"namespace"`
-	Clusterid string         `json:"clusterid"`
-	Name      string         `json:"name"`
-}
 
 func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 
@@ -61,7 +25,7 @@ func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var conf SvcConf
+	var conf svcconf.SvcConf
 
 	err = json.Unmarshal(data, &conf)
 	if err != nil {
@@ -131,7 +95,40 @@ func GetSvcConf(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+func QuerySvcConf(w http.ResponseWriter, r *http.Request) {
+	type scs struct {
+		Status int `json:"status"`
+	}
+	svc := r.URL.Query().Get("svc")
+	if svc == "" {
+		tool.ReturnError(w, errors.New(_const.SvcNotFound))
+		return
+	}
 
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		namespace = _const.DefaultNameSpace
+	}
+
+	scf, err := svcconf.GetSvcConfByName(svc, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	var s scs
+
+	s.Status = scf.Status
+
+	data, err := json.Marshal(&s)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+
+}
 func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 
 	//w.Header().Set("Content-Type", "application/json")
@@ -155,26 +152,35 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-func checkConf(conf SvcConf) error {
+func checkConf(conf svcconf.SvcConf) error {
 	if conf.Name == "" {
 		return errors.New(_const.NameNotFound)
 	}
 	if conf.Namespace == "" {
-		return errors.New(_const.NamespaceNotFound)
+		conf.Namespace = _const.DefaultNameSpace
+	}
+
+	if conf.Replicas == 0 {
+		conf.Replicas = 1
 	}
 
 	conf.Name = strings.Replace(strings.ToLower(conf.Name), " ", "-", -1)
 	conf.Namespace = strings.Replace(strings.ToLower(conf.Namespace), " ", "-", -1)
-	if conf.Netconf.Protocol != 0 && conf.Netconf.Protocol != 1 {
-		return errors.New(_const.LbProtocolError)
-	}
+	if len(conf.Netconf) > 0 {
+		for _, n := range conf.Netconf {
+			if n.Protocol != 0 && n.Protocol != 1 {
+				return errors.New(_const.LbProtocolError)
+			}
 
-	if conf.Netconf.InPort == 0 || conf.Netconf.OutPort == 0 {
-		return errors.New(_const.LbPortError)
-	}
+			if n.InPort == 0 || n.OutPort == 0 {
+				return errors.New(_const.LbPortError)
+			}
 
-	if conf.Netconf.AccessType != 0 && conf.Netconf.AccessType != 1 && conf.Netconf.AccessType != 2 {
-		return errors.New(_const.AccessTypeError)
+			if n.AccessType != 0 && n.AccessType != 1 && n.AccessType != 2 {
+				return errors.New(_const.AccessTypeError)
+			}
+		}
+
 	}
 
 	return nil
@@ -193,7 +199,7 @@ func UpgradeSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conf, err := conver(c)
+	conf, err := svcconf.Conver(c)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -205,7 +211,7 @@ func UpgradeSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var nc SvcConf
+	var nc svcconf.SvcConf
 
 	err = json.Unmarshal(data, &nc)
 	if err != nil {
@@ -217,27 +223,31 @@ func UpgradeSvcConf(w http.ResponseWriter, r *http.Request) {
 		conf.Replicas = nc.Replicas
 	}
 
-	if nc.Netconf.Protocol != 0 && nc.Netconf.Protocol != 1 {
-		tool.ReturnError(w, errors.New(_const.LbProtocolError))
-		return
-	} else {
-		conf.Netconf.Protocol = nc.Netconf.Protocol
-	}
+	if len(nc.Netconf) > 0 {
+		for i, n := range nc.Netconf {
+			if n.Protocol != 0 && n.Protocol != 1 {
+				tool.ReturnError(w, errors.New(_const.LbProtocolError))
+				return
+			} else {
+				conf.Netconf[i].Protocol = n.Protocol
+			}
 
-	if nc.Netconf.InPort == 0 || nc.Netconf.OutPort == 0 {
-		tool.ReturnError(w, errors.New(_const.LbPortError))
-		return
-	} else if nc.Netconf.InPort > 0 {
-		conf.Netconf.InPort = nc.Netconf.InPort
-	} else if nc.Netconf.OutPort > 0 {
-		conf.Netconf.OutPort = nc.Netconf.OutPort
-	}
+			if n.InPort == 0 || n.OutPort == 0 {
+				tool.ReturnError(w, errors.New(_const.LbPortError))
+				return
+			} else if n.InPort > 0 {
+				conf.Netconf[i].InPort = n.InPort
+			} else if n.OutPort > 0 {
+				conf.Netconf[i].OutPort = n.OutPort
+			}
 
-	if nc.Netconf.AccessType != 0 && nc.Netconf.AccessType != 1 && nc.Netconf.AccessType != 2 {
-		tool.ReturnError(w, errors.New(_const.AccessTypeError))
-		return
-	} else {
-		conf.Netconf.AccessType = nc.Netconf.AccessType
+			if n.AccessType != 0 && n.AccessType != 1 && n.AccessType != 2 {
+				tool.ReturnError(w, errors.New(_const.AccessTypeError))
+				return
+			} else {
+				conf.Netconf[i].AccessType = n.AccessType
+			}
+		}
 	}
 
 	err = mongo.DeleteSvcConfById(conf.Id.Hex())
@@ -255,39 +265,77 @@ func UpgradeSvcConf(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func conver(conf interface{}) (c *SvcConf, err error) {
-	data, err := bson.Marshal(conf)
-	if err != nil {
-		return
-	}
-	err = bson.Unmarshal(data, &c)
-	if err != nil {
+func UpdateNetPort(w http.ResponseWriter, r *http.Request) {
+	svc := r.URL.Query().Get("svc")
+	if svc == "" {
+		tool.ReturnError(w, errors.New("svc empty!"))
 		return
 	}
 
-	return
+	nsme := r.URL.Query().Get("namespace")
+	if nsme == "" {
+		tool.ReturnError(w, errors.New("namespace empty!"))
+		return
+	}
+
+	port := r.URL.Query().Get("port")
+	if port == "" {
+		tool.ReturnError(w, errors.New("port empty!"))
+		return
+	}
+
+	pb, err := base64.StdEncoding.DecodeString(port)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	port = string(pb)
+	ports := strings.Split(port, ";")
+
+	scf, err := svcconf.GetSvcConfByName(svc, nsme)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	var nt []svcconf.NetConfigure
+	if len(scf.Netconf) > 0 {
+		nt = scf.Netconf
+	}
+
+	pm := make(map[int]int)
+
+	for _, n := range nt {
+		pm[n.InPort] = n.OutPort
+	}
+
+	for _, p := range ports {
+		pi, _ := strconv.Atoi(p)
+
+		if pm[pi] > 0 {
+			pm[pi] = pm[pi] + 1
+		} else {
+			pm[pi] = pi
+		}
+		nt = append(nt, svcconf.NetConfigure{
+			AccessType: 0,
+			InPort:     pi,
+			OutPort:    pm[pi],
+			Protocol:   0,
+		})
+	}
+
+	scf.Netconf = nt
+
+	err = svcconf.UpdateSvcConf(scf)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
 }
 
-func GetSvcConfByID(id string) (cf SvcConf, err error) {
-	conf, err := mongo.GetSvcConfByID(id)
-	if err != nil {
-		return
-	}
-
-	data, err := bson.Marshal(conf)
-	if err != nil {
-		return
-	}
-
-	err = bson.Unmarshal(data, &cf)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func GetSvcConfByName(name, ns string) (cf SvcConf, err error) {
+func GetSvcConfByName(name, ns string) (cf svcconf.SvcConf, err error) {
 	conf, err := mongo.GetSvcConfByName(name, ns)
 	if err != nil {
 		return
@@ -305,6 +353,7 @@ func GetSvcConfByName(name, ns string) (cf SvcConf, err error) {
 
 	return
 }
+
 func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 	data, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
@@ -313,7 +362,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var conf SvcConf
+	var conf svcconf.SvcConf
 
 	err = json.Unmarshal(data, &conf)
 	if err != nil {
@@ -333,8 +382,22 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 
 	cf, err := mongo.GetSvcConfByName(conf.Name, conf.Namespace)
 	if cf == nil {
-		if conf.Replicas == 0 {
-			conf.Replicas = 1
+		//if conf.Replicas == 0 {
+		//	conf.Replicas = 1
+		//}
+		//
+		//if conf.Namespace == "" {
+		//	conf.Namespace = _const.DefaultNameSpace
+		//}
+		//
+		//if conf.Desc == "" {
+		//	conf.Desc = "Create-by-ddog"
+		//}
+
+		err = checkConf(conf)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
 		}
 
 		conf.Id = bson.NewObjectId()
@@ -345,7 +408,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		rm.Code = 1001
 		rm.Msg = "Create New SvcConfig"
 	} else {
-		nc, err := conver(cf)
+		nc, err := svcconf.Conver(cf)
 		if err != nil {
 			tool.ReturnError(w, err)
 			return
@@ -434,7 +497,7 @@ func AddSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	nscg, err := Unmarshal(scg)
+	nscg, err := svcconf.Unmarshal(scg)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -541,7 +604,7 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nscg, err := Unmarshal(scg)
+	nscg, err := svcconf.Unmarshal(scg)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -563,20 +626,4 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 
 	return
 
-}
-func Unmarshal(scg interface{}) (nscf SvcConfGroup, err error) {
-	if scg == nil {
-		return
-	}
-	data, err := bson.Marshal(scg)
-	if err != nil {
-		return
-	}
-
-	err = bson.Unmarshal(data, &nscf)
-	if err != nil {
-		return
-	}
-
-	return
 }
