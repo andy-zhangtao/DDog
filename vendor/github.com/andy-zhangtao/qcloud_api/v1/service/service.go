@@ -24,16 +24,16 @@ type Svc struct {
 }
 
 type Service struct {
-	Pub          public.Public `json:"pub"`
-	ClusterId    string        `json:"cluster_id"`
-	ServiceName  string        `json:"service_name"`
-	ServiceDesc  string        `json:"service_desc"`
-	Replicas     int           `json:"replicas"`
-	AccessType   string        `json:"access_type"`
-	Namespace    string        `json:"namespace"`
-	Containers   []Containers  `json:"containers"`
-	PortMappings PortMappings  `json:"port_mappings"`
-	Strategy     string        `json:"strategy"`
+	Pub          public.Public  `json:"pub"`
+	ClusterId    string         `json:"cluster_id"`
+	ServiceName  string         `json:"service_name"`
+	ServiceDesc  string         `json:"service_desc"`
+	Replicas     int            `json:"replicas"`
+	AccessType   string         `json:"access_type"`
+	Namespace    string         `json:"namespace"`
+	Containers   []Containers   `json:"containers"`
+	PortMappings []PortMappings `json:"port_mappings"`
+	Strategy     string         `json:"strategy"`
 	SecretKey    string
 	sign         string
 }
@@ -240,24 +240,30 @@ func (this Service) createSvc() ([]string, map[string]string) {
 		}
 	}
 
-	if this.PortMappings.LbPort > 0 {
-		field = append(field, "portMappings.0.lbPort")
-		req["portMappings.0.lbPort"] = strconv.Itoa(this.PortMappings.LbPort)
-	}
+	for i, p := range this.PortMappings {
+		if p.LbPort > 0 {
+			key := fmt.Sprintf("portMappings.%d.lbPort", i)
+			field = append(field, key)
+			req[key] = strconv.Itoa(p.LbPort)
+		}
 
-	if this.PortMappings.ContainerPort > 0 {
-		field = append(field, "portMappings.0.containerPort")
-		req["portMappings.0.containerPort"] = strconv.Itoa(this.PortMappings.ContainerPort)
-	}
+		if p.ContainerPort > 0 {
+			key := fmt.Sprintf("portMappings.%d.containerPort", i)
+			field = append(field, key)
+			req[key] = strconv.Itoa(p.ContainerPort)
+		}
 
-	if this.PortMappings.NodePort > 0 {
-		field = append(field, "portMappings.0.nodePort")
-		req["portMappings.0.nodePort"] = strconv.Itoa(this.PortMappings.NodePort)
-	}
+		if p.NodePort > 0 {
+			key := fmt.Sprintf("portMappings.%d.nodePort", i)
+			field = append(field, key)
+			req[key] = strconv.Itoa(p.NodePort)
+		}
 
-	if this.PortMappings.Protocol != "" {
-		field = append(field, "portMappings.0.protocol")
-		req["portMappings.0.protocol"] = this.PortMappings.Protocol
+		if p.Protocol != "" {
+			key := fmt.Sprintf("portMappings.%d.protocol", i)
+			field = append(field, key)
+			req[key] = p.Protocol
+		}
 	}
 
 	if this.Strategy != "" {

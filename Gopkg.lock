@@ -3,6 +3,15 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/andy-zhangtao/go-unit-test-suite"
+  packages = [
+    "http-ut",
+    "io-ut"
+  ]
+  revision = "4bd82190d1a4ed51b967d213514a73e71473b2c3"
+
+[[projects]]
+  branch = "master"
   name = "github.com/andy-zhangtao/gogather"
   packages = [
     "random",
@@ -23,7 +32,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "33cc72fc3eea65539710d3ceeb341fe9dd280788"
+  revision = "ad7e3101b27cebd9c2bac96b3b6e6259a781acdd"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -47,6 +56,12 @@
   packages = ["semver"]
   revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
   version = "v0.2.0"
+
+[[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -89,10 +104,22 @@
   version = "v1.6.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "ccfe18359b55b97855cee1d3f74e5efbda4869dc"
+  revision = "9831f2c3ac1068a78f50999a30db84270f647af6"
 
 [[projects]]
   branch = "master"
@@ -180,6 +207,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "14b18ebf9ac1371062a051029cd10fd276088bf7ce59cddc37cbcd1959987571"
+  inputs-digest = "c3ce17302b54eaa5278a43d70bfe491b725c21a065aed4a10ca486ea52e6a2e2"
   solver-name = "gps-cdcl"
   solver-version = 1
