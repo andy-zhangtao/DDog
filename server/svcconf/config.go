@@ -13,9 +13,17 @@ import (
 	"strconv"
 	"log"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"encoding/base64"
 	"fmt"
+	"github.com/andy-zhangtao/DDog/model/container"
+	"net/url"
 )
+
+// CPort 容器端口数据
+type CPort struct {
+	Name string                   `json:"name"`
+	Img  string                   `json:"img"`
+	Net  []container.NetConfigure `json:"net"`
+}
 
 func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 
@@ -277,6 +285,17 @@ func UpgradeSvcConf(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// UpdateNetPort 更新服务端口数据
+// *svc 服务名称
+// *namespace 命名空间
+// *port 端口数据(base64编码)
+// {
+//	"name":string,
+// 	"img":string,
+//	"net":[
+//		{NetConfigure}
+//	]
+// }
 func UpdateNetPort(w http.ResponseWriter, r *http.Request) {
 	svc := r.URL.Query().Get("svc")
 	if svc == "" {
@@ -290,61 +309,57 @@ func UpdateNetPort(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	port := r.URL.Query().Get("port")
+	port := r.URL.Query().Get("net")
 	if port == "" {
 		tool.ReturnError(w, errors.New("port empty!"))
 		return
 	}
 
-	pb, err := base64.StdEncoding.DecodeString(port)
+	pb, err := url.QueryUnescape(port)
+	//pb, err := base64.StdEncoding.DecodeString(port)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
-	port = string(pb)
-	ports := strings.Split(port, ";")
+	if _const.DEBUG{
+		log.Printf("[UpdateNetPort] NetConfigure [%s]\n", pb)
+	}
 
-	scf, err := svcconf.GetSvcConfByName(svc, nsme)
+	var cp CPort
+
+	err = json.Unmarshal([]byte(pb), &cp)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
-	var nt []svcconf.NetConfigure
-	if len(scf.Netconf) > 0 {
-		nt = scf.Netconf
+	//port = string(pb)
+	//ports := strings.Split(port, ";")
+
+	isChange, err := container.UpgradeContainerNetByName(cp.Name, svc, nsme, cp.Net)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+	if _const.DEBUG{
+		log.Printf("[UpdateNetPort] Compare NetConfigure Is change? [%v]!\n", isChange)
 	}
 
-	pm := make(map[int]int)
-
-	for _, n := range nt {
-		pm[n.InPort] = n.OutPort
-	}
-
-	for _, p := range ports {
-		pi, _ := strconv.Atoi(p)
-
-		if pm[pi] > 0 {
-			pm[pi] = pm[pi] + 1
-		} else {
-			pm[pi] = pi
+	if isChange {
+		scf, err := svcconf.GetSvcConfByName(svc, nsme)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
 		}
-		nt = append(nt, svcconf.NetConfigure{
-			AccessType: 0,
-			InPort:     pi,
-			OutPort:    pm[pi],
-			Protocol:   0,
-		})
+		err = svcconf.GenerateNetconifg(scf)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	}
 
-	scf.Netconf = nt
-
-	err = svcconf.UpdateSvcConf(scf)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
+	return
 }
 
 func GetSvcConfByName(name, ns string) (cf svcconf.SvcConf, err error) {

@@ -10,6 +10,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"net/url"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/model/container"
 )
 
 var svc = svcconf.SvcConf{
@@ -17,8 +18,8 @@ var svc = svcconf.SvcConf{
 	Desc:      "SVCCONF",
 	Replicas:  2,
 	Namespace: "SVC_NSME",
-	Netconf: []svcconf.NetConfigure{
-		svcconf.NetConfigure{AccessType: 2,
+	Netconf: []container.NetConfigure{
+		container.NetConfigure{AccessType: 2,
 			InPort: 9000,
 			OutPort: 8000,
 			Protocol: 1,},

@@ -17,6 +17,7 @@ const (
 	GetContainer         = "/cloud/container/info"
 	DeleteContainer      = "/cloud/container/delete"
 	UpgradeContainer     = "/cloud/contianer/upgrade"
+	CheckContainer       = "/cloud/container/check"
 	NewSvcConfig         = "/cloud/svcconf/create"
 	GetSvcConfig         = "/cloud/svcconf/info"
 	DeleteSvcConfig      = "/cloud/svcconf/delete"

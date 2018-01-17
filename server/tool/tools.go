@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"errors"
 	"io/ioutil"
+	"net/url"
+	"log"
 )
 
 type HttpError struct {
@@ -84,19 +86,21 @@ func ReturnResp(w http.ResponseWriter, data []byte) {
 }
 
 // InspectImgInfo 获取镜像信息
+// conname 容器名称, 用于回调时查找容器配置
 // svcname 服务配置名称，用于回调时确定服务配置
 // namespace 命名空间名称, 回调时使用
 // imgname 镜像名称,用于检索镜像数据
-func InspectImgInfo(svcname, namespace, imgname string, callback func(error)) error {
+func InspectImgInfo(conname, svcname, namespace, imgname string, callback func(error)) error {
 	goblin := os.Getenv(_const.EnvGoblin)
 	if goblin == "" {
 		return errors.New(fmt.Sprintf("[%s]Empty!\n", _const.EnvGoblin))
 	}
 
 	errChan := make(chan error)
-	
+
 	go func() {
-		path := fmt.Sprintf("http://%s/v1/inspect?svc=%s&namespace=%s&img=%s", goblin, svcname, namespace, imgname)
+		imgname = url.QueryEscape(imgname)
+		path := fmt.Sprintf("http://%s/v1/inspect?name=%s&svc=%s&namespace=%s&img=%s", goblin, conname, svcname, namespace, imgname)
 		fmt.Printf("Invoke[%s]\n ", path)
 		resp, err := http.Get(path)
 		if err != nil {
@@ -116,7 +120,7 @@ func InspectImgInfo(svcname, namespace, imgname string, callback func(error)) er
 
 	}()
 	err := <-errChan
-	fmt.Println("==Ready to invoke callback")
+	log.Printf("[InspectImgInfo][==Ready to invoke callback]\n")
 	callback(err)
 	return nil
 }

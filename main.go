@@ -111,6 +111,7 @@ func containerAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.GetContainer), container.GetContainer).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.DeleteContainer), container.DeleteContainer).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.UpgradeContainer), container.UpgradeContainer).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.CheckContainer), container.CheckContainer).Methods(http.MethodPost)
 	return r
 }
 

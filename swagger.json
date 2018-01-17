@@ -424,6 +424,40 @@
         }
       }
     },
+    "/cloud/svcconf/check": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "确认服务配置信息是否存在",
+        "description": "如果服务配置信息已存在，则更新其数据。 如果不存在则创建新配置信息",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "配置信息",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SvcConfig"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "schema": {
+              "$ref": "#/definitions/UpgradeMsg"
+            }
+          },
+          "500": {
+            "description": "创建失败"
+          }
+        }
+      }
+    },
     "/cloud/svc/upgrade": {
       "post": {
         "tags": [
@@ -461,40 +495,6 @@
           },
           "500": {
             "description": "操作失败"
-          }
-        }
-      }
-    },
-    "/cloud/svcconf/check": {
-      "post": {
-        "tags": [
-          "svc"
-        ],
-        "summary": "确认服务配置信息是否存在",
-        "description": "如果服务配置信息已存在，则更新其数据。 如果不存在则创建新配置信息",
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "description": "配置信息",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/SvcConfig"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "创建成功",
-            "schema": {
-              "$ref": "#/definitions/UpgradeMsg"
-            }
-          },
-          "500": {
-            "description": "创建失败"
           }
         }
       }
@@ -1395,6 +1395,37 @@
             "description": "容器ID,如果为空，则删除此服务下所有的容器数据",
             "required": false,
             "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/container/check":{
+      "post":{
+        "tags":[
+          "container"
+        ],
+        "summary": "检查容器配置数据是否存在",
+        "description": "如果配置数据不存在则直接创建, 如果已经存在则进行更新",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "容器数据",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Container"
+            }
           }
         ],
         "responses": {

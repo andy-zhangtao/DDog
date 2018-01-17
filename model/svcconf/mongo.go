@@ -4,35 +4,24 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/andy-zhangtao/DDog/model/container"
+	"log"
+	"errors"
+	"fmt"
+	"github.com/andy-zhangtao/DDog/const"
 )
 
 // SvcConf 服务配置信息
 // 默认情况下Replicas为1
 type SvcConf struct {
-	Id        bson.ObjectId  `json:"id,omitempty" bson:"_id,omitempty"`
-	Name      string         `json:"name"`
-	Desc      string         `json:"desc"`
-	Replicas  int            `json:"replicas"`
-	Namespace string         `json:"namespace"`
-	Netconf   []NetConfigure `json:"netconf"`
-	Status    int            `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
-}
-
-// NetConfigure 服务配置信息
-// accessType 默认为ClusterIP:
-//     0 - ClusterIP
-//     1 - LoadBalancer
-//     2 - SvcLBTypeInner
-// Inport 容器监听端口
-// Outport 负载监听端口
-// protocol 协议类型 默认为TCP
-//     0 - TCP
-//     1 - UDP
-type NetConfigure struct {
-	AccessType int `json:"access_type"`
-	InPort     int `json:"in_port"`
-	OutPort    int `json:"out_port"`
-	Protocol   int `json:"protocol"`
+	Id        bson.ObjectId            `json:"id,omitempty" bson:"_id,omitempty"`
+	Name      string                   `json:"name"`
+	Desc      string                   `json:"desc"`
+	Replicas  int                      `json:"replicas"`
+	Namespace string                   `json:"namespace"`
+	Netconf   []container.NetConfigure `json:"netconf"`
+	Status    int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
+	Msg       string                   `json:"msg"`
 }
 
 // SvcConfGroup 服务群组配置信息
@@ -113,13 +102,57 @@ func GetSvcConfByID(id string) (*SvcConf, error) {
 }
 
 func SaveSvcConf(scf *SvcConf) error {
+	if _const.DEBUG {
+		log.Printf("[SaveSvcConf] Save SvcConf [%v]\n", scf)
+	}
 	return mongo.SaveSvcConfig(scf)
 }
 
 func UpdateSvcConf(scf *SvcConf) error {
+	if _const.DEBUG {
+		log.Printf("[UpdateSvcConf] DeleteSvcConfById [%s]\n", scf.Id.Hex())
+	}
 	err := mongo.DeleteSvcConfById(scf.Id.Hex())
-	if err != nil{
+	if err != nil {
 		return err
 	}
+
 	return SaveSvcConf(scf)
+}
+
+// GenerateNetconifg 重建服务的网络配置信息
+func GenerateNetconifg(scf *SvcConf) (err error) {
+
+	cons, err := container.GetAllContainersBySvc(scf.Name, scf.Namespace)
+	if err != nil {
+		return
+	}
+
+	if len(cons) == 0 {
+		return errors.New(fmt.Sprintf("This SVC contains 0 container. Name:[%s]Namespace:[%s]", scf.Name, scf.Namespace))
+	}
+	var net []container.NetConfigure
+
+	pm := make(map[int]int)
+	for _, cn := range cons {
+		for _, n := range cn.Net {
+			if pm[n.InPort] > 0 {
+				pm[n.InPort] += 1
+			} else {
+				pm[n.InPort] = n.InPort
+			}
+
+			net = append(net, container.NetConfigure{
+				AccessType: n.AccessType,
+				InPort:     n.InPort,
+				OutPort:    pm[n.InPort],
+				Protocol:   n.Protocol,
+			})
+		}
+	}
+
+	scf.Netconf = net
+	log.Printf("[GenerateNetconifg] SvcConf [%v]\n", scf)
+	err = UpdateSvcConf(scf)
+	return
 }
