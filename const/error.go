@@ -32,4 +32,5 @@ const (
 	AccessTypeError        = "The AccessType Error. The value must in 0,1 and 2"
 	IDNotFound             = "The ID Field Cannot Be Empty!"
 	SvcHasExist            = "The Svc Has Exist In This Group!"
+	ContainerNotFound      = "Cannot find container in this svc"
 )

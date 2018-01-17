@@ -22,6 +22,7 @@ const (
 
 var DEBUG = false
 var DefaultNameSpace string
+var Region string
 
 var RegionMap = map[string]string{
 	"ap-shanghai": "sh",

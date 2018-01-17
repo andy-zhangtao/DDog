@@ -519,16 +519,9 @@
           },
           {
             "in": "query",
-            "name": "clusterid",
-            "description": "集群ID",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "in": "query",
             "name": "namespace",
-            "description": "命名空间名称",
-            "required": true,
+            "description": "命名空间名称。如果为空，则取默认值",
+            "required": false,
             "type": "string"
           }
         ],

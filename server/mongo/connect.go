@@ -82,6 +82,12 @@ func FindMetaDataByRegion(region string) (md interface{}, err error) {
 	return
 }
 
+// FindAllMetaData 检索所有的MetaData数据
+func FindAllMetaData()(md []interface{}, err error){
+	err = MongoMetadataCol().Find(nil).All(&md)
+	return
+}
+
 func GetMetaDataByRegion(region string, metadata interface{}) (err error) {
 	c := MongoMetadataCol()
 	err = c.Find(bson.M{"region": region}).One(metadata)

@@ -6,7 +6,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"errors"
 	"encoding/json"
-	"github.com/andy-zhangtao/DDog/server/metadata"
+
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 
@@ -18,14 +18,16 @@ import (
 	"log"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"fmt"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
-	clusterid := r.URL.Query().Get("clusterid")
-	if clusterid == "" {
-		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
-		return
-	}
+	//clusterid := r.URL.Query().Get("clusterid")
+	//if clusterid == "" {
+	//	tool.ReturnError(w, errors.New(_const.ClusterNotFound))
+	//	return
+	//}
 
 	var id string
 	var cf *svcconf.SvcConf
@@ -36,8 +38,11 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 		//	如果上传服务名称，则直接重新部署此服务
 		nsme = r.URL.Query().Get("namespace")
 		if nsme == "" {
-			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
-			return
+			nsme = _const.DefaultNameSpace
+			if nsme == "" {
+				tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+				return
+			}
 		}
 	} else {
 		id = r.URL.Query().Get("id")
@@ -61,7 +66,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	name = strings.TrimSpace(name)
 	nsme = strings.TrimSpace(nsme)
-	md, err := metadata.GetMdByClusterID(clusterid)
+	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -71,7 +76,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 			SecretId: md.Sid,
 			Region:   md.Region,
 		},
-		ClusterId: clusterid,
+		ClusterId: md.ClusterID,
 		//ServiceName: name,
 		Namespace: nsme,
 		SecretKey: md.Skey,
@@ -100,11 +105,6 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func RunService(w http.ResponseWriter, r *http.Request) {
-	//id := r.URL.Query().Get("svcid")
-	//if id == "" {
-	//	tool.ReturnError(w, errors.New(_const.SvcIDNotFound))
-	//	return
-	//}
 
 	name := r.URL.Query().Get("svcname")
 	if name == "" {
@@ -114,19 +114,25 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	nsme := r.URL.Query().Get("namespace")
 	if nsme == "" {
-		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
-		return
+		if nsme == "" {
+			nsme = _const.DefaultNameSpace
+		}
+		if nsme == "" {
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
 	}
 
-	clusterid := r.URL.Query().Get("clusterid")
-	if clusterid == "" {
-		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
-		return
-	}
+	//clusterid := r.URL.Query().Get("clusterid")
+	//if clusterid == "" {
+	//	tool.ReturnError(w, errors.New(_const.ClusterNotFound))
+	//	return
+	//}
 
 	up := r.URL.Query().Get("upgrade")
 	isUpgrade, err := strconv.ParseBool(up)
 	if err != nil {
+		log.Printf("[RunService] parsebool error [%s] request value [%v]", err.Error(), up)
 		isUpgrade = false
 	}
 
@@ -136,7 +142,11 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := metadata.GetMdByClusterID(clusterid)
+	if _const.DEBUG {
+		log.Printf("[RunService] Svc Conf [%v]\n", cf)
+	}
+
+	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -146,44 +156,50 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			SecretId: md.Sid,
 			Region:   md.Region,
 		},
-		ClusterId:   clusterid,
+		ClusterId:   md.ClusterID,
 		ServiceName: cf.Name,
 		ServiceDesc: cf.Desc,
 		Replicas:    cf.Replicas,
 		Namespace:   cf.Namespace,
 		SecretKey:   md.Skey,
-		//PortMappings: service.PortMappings{
-		//	LbPort:        cf.Netconf.OutPort,
-		//	ContainerPort: cf.Netconf.InPort,
-		//},
 	}
 
-	var pm []service.PortMappings
-	for _, n := range cf.Netconf {
-		p := service.PortMappings{}
-		switch n.Protocol {
-		case 0:
-			p.Protocol = "TCP"
-		case 1:
-			p.Protocol = "UDP"
-		}
-	}
-	q.PortMappings = pm
 	q.SetDebug(true)
-	switch cf.Netconf[0].AccessType {
-	case 0:
-		q.AccessType = "ClusterIP"
-	case 1:
-		q.AccessType = "LoadBalancer"
-	case 2:
-		q.AccessType = "SvcLBTypeInner"
+	if len(cf.Netconf) > 0 {
+		var pm []service.PortMappings
+		for _, n := range cf.Netconf {
+			p := service.PortMappings{}
+			switch n.Protocol {
+			case 0:
+				p.Protocol = "TCP"
+			case 1:
+				p.Protocol = "UDP"
+			}
+			p.ContainerPort = n.InPort
+			p.LbPort = n.OutPort
+			pm = append(pm, p)
+		}
+		q.PortMappings = pm
+		switch cf.Netconf[0].AccessType {
+		case 0:
+			q.AccessType = "ClusterIP"
+		case 1:
+			q.AccessType = "LoadBalancer"
+		case 2:
+			q.AccessType = "SvcLBTypeInner"
+		}
 	}
 
 	var cons []service.Containers
 
-	containers, err := mongo.GetContaienrBySvc(cf.Name, cf.Namespace)
+	containers, err := container.GetAllContainersBySvc(cf.Name, cf.Namespace)
 	if err != nil {
 		tool.ReturnError(w, err)
+		return
+	}
+
+	if len(containers) == 0 {
+		tool.ReturnError(w, errors.New(fmt.Sprintf("[Find Container Error][%s]svc[%s]namespace[%s]", _const.ContainerNotFound, cf.Name, cf.Namespace)))
 		return
 	}
 
@@ -209,10 +225,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	q.Containers = cons
 
+	if _const.DEBUG {
+		log.Printf("[RunService] QCloud Request [%v] Object Deploy Type [%v] \n", q, isUpgrade)
+	}
 	var resp *service.SvcSMData
 	if isUpgrade {
 		q.Strategy = "RollingUpdate"
-		resp, err = q.UpgradeService()
+		resp, err = q.RedeployService()
 	} else {
 		resp, err = q.CreateNewSerivce()
 	}
@@ -267,7 +286,7 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := metadata.GetMdByClusterID(clusterid)
+	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -339,7 +358,7 @@ func ReinstallService(w http.ResponseWriter, r *http.Request) {
 		nsme = cf.Namespace
 	}
 
-	md, err := metadata.GetMdByClusterID(clusterid)
+	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -380,14 +399,11 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 
 	nsme := r.URL.Query().Get("namespace")
 	if nsme == "" {
-		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
-		return
-	}
-
-	clusterid := r.URL.Query().Get("clusterid")
-	if clusterid == "" {
-		tool.ReturnError(w, errors.New(_const.ClusterNotFound))
-		return
+		nsme = _const.DefaultNameSpace
+		if nsme == "" {
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
 	}
 
 	cf, err := svcconf.GetSvcConfByName(name, nsme)
@@ -396,7 +412,12 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := metadata.GetMdByClusterID(clusterid)
+	if cf == nil {
+		tool.ReturnError(w, errors.New(_const.SVCNoExist))
+		return
+	}
+
+	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -406,7 +427,7 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 			SecretId: md.Sid,
 			Region:   md.Region,
 		},
-		ClusterId: clusterid,
+		ClusterId: md.ClusterID,
 		Namespace: cf.Namespace,
 		SecretKey: md.Skey,
 	}
@@ -419,16 +440,25 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 
 	isUpgrade := false
 	for _, r := range resp.Data.Services {
+		if _const.DEBUG {
+			log.Printf("[DeployService] Find Svc Dist:[%s] Current:[%s]\n", cf.Name, r.ServiceName)
+		}
 		if strings.Compare(r.ServiceName, cf.Name) == 0 {
 			isUpgrade = true
 			break
 		}
 	}
 
+	oldPath := r.URL.RawQuery + "&namespace=" + cf.Namespace
+
 	if isUpgrade {
-		r.URL.Query().Set("isupgrade", "true")
+		r.URL.RawQuery = oldPath + "&upgrade=true"
 	} else {
-		r.URL.Query().Set("isupgrade", "false")
+		r.URL.RawQuery = oldPath + "&upgrade=false"
+	}
+
+	if _const.DEBUG {
+		log.Printf("[DeployService] Deploy Type [%v] [%s] [%s]\n", isUpgrade, r.URL.String(), oldPath)
 	}
 
 	RunService(w, r)
