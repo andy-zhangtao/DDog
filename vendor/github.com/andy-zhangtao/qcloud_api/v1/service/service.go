@@ -70,7 +70,7 @@ type SvcData_data_services struct {
 type SvcData_data struct {
 	TotalCount int                     `json:"totalcount"`
 	Services   []SvcData_data_services `json:"services"`
-	Instance   []Instance `json:"instanaces"`
+	Instance   []Instance              `json:"instanaces"`
 }
 
 type SvcSMData struct {
@@ -358,6 +358,10 @@ func (this Service) DeleteService() (*SvcSMData, error) {
 
 func (this Service) RedeployService() (*SvcSMData, error) {
 	return this.generateRequest(3)
+}
+
+func (this Service) QueryInstance() (*SvcSMData, error) {
+	return this.generateRequest(4)
 }
 
 // generateRequest 生成操作请求

@@ -32,7 +32,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "ef399f21b3d2e480e54affa1ce07306967a33bbd"
+  revision = "8bf35b28e66d0beece2e6b83eb0841caeccab115"
 
 [[projects]]
   name = "github.com/coreos/etcd"
