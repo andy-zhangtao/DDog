@@ -20,6 +20,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"fmt"
+	"time"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
@@ -271,6 +272,62 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go func(svc, namespace string, distIns int, scf *svcconf.SvcConf) {
+		//succIns 成功启动的实例数
+		//正常情况下, 成功启动的实例数应该等于目标实例数(distIns)
+		succIns := 0
+		errIdx := 0
+		for {
+			if succIns >= distIns {
+				scf.Status = 1
+				break
+			}
+			if errIdx == 3 {
+				scf.Status = 4
+				break
+			}
+			instances, err := queryInstance(svc, namespace)
+			if err != nil {
+				log.Printf("Error [queryInstance]QueryInstance Error [%s] svc [%s] namespace [%s]\n", err.Error(), svc, namespace)
+				scf.Msg = err.Error()
+				errIdx ++
+			}
+
+			if _const.DEBUG {
+				log.Printf("[queryInstance]QueryInstance [%v]\n", instances)
+			}
+
+			var sic []svcconf.SvcInstance
+			succIns = 0
+			for _, inc := range instances {
+				statusFlag := 0
+				switch strings.ToLower(inc.Status) {
+				case "running":
+					statusFlag = 1
+					succIns ++
+				case "waiting":
+					fallthrough
+				case "Terminating":
+					fallthrough
+				case "Terminated":
+					statusFlag = 2
+				case "NotReady":
+					statusFlag = 3
+				}
+				sic = append(sic, svcconf.SvcInstance{
+					Name:   inc.Name,
+					Msg:    inc.Reason,
+					Status: statusFlag,
+				})
+				scf.Instance = sic
+			}
+			svcconf.UpdateSvcConf(scf)
+			time.Sleep(3 * time.Second)
+		}
+		svcconf.UpdateSvcConf(scf)
+	}(name, nsme, q.Replicas, cf)
+	cf.Status = 2
+	svcconf.UpdateSvcConf(cf)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("EQXC-Run-Svc", "200")
 	w.Write(data)
@@ -629,4 +686,60 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// FlowDeploy 流式发布
+// 将指定服务的实例按照顺序进行升级部署
+func FlowDeploy(w http.ResponseWriter, r *http.Request) {
+	svcname := r.URL.Query().Get("svcname")
+	if svcname == "" {
+		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		namespace = _const.DefaultNameSpace
+		if namespace == "" {
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
+	}
+
+}
+
+// queryInstance 查询指定服务的实例状态
+func queryInstance(svc, namespace string) (instances []service.Instance, err error) {
+	md, err := metadata.GetMetaDataByRegion("")
+	if err != nil {
+		return nil, err
+	}
+
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId:   md.ClusterID,
+		Namespace:   namespace,
+		SecretKey:   md.Skey,
+		ServiceName: svc,
+	}
+
+	q.SetDebug(true)
+	resp, err := q.QueryInstance()
+	if err != nil {
+		return
+	}
+
+	if _const.DEBUG {
+		log.Printf("[queryInstance] Query Instance [%v] \n", resp)
+	}
+
+	if resp.Code != 0{
+		err = errors.New(resp.Message)
+		return
+	}
+	instances = resp.Data.Instance
+	return
 }
