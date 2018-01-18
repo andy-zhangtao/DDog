@@ -66,16 +66,34 @@ type SvcData_data_services struct {
 	CreatedAt       string `json:"createdat"`
 	Namespace       string `json:"namespace"`
 }
+
 type SvcData_data struct {
 	TotalCount int                     `json:"totalcount"`
 	Services   []SvcData_data_services `json:"services"`
+	Instance   []Instance `json:"instanaces"`
 }
+
 type SvcSMData struct {
 	Code     int          `json:"code"`
 	Message  string       `json:"message"`
 	CodeDesc string       `json:"codedesc"`
 	Url      string       `json:"request"`
 	Data     SvcData_data `json:"data"`
+}
+
+// 实例数据
+type Instance_data struct {
+	TotalCount int        `json:"totalcount"`
+	Instance   []Instance `json:"instanaces"`
+}
+
+// 实例数据
+type SvcInstance struct {
+	Code     int           `json:"code"`
+	Message  string        `json:"message"`
+	CodeDesc string        `json:"codedesc"`
+	Url      string        `json:"request"`
+	Data     Instance_data `json:"data"`
 }
 
 func (this Svc) querySampleInfo() ([]string, map[string]string) {
@@ -342,6 +360,13 @@ func (this Service) RedeployService() (*SvcSMData, error) {
 	return this.generateRequest(3)
 }
 
+// generateRequest 生成操作请求
+// 每个请求中都存在公共部分,因此在这里只需要处理特殊操作对应的数据即可
+// 0 - 创建服务
+// 1 - 升级服务
+// 2 - 删除服务
+// 3 - 重新部署服务
+// 4 - 查询实例
 func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	var svcKind string
 	var debugStr string
@@ -362,6 +387,10 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		//	重新部署
 		svcKind = "RedeployClusterService"
 		debugStr = "重新部署"
+	case 4:
+		//	查询服务实例状态
+		svcKind = "QueryServiceInstance"
+		debugStr = "查询服务实例"
 	}
 
 	field, reqmap := this.createSvc()
@@ -397,4 +426,5 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	}
 
 	return &ssmd, nil
+
 }
