@@ -32,7 +32,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "ad7e3101b27cebd9c2bac96b3b6e6259a781acdd"
+  revision = "5622da7f40713ed9dcf413099de78ba518adcaa0"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -48,8 +48,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "9e079d8f02af4f1fabcd015994d60051d22024f3"
-  version = "v3.3.0-rc.2"
+  revision = "374dc5743f05003f25d7c21e7ff94784d2726276"
+  version = "v3.3.0-rc.3"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -100,8 +100,8 @@
 [[projects]]
   name = "github.com/gorilla/mux"
   packages = ["."]
-  revision = "7f08801859139f86dfafd1c296e2cba9a80d292e"
-  version = "v1.6.0"
+  revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
+  version = "v1.6.1"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"

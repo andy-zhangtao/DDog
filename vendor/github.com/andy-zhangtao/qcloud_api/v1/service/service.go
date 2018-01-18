@@ -43,6 +43,7 @@ type Containers struct {
 	Image         string            `json:"image"`
 	Envs          map[string]string `json:"envs"`
 	Command       string            `json:"command"`
+	HealthCheck   []HealthCheck     `json:"health_check"`
 }
 
 type PortMappings struct {
@@ -143,35 +144,6 @@ func (this Service) SetDebug(isDebug bool) {
 func (this Service) CreateNewSerivce() (*SvcSMData, error) {
 	// 新建服务,不需要填写升级策略
 	this.Strategy = ""
-	//field, reqmap := this.createSvc()
-	//pubMap := public.PublicParam("CreateClusterService", this.Pub.Region, this.Pub.SecretId)
-	//this.sign = public.GenerateSignatureString(field, reqmap, pubMap)
-	//signStr := "GET" + v1.QCloudApiEndpoint + this.sign
-	//sign := public.GenerateSignature(this.SecretKey, signStr)
-	//reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
-	//
-	//if debug {
-	//	log.Printf("[创建服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", public.API_URL+reqURL, this.SecretKey, signStr, sign)
-	//}
-	//
-	//resp, err := http.Get(public.API_URL + reqURL)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//data, err := ioutil.ReadAll(resp.Body)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//var ssmd SvcSMData
-	//
-	//err = json.Unmarshal(data, &ssmd)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//return &ssmd, nil
 	return this.generateRequest(0)
 }
 
@@ -237,6 +209,62 @@ func (this Service) createSvc() ([]string, map[string]string) {
 			key := fmt.Sprintf("containers.%d.command", i)
 			field = append(field, key)
 			req[key] = url.QueryEscape(c.Command)
+		}
+
+		for n, hk := range c.HealthCheck {
+			if hk.Type != "" {
+				key := fmt.Sprintf("containers.%d.healthCheck.%d.type", i, n)
+				field = append(field, key)
+				req[key] = hk.Type
+			}
+
+			key := fmt.Sprintf("containers.%d.healthCheck.%d.healthNum", i, n)
+			field = append(field, key)
+			req[key] = strconv.Itoa(hk.HealthNum)
+
+			key = fmt.Sprintf("containers.%d.healthCheck.%d.unhealthNum", i, n)
+			field = append(field, key)
+			req[key] = strconv.Itoa(hk.UnhealthNum)
+
+			key = fmt.Sprintf("containers.%d.healthCheck.%d.intervalTime", i, n)
+			field = append(field, key)
+			req[key] = strconv.Itoa(hk.IntervalTime)
+
+			key = fmt.Sprintf("containers.%d.healthCheck.%d.timeOut", i, n)
+			field = append(field, key)
+			req[key] = strconv.Itoa(hk.TimeOut)
+
+			key = fmt.Sprintf("containers.%d.healthCheck.%d.delayTime", i, n)
+			field = append(field, key)
+			req[key] = strconv.Itoa(hk.DelayTime)
+
+			key = fmt.Sprintf("containers.%d.healthCheck.%d.checkMethod", i, n)
+			field = append(field, key)
+			req[key] = hk.CheckMethod
+
+			switch hk.CheckMethod {
+			case CheckMethodHTTP:
+				key = fmt.Sprintf("containers.%d.healthCheck.%d.port", i, n)
+				field = append(field, key)
+				req[key] = strconv.Itoa(hk.Port)
+
+				key = fmt.Sprintf("containers.%d.healthCheck.%d.protocol", i, n)
+				field = append(field, key)
+				req[key] = hk.Protocol
+
+				key = fmt.Sprintf("containers.%d.healthCheck.%d.path", i, n)
+				field = append(field, key)
+				req[key] = hk.Path
+			case CheckMethodCmd:
+				key = fmt.Sprintf("containers.%d.healthCheck.%d.cmd", i, n)
+				field = append(field, key)
+				req[key] = hk.Cmd
+			case CheckMethodTCP:
+				key = fmt.Sprintf("containers.%d.healthCheck.%d.port", i, n)
+				field = append(field, key)
+				req[key] = strconv.Itoa(hk.Port)
+			}
+
 		}
 	}
 
