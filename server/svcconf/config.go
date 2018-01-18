@@ -334,9 +334,6 @@ func UpdateNetPort(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//port = string(pb)
-	//ports := strings.Split(port, ";")
-
 	isChange, err := container.UpgradeContainerNetByName(cp.Name, svc, nsme, cp.Net)
 	if err != nil {
 		tool.ReturnError(w, err)

@@ -104,6 +104,17 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
+// RunService 在K8s集群中创建服务
+// svcname 服务配置名称, 此名称应该在创建服务之前首先创建。
+// namespace 命名空间名称, 如果为空则为默认值
+// upgrade 是否为升级操作. 默认为false。
+// 当在创建服务时，会使用以下默认参数
+// 1. 默认启用健康检查和准备就绪检查。
+// 2. 上述两种检查使用TCP端口检查方式
+// 3. 均针对容器对外暴露的端口进行检查，如果镜像构建未对外暴露端口，则不会对此镜像启用检查
+// 4. 延时30秒后启动检查
+// 5. 连续三次，间隔10秒，健康均失败则检查失败
+// 6. 每次检查超时时间为5秒
 func RunService(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("svcname")
@@ -122,12 +133,6 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	//clusterid := r.URL.Query().Get("clusterid")
-	//if clusterid == "" {
-	//	tool.ReturnError(w, errors.New(_const.ClusterNotFound))
-	//	return
-	//}
 
 	up := r.URL.Query().Get("upgrade")
 	isUpgrade, err := strconv.ParseBool(up)
@@ -217,9 +222,26 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var hk []service.HealthCheck
+
+		for _, n := range cn.Net {
+			shk := service.HealthCheck{
+				Type:        service.LiveCheck,
+				UnhealthNum: 5,
+				DelayTime:   30,
+				CheckMethod: service.CheckMethodTCP,
+			}
+			shk.GenerateTCPCheck(n.InPort)
+
+			hk = append(hk, shk)
+			shk.Type = service.ReadyCheck
+			hk = append(hk, shk)
+		}
+
 		cons = append(cons, service.Containers{
 			ContainerName: cnns.Name,
 			Image:         cnns.Img,
+			HealthCheck:   hk,
 		})
 	}
 

@@ -22,7 +22,13 @@ type SvcConf struct {
 	Netconf   []container.NetConfigure `json:"netconf"`
 	Status    int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
 	Msg       string                   `json:"msg"`
-	Deploy    int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 部署失败
+	Deploy    int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署成功 4 - 部署失败
+}
+
+// SvcGroup 蓝绿发布配置信息
+type SvcGroup struct {
+	Name   string `json:"name"` //服务名称. 此名称对应的是K8s中的服务名，命名规则为SvcConf的name+A/B.例如 service1-A
+	Status int    `json:"status"` //服务当前状态. 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署成功 4 - 部署失败
 }
 
 // SvcConfGroup 服务群组配置信息
