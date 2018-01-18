@@ -115,6 +115,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 // 4. 延时30秒后启动检查
 // 5. 连续三次，间隔10秒，健康均失败则检查失败
 // 6. 每次检查超时时间为5秒
+// 7. 每个服务存在2个实例
 func RunService(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("svcname")
@@ -156,6 +157,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		tool.ReturnError(w, err)
 		return
 	}
+
 	q := service.Service{
 		Pub: public.Public{
 			SecretId: md.Sid,
@@ -164,7 +166,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		ClusterId:   md.ClusterID,
 		ServiceName: cf.Name,
 		ServiceDesc: cf.Desc,
-		Replicas:    cf.Replicas,
+		Replicas:    2,
 		Namespace:   cf.Namespace,
 		SecretKey:   md.Skey,
 	}
@@ -474,8 +476,10 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 	oldPath := r.URL.RawQuery + "&namespace=" + cf.Namespace
 
 	if isUpgrade {
+		// 进行蓝绿发布
 		r.URL.RawQuery = oldPath + "&upgrade=true"
 	} else {
+		// 同时发布
 		r.URL.RawQuery = oldPath + "&upgrade=false"
 	}
 
