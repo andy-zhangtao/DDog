@@ -19,6 +19,7 @@ type HealthCheck struct {
 
 const (
 	ReadyCheck      = "readyCheck"
+	LiveCheck       = "liveCheck"
 	CheckMethodTCP  = "methodTcp"
 	CheckMethodHTTP = "methodHttp"
 	CheckMethodCmd  = "methodCmd"
