@@ -21,6 +21,8 @@ import (
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"fmt"
 	"time"
+	"github.com/andy-zhangtao/DDog/k8s"
+	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
@@ -272,60 +274,105 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func(svc, namespace string, distIns int, scf *svcconf.SvcConf) {
-		//succIns 成功启动的实例数
-		//正常情况下, 成功启动的实例数应该等于目标实例数(distIns)
-		succIns := 0
+	go func(svc, namespace string, q service.Service, scf *svcconf.SvcConf) {
+
+		log.Printf("[queryServiceInfo]ServiceConf[%v]\n", scf)
 		errIdx := 0
+		scf.Status = 0
+		// 轮询当前服务的运行状态
 		for {
-			if succIns >= distIns {
-				scf.Status = 1
-				break
-			}
-			if errIdx == 3 {
-				scf.Status = 4
-				break
-			}
-			instances, err := queryInstance(svc, namespace)
+			resp, err := q.QuerySvcInfo()
 			if err != nil {
-				log.Printf("Error [queryInstance]QueryInstance Error [%s] svc [%s] namespace [%s]\n", err.Error(), svc, namespace)
-				scf.Msg = err.Error()
+				log.Printf("[queryServiceInfo]QueryViaQCloud[%s]\n", err.Error())
 				errIdx ++
 			}
 
-			if _const.DEBUG {
-				log.Printf("[queryInstance]QueryInstance [%v]\n", instances)
+			if errIdx == 3 {
+				scf.Deploy = 4
+				break
 			}
 
-			var sic []svcconf.SvcInstance
-			succIns = 0
-			for _, inc := range instances {
-				statusFlag := 0
-				switch strings.ToLower(inc.Status) {
-				case "running":
-					statusFlag = 1
-					succIns ++
-				case "waiting":
-					fallthrough
-				case "Terminating":
-					fallthrough
-				case "Terminated":
-					statusFlag = 2
-				case "NotReady":
-					statusFlag = 3
+			log.Printf("[queryServiceInfo]Service Info Status [%s]\n", resp.Data.ServiceInfo.Status)
+			if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
+				//先解析负载数据
+				lb := svcconf.LoadBlance{
+					IP: resp.Data.ServiceInfo.ServiceIp,
 				}
-				sic = append(sic, svcconf.SvcInstance{
-					Name:   inc.Name,
-					Msg:    inc.Reason,
-					Status: statusFlag,
-				})
-				scf.Instance = sic
+
+				var port []int
+				for _, c := range resp.Data.ServiceInfo.PortMappings {
+					port = append(port, c.LbPort)
+				}
+				lb.Port = port
+				scf.LbConfig = lb
+
+				//succIns 成功启动的实例数
+				//正常情况下, 成功启动的实例数应该等于目标实例数(distIns)
+				succIns := 0
+				var sic []svcconf.SvcInstance
+				succIns = 0
+				for {
+					if succIns >= q.Replicas {
+						scf.Instance = sic
+						scf.Deploy = 1
+						scf.Msg = ""
+						break
+					}
+					if errIdx == 3 {
+						scf.Deploy = 4
+						break
+					}
+
+					instances, err := queryInstance(svc, namespace)
+					if err != nil {
+						instances, err = queryInstanceUseK8s(svc, namespace)
+						if err != nil {
+							log.Printf("Error [queryInstance]QueryInstance Error [%s] svc [%s] namespace [%s]\n", err.Error(), svc, namespace)
+							scf.Msg = err.Error()
+							errIdx ++
+						}
+					}
+
+					if _const.DEBUG {
+						log.Printf("[queryInstance]QueryInstance [%v]\n", instances)
+					}
+
+					for _, inc := range instances {
+						statusFlag := 0
+						switch strings.ToLower(inc.Status) {
+						case "running":
+							statusFlag = 1
+							succIns ++
+							sic = append(sic, svcconf.SvcInstance{
+								Name:   inc.Name,
+								Msg:    inc.Reason,
+								Status: statusFlag,
+							})
+						case "waiting":
+							fallthrough
+						case "terminating":
+							fallthrough
+						case "terminated":
+							statusFlag = 2
+						case "notready":
+							statusFlag = 3
+						}
+					}
+					//svcconf.UpdateSvcConf(scf)
+					time.Sleep(3 * time.Second)
+				}
 			}
-			svcconf.UpdateSvcConf(scf)
-			time.Sleep(3 * time.Second)
+			if scf.Deploy == 1 {
+				break
+			}
+			if scf.Deploy == 4 {
+				errIdx = 3
+			}
+			time.Sleep(5 * time.Second)
 		}
+		log.Printf("[queryServiceInfo]Update ServiceConf[%v]\n", scf)
 		svcconf.UpdateSvcConf(scf)
-	}(name, nsme, q.Replicas, cf)
+	}(name, nsme, q, cf)
 	cf.Status = 2
 	svcconf.UpdateSvcConf(cf)
 	w.Header().Set("Content-Type", "application/json")
@@ -736,10 +783,45 @@ func queryInstance(svc, namespace string) (instances []service.Instance, err err
 		log.Printf("[queryInstance] Query Instance [%v] \n", resp)
 	}
 
-	if resp.Code != 0{
+	if resp.Code != 0 {
 		err = errors.New(resp.Message)
 		return
 	}
 	instances = resp.Data.Instance
 	return
+}
+
+func queryInstanceUseK8s(svc, namespace string) (instances []service.Instance, err error) {
+	k := k8s.K8sMetaData{
+		Endpoint:  _const.K8sEndpoint,
+		Namespace: namespace,
+		Svcname:   svc,
+		Version:   "1.7",
+		Token:     _const.K8sToken,
+	}
+
+	k8p, err := k.GetPodsInNamespace()
+	if err != nil {
+		return nil, err
+	}
+
+	var k8sService []k8smodel.K8sPods_items
+	for _, k := range k8p.Items {
+		if k.Metadata.Labels.Qcloud_app == svc {
+			k8sService = append(k8sService, k)
+		}
+	}
+
+	for _, k := range k8sService {
+		instances = append(instances, service.Instance{
+			Name:   k.Metadata.Name,
+			Status: k.Status.Phase,
+		})
+	}
+
+	if _const.DEBUG {
+		log.Printf("[queryInstanceUseK8s] K8s [%v]  instances [%v] \n", k8p, instances)
+	}
+	return
+
 }

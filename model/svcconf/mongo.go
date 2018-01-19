@@ -24,6 +24,7 @@ type SvcConf struct {
 	Msg       string                   `json:"msg"`
 	Deploy    int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败
 	Instance  []SvcInstance            `json:"instance"`
+	LbConfig  LoadBlance               `json:"lb_config"`
 }
 
 // SvcInstance 服务实例信息
@@ -32,6 +33,12 @@ type SvcInstance struct {
 	Name   string `json:"name"`   //服务名称. 此名称对应的是K8s中的服务实例名
 	Status int    `json:"status"` //服务当前状态. 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 部署失败
 	Msg    string `json:"msg"`
+}
+
+// LoadBlance 负载均衡数据
+type LoadBlance struct {
+	IP   string `json:"ip"`
+	Port []int  `json:"port"`
 }
 
 // SvcConfGroup 服务群组配置信息

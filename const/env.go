@@ -18,11 +18,15 @@ const (
 	EnvRegion      = "DDOG_REGION"
 	EnvDefaultNS   = "DDOG_NAME_SPACE"
 	EnvGoblin      = "DDOG_GOBLIN_ENDPOINT"
+	EnvK8sEndpoint = "DDOG_K8S_ENDPOINT"
+	EnvK8sToken    = "DDOG_K8S_TOKEN"
 )
 
 var DEBUG = false
 var DefaultNameSpace string
 var Region string
+var K8sEndpoint string
+var K8sToken string
 
 var RegionMap = map[string]string{
 	"ap-shanghai": "sh",
@@ -56,7 +60,17 @@ func init() {
 		DefaultNameSpace = "default"
 	}
 
-	log.Printf("默认命名空间[%s]\n",DefaultNameSpace)
+	K8sEndpoint = os.Getenv(EnvK8sEndpoint)
+	if K8sEndpoint == ""{
+		log.Println("DDOG_K8S_ENDPOINT Empty!")
+	}
+
+	K8sToken = os.Getenv(EnvK8sToken)
+	if K8sToken == ""{
+		log.Println("DDOG_K8S_TOKEN Empty! ")
+	}
+
+	log.Printf("默认命名空间[%s]\n", DefaultNameSpace)
 	if DEBUG {
 		log.Println("启动DEBUG模式")
 	} else {
