@@ -1941,14 +1941,27 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "number",
-          "description": "网络解析状态 0-解析成功 1-准备解析 2-开始解析 3-解析失败"
+          "type": "string",
+          "description": "当前部署状态 ready-等待部署 normal-部署成功 updating-部署中 rolling-蓝绿发布进行中 failed-部署失败"
         },
-        "port":{
+        "lb_ip":{
+          "type": "string",
+          "description": "服务负载均衡IP"
+        },
+        "lb_port":{
           "type":"array",
+          "description": "服务负载均衡监听端口",
           "items": {
-            "$ref":"#/definitions/ContainerEnv"
+            "type":"number"
           }
+        },
+        "replicas":{
+          "type": "number",
+          "description": "实例个数"
+        },
+        "msg":{
+          "type": "string",
+          "description": "错误消息"
         }
       }
     }
