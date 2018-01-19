@@ -9,29 +9,32 @@ import (
 	"errors"
 	"fmt"
 	"github.com/andy-zhangtao/DDog/const"
+	"math"
 )
 
 // SvcConf 服务配置信息
 // 默认情况下Replicas为1
 type SvcConf struct {
-	Id        bson.ObjectId            `json:"id,omitempty" bson:"_id,omitempty"`
-	Name      string                   `json:"name"`
-	Desc      string                   `json:"desc"`
-	Replicas  int                      `json:"replicas"`
-	Namespace string                   `json:"namespace"`
-	Netconf   []container.NetConfigure `json:"netconf"`
-	Status    int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
-	Msg       string                   `json:"msg"`
-	Deploy    int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败
-	Instance  []SvcInstance            `json:"instance"`
-	LbConfig  LoadBlance               `json:"lb_config"`
+	Id            bson.ObjectId            `json:"id,omitempty" bson:"_id,omitempty"`
+	Name          string                   `json:"name"`
+	Desc          string                   `json:"desc"`
+	Replicas      int                      `json:"replicas"`
+	Namespace     string                   `json:"namespace"`
+	Netconf       []container.NetConfigure `json:"netconf"`
+	Status        int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
+	Msg           string                   `json:"msg"`
+	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败
+	Instance      []SvcInstance            `json:"instance"`
+	LbConfig      LoadBlance               `json:"lb_config"`
+	BackID        string                   `json:"back_id"`
+	BackContainer []container.Container    `json:"back_container,omitempty"`
 }
 
 // SvcInstance 服务实例信息
 // 用于蓝绿发布/金丝雀发布
 type SvcInstance struct {
 	Name   string `json:"name"`   //服务名称. 此名称对应的是K8s中的服务实例名
-	Status int    `json:"status"` //服务当前状态. 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 部署失败
+	Status int    `json:"status"` //服务当前状态. 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 部署失败 4 - 滚动部署中
 	Msg    string `json:"msg"`
 }
 
@@ -172,4 +175,68 @@ func GenerateNetconifg(scf *SvcConf) (err error) {
 	log.Printf("[GenerateNetconifg] SvcConf [%v]\n", scf)
 	err = UpdateSvcConf(scf)
 	return
+}
+
+// CountInstances 计算本次需要升级实例名称
+// 返回挑选出来需要升级的实例名称,同时返回剩余可以用于升级的实例个数
+func (sc *SvcConf) CountInstances(scope float64) ([]string, int) {
+	/*先检索当前还没有升级的实例个数*/
+	var instances []SvcInstance
+	for _, is := range sc.Instance {
+		if is.Status != 4 {
+			instances = append(instances, is)
+		}
+	}
+
+	var name []string
+	maxNumber := math.Ceil(scope * float64(len(instances)))
+	number := int(maxNumber)
+	if number > 0 {
+		for i := 0; i < number; i ++ {
+			name = append(name, instances[i].Name)
+		}
+	}
+
+	for _, n := range name {
+		for _, is := range sc.Instance {
+			if is.Name == n {
+				is.Status = 4
+			}
+		}
+	}
+
+	UpdateSvcConf(sc)
+
+	return name, len(instances) - number
+}
+
+// BackupSvcConf 备份服务配置
+func (sc *SvcConf) BackupSvcConf() error {
+	nsc := SvcConf{
+		Name:      sc.Name + "_bak",
+		Replicas:  sc.Replicas,
+		Namespace: sc.Namespace,
+		Netconf:   sc.Netconf,
+		LbConfig:  sc.LbConfig,
+	}
+
+	cons, err := container.GetAllContainersBySvc(sc.Name, sc.Namespace)
+	if err != nil {
+		return err
+	}
+	nsc.Id = bson.NewObjectId()
+	nsc.BackContainer = cons
+	sc.BackID = nsc.Id.Hex()
+
+	err = UpdateSvcConf(sc)
+	if err != nil {
+		return err
+	}
+
+	return SaveSvcConf(&nsc)
+}
+
+// GetBackSvcConf 取回备份配置
+func (sc *SvcConf) GetBackSvcConf() (bsc *SvcConf, err error) {
+	return GetSvcConfByID(sc.BackID)
 }

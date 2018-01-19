@@ -122,7 +122,6 @@ func DeleteContainerByName(conname, svcname, namespace string) (err error) {
 // UpgradeContaienrByName 升级容器配置信息
 // con 容器配置指针
 func UpgradeContaienrByName(con *Container) (err error) {
-
 	err = DeleteContainerByName(con.Name, con.Svc, con.Nsme)
 	if err != nil {
 		return

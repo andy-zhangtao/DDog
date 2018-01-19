@@ -35,7 +35,7 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
 	}
 
-	_,isExist, err := isExistContainer(&con)
+	_, isExist, err := isExistContainer(&con)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -187,7 +187,7 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
 	}
 
-	_,isExist, err := isExistContainer(&con)
+	_, isExist, err := isExistContainer(&con)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -308,7 +308,6 @@ func upgreadeSvcConf(con container.Container) (err error) {
 		}
 	}(callback)
 	sv.Status = 2
-	//fmt.Printf("svc conf [%v]\n", sv)
 	err = svcconf.UpdateSvcConf(sv)
 	return
 
@@ -316,11 +315,47 @@ func upgreadeSvcConf(con container.Container) (err error) {
 
 // upgreadeContaienr 更新容器配置数据
 func upgreadeContaienr(con *container.Container) (err error) {
+	err = backupContainer(*con)
+	if err != nil {
+		return
+	}
+
 	err = container.UpgradeContaienrByName(con)
 	if err != nil {
 		return
 	}
 
 	err = upgreadeSvcConf(*con)
+	return
+}
+
+// backupContainer 备份容器配置数据
+func backupContainer(con container.Container) (err error) {
+	scf, err := svcconf.GetSvcConfByName(con.Svc, con.Nsme)
+	if err != nil {
+		return
+	}
+
+	if scf.BackID == "" {
+		scf.BackupSvcConf()
+	} else {
+
+		bscf, err := scf.GetBackSvcConf()
+		if err != nil{
+			return err
+		}
+
+		for _, cn := range bscf.BackContainer {
+			if cn.Img == con.Img {
+				cn.Img = con.Img
+				cn.Cmd = con.Cmd
+				cn.Env = con.Env
+				cn.Idx = con.Idx
+				cn.Net = con.Net
+				return svcconf.SaveSvcConf(bscf)
+			}
+		}
+	}
+
 	return
 }

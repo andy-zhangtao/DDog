@@ -625,6 +625,83 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func RollingUpService(w http.ResponseWriter, r *http.Request) {
+	svc := r.URL.Query().Get("svcname")
+	if svc == "" {
+		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		namespace = _const.DefaultNameSpace
+		if namespace == "" {
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
+	}
+
+	scp := 0.5
+	scope := r.URL.Query().Get("percent")
+	if scope != "" {
+		scp, err := strconv.Atoi(scope)
+		if err != nil {
+			scp = scp / 100
+		}
+	}
+
+	scf, err := svcconf.GetSvcConfByName(svc, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	rollCons, left := scf.CountInstances(scp)
+	if len(rollCons) == 0 {
+		tool.ReturnError(w, errors.New("No Instance Will Be Update!"))
+		return
+	}
+
+	log.Printf("[RollingUpService]Left Instances [%d]\n", left)
+	if left <= 0 {
+		return
+	}
+
+	md, err := metadata.GetMetaDataByRegion("")
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId: md.ClusterID,
+		Namespace: scf.Namespace,
+		SecretKey: md.Skey,
+		Instance:  rollCons,
+	}
+
+	q.SetDebug(true)
+
+	resp, err := q.DestoryInstance()
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	data, err := json.Marshal(&resp)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
 func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {
