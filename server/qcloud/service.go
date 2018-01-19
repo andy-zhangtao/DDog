@@ -308,7 +308,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("[queryServiceInfo]ServiceConf[%v]\n", scf)
 		errIdx := 0
-		scf.Status = 0
+		scf.Deploy = 0
 		// 轮询当前服务的运行状态
 		for {
 			resp, err := q.QuerySvcInfo()
@@ -403,7 +403,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[queryServiceInfo]Update ServiceConf[%v]\n", scf)
 		svcconf.UpdateSvcConf(scf)
 	}(name, nsme, q, cf)
-	cf.Status = 2
+	cf.Deploy = 2
 	svcconf.UpdateSvcConf(cf)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("EQXC-Run-Svc", "200")
