@@ -26,14 +26,9 @@ import (
 )
 
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
-	//clusterid := r.URL.Query().Get("clusterid")
-	//if clusterid == "" {
-	//	tool.ReturnError(w, errors.New(_const.ClusterNotFound))
-	//	return
-	//}
 
 	var id string
-	var cf *svcconf.SvcConf
+	var scf *svcconf.SvcConf
 	var err error
 	var nsme string
 	name := r.URL.Query().Get("svcname")
@@ -53,55 +48,90 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, errors.New(_const.IDNotFound))
 			return
 		}
-		cf, err = svcconf.GetSvcConfByID(id)
+		scf, err = svcconf.GetSvcConfByID(id)
 		if err != nil {
 			tool.ReturnError(w, err)
 			return
 		}
 	}
-
-	if name == "" {
-		name = cf.Name
-	}
-	if nsme == "" {
-		nsme = cf.Namespace
-	}
-
 	name = strings.TrimSpace(name)
 	nsme = strings.TrimSpace(nsme)
-	md, err := metadata.GetMetaDataByRegion("")
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-	q := service.Svc{
-		Pub: public.Public{
-			SecretId: md.Sid,
-			Region:   md.Region,
-		},
-		ClusterId: md.ClusterID,
-		//ServiceName: name,
-		Namespace: nsme,
-		SecretKey: md.Skey,
-	}
 
-	service, err := q.QuerySampleInfo()
+	scf, err = svcconf.GetSvcConfByName(name, nsme)
 	if err != nil {
+		log.Printf("[GetSampleSVCInfo] GetSvcConfByName Error svc[%s] namespace[%s] \n", name, nsme)
 		tool.ReturnError(w, err)
 		return
 	}
 
-	var data []byte
-	for _, svc := range service.Data.Services {
-		if svc.ServiceName == name {
-			data, err = json.Marshal(svc)
-			if err != nil {
-				tool.ReturnError(w, err)
-				return
-			}
-			break
-		}
+	type SvcStatus struct {
+		Name     string `json:"name"`
+		Status   string `json:"status"`
+		LbIP     string `json:"lb_ip"`
+		LbPort   []int  `json:"lb_port"`
+		Replicas int    `json:"replicas"`
+		Msg      string `json:"msg"`
 	}
+
+	ss := SvcStatus{
+		Name:     scf.Name,
+		LbIP:     scf.LbConfig.IP,
+		LbPort:   scf.LbConfig.Port,
+		Replicas: len(scf.Instance),
+		Msg:      scf.Msg,
+	}
+
+	switch scf.Deploy {
+	case 0:
+		ss.Status = "ready"
+	case 1:
+		ss.Status = "normal"
+	case 2:
+		ss.Status = "updating"
+	case 3:
+		ss.Status = "rolling"
+	case 4:
+		ss.Status = "failed"
+	}
+
+	data, err := json.Marshal(&ss)
+	if err != nil {
+		log.Printf("[GetSampleSVCInfo] Convert Byte Error [%v]\n", ss)
+		tool.ReturnError(w, err)
+	}
+	//md, err := metadata.GetMetaDataByRegion("")
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
+	//q := service.Svc{
+	//	Pub: public.Public{
+	//		SecretId: md.Sid,
+	//		Region:   md.Region,
+	//	},
+	//	ClusterId: md.ClusterID,
+	//	//ServiceName: name,
+	//	Namespace: nsme,
+	//	SecretKey: md.Skey,
+	//}
+	//
+	//service, err := q.QuerySampleInfo()
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//var data []byte
+	//for _, svc := range service.Data.Services {
+	//	if svc.ServiceName == name {
+	//		data, err = json.Marshal(svc)
+	//		if err != nil {
+	//			tool.ReturnError(w, err)
+	//			return
+	//		}
+	//		break
+	//	}
+	//}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
