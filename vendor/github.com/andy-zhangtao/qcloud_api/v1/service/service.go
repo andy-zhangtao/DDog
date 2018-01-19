@@ -398,7 +398,7 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		debugStr = "重新部署"
 	case 4:
 		//	查询服务实例状态
-		svcKind = "QueryServiceInstance"
+		svcKind = "DescribeServiceInstance"
 		debugStr = "查询服务实例"
 	case 5:
 		//	查询服务详情

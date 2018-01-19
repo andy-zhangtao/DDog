@@ -6,7 +6,7 @@ import (
 )
 
 func TestSvcInfoUnmarshal(t *testing.T) {
-	var jsons=`{
+	var jsons = `{
 	"serviceName": "name1",
 	"serviceDesc": "des",
 	"status": "Waiting",
@@ -27,6 +27,12 @@ func TestSvcInfoUnmarshal(t *testing.T) {
 	"portMappings": [{
 		"containerPort": 100,
 		"lbPort": 900,
+		"nodePort": 32191,
+		"protocol": "TCP"
+	},
+	{
+		"containerPort": 100,
+		"lbPort": 9000,
 		"nodePort": 32191,
 		"protocol": "TCP"
 	}],
@@ -50,8 +56,12 @@ func TestSvcInfoUnmarshal(t *testing.T) {
 	}
 }`
 
-        svcInfo, err := SvcInfoUnmarshal([]byte(jsons))
-        assert.Nil(t, err)
-        assert.Equal(t, "name1", svcInfo.ServiceName)
-        assert.Equal(t, "Waiting", svcInfo.Status)
+	svcInfo, err := SvcInfoUnmarshal([]byte(jsons))
+	assert.Nil(t, err)
+	assert.Equal(t, "name1", svcInfo.ServiceName)
+	assert.Equal(t, "Waiting", svcInfo.Status)
+	assert.Equal(t, "100.71.0.60", svcInfo.ServiceIp)
+	assert.Equal(t, "100.71.0.60", svcInfo.ServiceIp)
+	assert.Equal(t, 900, svcInfo.PortMappings[0].LbPort)
+	assert.Equal(t, 9000, svcInfo.PortMappings[1].LbPort)
 }
