@@ -365,6 +365,10 @@ func (this Service) QueryInstance() (*SvcSMData, error) {
 	return this.generateRequest(4)
 }
 
+func (this Service) QuerySvcInfo() (*SvcSMData, error) {
+	return this.generateRequest(5)
+}
+
 // generateRequest 生成操作请求
 // 每个请求中都存在公共部分,因此在这里只需要处理特殊操作对应的数据即可
 // 0 - 创建服务
