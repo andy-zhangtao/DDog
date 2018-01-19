@@ -68,9 +68,10 @@ type SvcData_data_services struct {
 }
 
 type SvcData_data struct {
-	TotalCount int                     `json:"totalcount"`
-	Services   []SvcData_data_services `json:"services"`
-	Instance   []Instance              `json:"instanaces"`
+	TotalCount  int                     `json:"totalcount"`
+	Services    []SvcData_data_services `json:"services"`
+	Instance    []Instance              `json:"instanaces"`
+	ServiceInfo ServiceInfo             `json:"service"`
 }
 
 type SvcSMData struct {
@@ -395,6 +396,10 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		//	查询服务实例状态
 		svcKind = "QueryServiceInstance"
 		debugStr = "查询服务实例"
+	case 5:
+		//	查询服务详情
+		svcKind = "DescribeClusterServiceInfo"
+		debugStr = "查询服务详情"
 	}
 
 	field, reqmap := this.createSvc()
@@ -405,7 +410,7 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
 
 	if debug {
-		log.Printf("[%s服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", debugStr, public.API_URL+reqURL, this.SecretKey, signStr, sign)
+		log.Printf("[%s 服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", debugStr, public.API_URL+reqURL, this.SecretKey, signStr, sign)
 	}
 
 	resp, err := http.Get(public.API_URL + reqURL)
