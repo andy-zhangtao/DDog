@@ -1,5 +1,7 @@
 package service
 
+import "encoding/json"
+
 type Instance struct {
 	Name         string              `json:"name"`
 	Status       string              `json:"status"`
@@ -21,3 +23,13 @@ type InstanceContainer struct {
 	Image       string `json:"image"`
 }
 
+func InstanceUnmarshal(data []byte) (*Instance, error) {
+	var inst Instance
+
+	err := json.Unmarshal(data, &inst)
+	if err != nil {
+		return nil, err
+	}
+
+	return &inst, nil
+}

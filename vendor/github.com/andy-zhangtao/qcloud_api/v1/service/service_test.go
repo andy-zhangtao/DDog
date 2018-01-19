@@ -3,6 +3,7 @@ package service
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
+	"encoding/json"
 )
 
 func TestService_CreateNewSerivce(t *testing.T) {
@@ -69,4 +70,59 @@ func TestService_CreateNewSerivce(t *testing.T) {
 	assert.Equal(t, "3000", regmap["containers.0.healthCheck.0.port"], "containers.0.healthCheck.0.port:3000 Error")
 	assert.Equal(t, "8000", regmap["portMappings.0.lbPort"], "portMappings.0.lbPort:8000 Error")
 	assert.Equal(t, "9000", regmap["portMappings.0.containerPort"], "portMappings.0.containerPort:9000  Error")
+}
+
+func TestInstanceUnmarshalInService(t *testing.T) {
+	var jsons = `{
+	"code": 0,
+	"message": "",
+	"codeDesc": "Success",
+	"data": {
+		"totalCount": 2,
+		"instances": [{
+			"name": "test1-2249619043-46qpq",
+			"status": "Running",
+			"reason": "",
+			"srcReason": "",
+			"ip": "172.16.1.124",
+			"restartCount": 0,
+			"readyCount": 1,
+			"nodeName": "192.168.1.16",
+			"nodeIp": "192.168.1.16",
+			"createdAt": "2018-01-19 13:39:05",
+			"containers": [{
+				"name": "eqxiu-base-server",
+				"containerId": "cc7a3a78f98d37275b4dc808e64fd63d20f8b278603cbb0873b3cd7fdcc93250",
+				"status": "Running",
+				"reason": "",
+				"image": "ccr.ccs.tencentyun.com\/eqxiu\/eqxiu-base-server:1.1.1"
+			}]
+		}, {
+			"name": "test1-2249619043-ns6zd",
+			"status": "Running",
+			"reason": "",
+			"srcReason": "",
+			"ip": "172.16.0.139",
+			"restartCount": 0,
+			"readyCount": 1,
+			"nodeName": "192.168.1.15",
+			"nodeIp": "192.168.1.15",
+			"createdAt": "2018-01-19 13:38:25",
+			"containers": [{
+				"name": "eqxiu-base-server",
+				"containerId": "411a2e4953bd427c050f0879803ff807dff1fd5560e23f5311003c13dc196371",
+				"status": "Running",
+				"reason": "",
+				"image": "ccr.ccs.tencentyun.com\/eqxiu\/eqxiu-base-server:1.1.1"
+			}]
+		}]
+	}
+}`
+	var smd SvcSMData
+	err := json.Unmarshal([]byte(jsons), &smd)
+	assert.Nil(t, err)
+	assert.Equal(t, "test1-2249619043-46qpq", smd.Data.Instance[0].Name)
+	assert.Equal(t, "Running", smd.Data.Instance[0].Status)
+	assert.Equal(t, "test1-2249619043-ns6zd", smd.Data.Instance[1].Name)
+	assert.Equal(t, "Running", smd.Data.Instance[1].Status)
 }

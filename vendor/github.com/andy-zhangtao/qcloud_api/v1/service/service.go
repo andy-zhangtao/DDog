@@ -70,7 +70,7 @@ type SvcData_data_services struct {
 type SvcData_data struct {
 	TotalCount  int                     `json:"totalcount"`
 	Services    []SvcData_data_services `json:"services"`
-	Instance    []Instance              `json:"instanaces"`
+	Instance    []Instance              `json:"instances"`
 	ServiceInfo ServiceInfo             `json:"service"`
 }
 
