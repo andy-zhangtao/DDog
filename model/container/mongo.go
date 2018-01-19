@@ -18,6 +18,7 @@ type Container struct {
 	Nsme string            `json:"namespace"`
 	Idx  int               `json:"idx"`
 	Net  []NetConfigure    `json:"net"`
+	Port []int             `json:"port"`
 }
 
 // NetConfigure 服务配置信息
