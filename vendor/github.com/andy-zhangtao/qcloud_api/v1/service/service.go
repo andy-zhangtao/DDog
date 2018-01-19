@@ -34,6 +34,7 @@ type Service struct {
 	Containers   []Containers   `json:"containers"`
 	PortMappings []PortMappings `json:"port_mappings"`
 	Strategy     string         `json:"strategy"`
+	Instance     []string       `json:"instance"`
 	SecretKey    string
 	sign         string
 }
@@ -317,6 +318,13 @@ func (this Service) createSvc() ([]string, map[string]string) {
 		field = append(field, "strategy")
 		req["strategy"] = this.Strategy
 	}
+
+	for i, n := range this.Instance {
+		key := fmt.Sprintf("instances.%d", i)
+		field = append(field, key)
+		req[key] = n
+	}
+
 	return field, req
 }
 
@@ -369,6 +377,10 @@ func (this Service) QuerySvcInfo() (*SvcSMData, error) {
 	return this.generateRequest(5)
 }
 
+func (this Service) DestoryInstance() (*SvcSMData, error) {
+	return this.generateRequest(6)
+}
+
 // generateRequest 生成操作请求
 // 每个请求中都存在公共部分,因此在这里只需要处理特殊操作对应的数据即可
 // 0 - 创建服务
@@ -404,6 +416,10 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		//	查询服务详情
 		svcKind = "DescribeClusterServiceInfo"
 		debugStr = "查询服务详情"
+	case 6:
+		//	删除实例
+		svcKind = "DeleteInstances"
+		debugStr = "删除实例"
 	}
 
 	field, reqmap := this.createSvc()
