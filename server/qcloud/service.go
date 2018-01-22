@@ -738,6 +738,56 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
+// ConfirmRollService 确认升级完成. 只有当前状态为滚动升级中，并且所有实例状态都是升级成功的情况下才可调用此API
+func ConfirmRollService(w http.ResponseWriter, r *http.Request){
+	svc := r.URL.Query().Get("svcname")
+	if svc == "" {
+		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+		return
+	}
+
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		namespace = _const.DefaultNameSpace
+		if namespace == "" {
+			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+			return
+		}
+	}
+
+	scf, err := svcconf.GetSvcConfByName(svc, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if scf.Deploy != 3 {
+		tool.ReturnError(w, errors.New(_const.NotRollingUP))
+		return
+	}
+
+	for _, i := range scf.Instance{
+		if i.Status != 4{
+			tool.ReturnError(w, errors.New(_const.NotAllInstanceRollingUP))
+			return
+		}
+	}
+
+	scf.Deploy = 1
+	for i, _ := range scf.Instance{
+		scf.Instance[i].Status = 1
+	}
+
+	err = svcconf.UpdateSvcConf(scf)
+	if err != nil{
+		tool.ReturnError(w, err)
+		return
+	}
+
+	tool.ReturnResp(w, []byte("Confirm Success"))
+	return
+}
+
 func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 	clusterid := r.URL.Query().Get("clusterid")
 	if clusterid == "" {

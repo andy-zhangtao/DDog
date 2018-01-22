@@ -30,6 +30,7 @@ const (
 	DeleteService        = "/cloud/svc/delete"
 	ReinstallService     = "/cloud/svc/reinstall"
 	RollUpService        = "/cloud/svc/rolling"
+	ConfirmService       = "/cloud/svc/confirm"
 	AddSvcGroup          = "/cluod/svc/group/add"
 	GetSvcGroup          = "/cloud/svc/group/info"
 	DeleSvcGroup         = "/cloud/svc/group/delete"
