@@ -25,7 +25,7 @@ type SvcConf struct {
 	Netconf       []container.NetConfigure `json:"netconf"`
 	Status        int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
 	Msg           string                   `json:"msg"`
-	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成
+	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成 6-回滚中
 	Instance      []SvcInstance            `json:"instance"`
 	LbConfig      LoadBlance               `json:"lb_config"`
 	BackID        string                   `json:"back_id"`

@@ -87,6 +87,7 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.UpdateSvcConfig), svcconf.UpdateNetPort).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.RollUpService), qcloud.RollingUpServiceWithSvc).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.ConfirmService), qcloud.ConfirmRollService).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.RollBackService), qcloud.RollBackService).Methods(http.MethodPost)
 	return r
 }
 

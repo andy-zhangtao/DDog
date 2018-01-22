@@ -713,6 +713,42 @@
         }
       }
     },
+    "/cloud/svc/rollback":{
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "升级回滚",
+        "description": "对所有升级操作进行回滚",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "svcname",
+            "required": true,
+            "description": "服务配置名称",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "required": false,
+            "description": "命名空间名称,为空则取默认值",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
     "/cloud/svc/rolling": {
       "post": {
         "tags": [
