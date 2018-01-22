@@ -393,24 +393,24 @@
         "tags": [
           "svc"
         ],
-        "summary": "删除配置数据",
-        "description": "删除指定服务配置数据",
+        "summary": "删除指定服务",
+        "description": "删除指定服务配置数据和此服务下面的所有实例",
         "produces": [
           "application/json"
         ],
         "parameters": [
           {
             "in": "query",
-            "name": "namespace",
-            "description": "命名空间名称,",
+            "name": "svcname",
             "required": true,
+            "description": "服务配置名称",
             "type": "string"
           },
           {
             "in": "query",
-            "name": "id",
-            "description": "配置ID,如果存在ID，则删除此ID所对应的配置信息。如果不上送ID，则删除此命名空间下的所有配置信息",
+            "name": "namespace",
             "required": false,
+            "description": "命名空间名称,为空则取默认值",
             "type": "string"
           }
         ],
@@ -693,6 +693,85 @@
             "name": "id",
             "description": "配置ID,当提供服务名称时此项可不提供",
             "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/rolling": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "进行滚动升级(蓝绿/金丝雀)",
+        "description": "对未升级的实例按照给定的比例进行升级",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "svcname",
+            "required": true,
+            "description": "服务配置名称",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "required": false,
+            "description": "命名空间名称,为空则取默认值",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "percent",
+            "required": false,
+            "description": "升级百分比",
+            "type": "number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "操作成功"
+          },
+          "500": {
+            "description": "操作失败"
+          }
+        }
+      }
+    },
+    "/cloud/svc/confirm": {
+      "post": {
+        "tags": [
+          "svc"
+        ],
+        "summary": "确认完成滚动升级(蓝绿/金丝雀)",
+        "description": "确认完成滚动升级,修改当前服务及实例状态",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "svcname",
+            "required": true,
+            "description": "服务配置名称",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "required": false,
+            "description": "命名空间名称,为空则取默认值",
             "type": "string"
           }
         ],
@@ -1386,9 +1465,9 @@
         }
       }
     },
-    "/cloud/container/check":{
-      "post":{
-        "tags":[
+    "/cloud/container/check": {
+      "post": {
+        "tags": [
           "container"
         ],
         "summary": "检查容器配置数据是否存在",
@@ -1941,14 +2020,27 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "number",
-          "description": "网络解析状态 0-解析成功 1-准备解析 2-开始解析 3-解析失败"
+          "type": "string",
+          "description": "当前部署状态 ready-等待部署 normal-部署成功 updating-部署中 rolling-蓝绿发布进行中 failed-部署失败"
         },
-        "port":{
-          "type":"array",
+        "lb_ip": {
+          "type": "string",
+          "description": "服务负载均衡IP"
+        },
+        "lb_port": {
+          "type": "array",
+          "description": "服务负载均衡监听端口",
           "items": {
-            "$ref":"#/definitions/ContainerEnv"
+            "type": "number"
           }
+        },
+        "replicas": {
+          "type": "number",
+          "description": "实例个数"
+        },
+        "msg": {
+          "type": "string",
+          "description": "错误消息"
         }
       }
     }

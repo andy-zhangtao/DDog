@@ -13,7 +13,6 @@ import (
 	"github.com/andy-zhangtao/DDog/model/container"
 	"strings"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"fmt"
 )
 
 func CreateContainer(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +34,7 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
 	}
 
-	_,isExist, err := isExistContainer(&con)
+	_, isExist, err := isExistContainer(&con)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -187,7 +186,7 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
 	}
 
-	_,isExist, err := isExistContainer(&con)
+	_, isExist, err := isExistContainer(&con)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
@@ -211,6 +210,10 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 		err = errors.New(_const.SVCNoExist)
 	}
 
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
 	return
 }
 
@@ -223,6 +226,10 @@ func isExistContainer(con *container.Container) (old *container.Container, isExi
 
 	if err = checkContainer(con); err != nil {
 		return
+	}
+
+	if _const.DEBUG {
+		log.Printf("[IsExistContainer] After Check [%v]\n", con)
 	}
 
 	tcon, err := container.GetContainerByName(con.Name, con.Svc, con.Nsme)
@@ -254,14 +261,51 @@ func CheckContainer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
 	}
 
-	old, isExist, err := isExistContainer(&con)
+	var nt []container.NetConfigure
+	for _, p := range con.Port {
+		nt = append(nt, container.NetConfigure{
+			AccessType: 0,
+			InPort:     p,
+			OutPort:    p,
+			Protocol:   0,
+		})
+	}
+
+	con.Net = nt
+	_, isExist, err := isExistContainer(&con)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
 	if isExist {
-		con.Net = old.Net
+		isChange, err := container.UpgradeContainerNetByName(con.Name, con.Svc, con.Nsme, con.Net)
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+		if _const.DEBUG {
+			log.Printf("[UpdateNetPort] Compare NetConfigure Is change? [%v]!\n", isChange)
+		}
+
+		if isChange {
+			scf, err := svcconf.GetSvcConfByName(con.Svc, con.Nsme)
+			if err != nil {
+				tool.ReturnError(w, err)
+				return
+			}
+			err = svcconf.GenerateNetconifg(scf)
+			if err != nil {
+				tool.ReturnError(w, err)
+				return
+			}
+		}
+
+		if err != nil {
+			tool.ReturnError(w, err)
+		} else {
+			tool.ReturnResp(w, []byte("Container Check Succ!"))
+		}
 		err = upgreadeContaienr(&con)
 	} else {
 		err = createContainer(&con)
@@ -273,7 +317,7 @@ func CheckContainer(w http.ResponseWriter, r *http.Request) {
 // createContainer 创建容器配置信息
 // 在创建的同时会调用Goblin来解析网络配置数据
 func createContainer(con *container.Container) (err error) {
-	err = upgreadeSvcConf(*con)
+	err = upgreadeSvcConf(*con, true)
 	if err != nil {
 		return
 	}
@@ -282,33 +326,17 @@ func createContainer(con *container.Container) (err error) {
 }
 
 // upgreadeSvcConf 异步更新服务配置信息
-func upgreadeSvcConf(con container.Container) (err error) {
+// updataNet 是否需要同步更新网络信息，在更新容器配置信息时，已经更新过网络信息了，这里就不需要再更新了
+func upgreadeSvcConf(con container.Container, updateNet bool) (err error) {
 	sv, err := svcconf.GetSvcConfByName(con.Svc, con.Nsme)
 	if sv == nil {
 		err = errors.New(_const.SVCNoExist)
 		return
 	}
-	var callback = func(err error) {
-		//fmt.Println("svc conf", err)
-		if err != nil {
-			sv.Status = 3
-			sv.Msg = err.Error()
-			svcconf.UpdateSvcConf(sv)
-		}
-
-		return
+	sv.Status = 0
+	if updateNet {
+		sv.Netconf = append(sv.Netconf, con.Net...)
 	}
-
-	sv.Status = 1
-	go func(callback func(error)) {
-		err := tool.InspectImgInfo(con.Name, con.Svc, con.Nsme, con.Img, callback)
-		if err != nil {
-			fmt.Printf("********[%s] CallBack Error[%s]********\n", con.Img, err.Error())
-			return
-		}
-	}(callback)
-	sv.Status = 2
-	//fmt.Printf("svc conf [%v]\n", sv)
 	err = svcconf.UpdateSvcConf(sv)
 	return
 
@@ -316,11 +344,47 @@ func upgreadeSvcConf(con container.Container) (err error) {
 
 // upgreadeContaienr 更新容器配置数据
 func upgreadeContaienr(con *container.Container) (err error) {
+	err = backupContainer(*con)
+	if err != nil {
+		return
+	}
+
 	err = container.UpgradeContaienrByName(con)
 	if err != nil {
 		return
 	}
 
-	err = upgreadeSvcConf(*con)
+	err = upgreadeSvcConf(*con, false)
+	return
+}
+
+// backupContainer 备份容器配置数据
+func backupContainer(con container.Container) (err error) {
+	scf, err := svcconf.GetSvcConfByName(con.Svc, con.Nsme)
+	if err != nil {
+		return
+	}
+
+	if scf.BackID == "" {
+		scf.BackupSvcConf()
+	} else {
+
+		bscf, err := scf.GetBackSvcConf()
+		if err != nil {
+			return err
+		}
+
+		for _, cn := range bscf.BackContainer {
+			if cn.Img == con.Img {
+				cn.Img = con.Img
+				cn.Cmd = con.Cmd
+				cn.Env = con.Env
+				cn.Idx = con.Idx
+				cn.Net = con.Net
+				return svcconf.UpdateSvcConf(bscf)
+			}
+		}
+	}
+
 	return
 }

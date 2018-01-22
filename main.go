@@ -17,7 +17,6 @@ import (
 	"os"
 	"github.com/andy-zhangtao/DDog/server/container"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
-	"github.com/andy-zhangtao/DDog/watch"
 )
 
 var _VERSION_ = "unknown"
@@ -29,7 +28,7 @@ func main() {
 	if region == "" {
 		log.Panic(_const.EnvRegionNotFound)
 	}
-	go watch.Go(region)
+	//go watch.Go(region)
 	r := mux.NewRouter()
 	r = dnsAPI(r)
 	r = cloudAPI(r)
@@ -86,6 +85,8 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.DeploySvcConfig), qcloud.DeployService).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.QuerySvcStatus), qcloud.GetSampleSVCInfo).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.UpdateSvcConfig), svcconf.UpdateNetPort).Methods(http.MethodGet)
+	r.HandleFunc(getApiPath(_const.RollUpService), qcloud.RollingUpService).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.ConfirmService), qcloud.ConfirmRollService).Methods(http.MethodPost)
 	return r
 }
 

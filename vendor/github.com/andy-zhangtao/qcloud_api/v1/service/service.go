@@ -34,6 +34,7 @@ type Service struct {
 	Containers   []Containers   `json:"containers"`
 	PortMappings []PortMappings `json:"port_mappings"`
 	Strategy     string         `json:"strategy"`
+	Instance     []string       `json:"instance"`
 	SecretKey    string
 	sign         string
 }
@@ -66,16 +67,35 @@ type SvcData_data_services struct {
 	CreatedAt       string `json:"createdat"`
 	Namespace       string `json:"namespace"`
 }
+
 type SvcData_data struct {
-	TotalCount int                     `json:"totalcount"`
-	Services   []SvcData_data_services `json:"services"`
+	TotalCount  int                     `json:"totalcount"`
+	Services    []SvcData_data_services `json:"services"`
+	Instance    []Instance              `json:"instances"`
+	ServiceInfo ServiceInfo             `json:"service"`
 }
+
 type SvcSMData struct {
 	Code     int          `json:"code"`
 	Message  string       `json:"message"`
 	CodeDesc string       `json:"codedesc"`
 	Url      string       `json:"request"`
 	Data     SvcData_data `json:"data"`
+}
+
+// 实例数据
+type Instance_data struct {
+	TotalCount int        `json:"totalcount"`
+	Instance   []Instance `json:"instanaces"`
+}
+
+// 实例数据
+type SvcInstance struct {
+	Code     int           `json:"code"`
+	Message  string        `json:"message"`
+	CodeDesc string        `json:"codedesc"`
+	Url      string        `json:"request"`
+	Data     Instance_data `json:"data"`
 }
 
 func (this Svc) querySampleInfo() ([]string, map[string]string) {
@@ -298,6 +318,13 @@ func (this Service) createSvc() ([]string, map[string]string) {
 		field = append(field, "strategy")
 		req["strategy"] = this.Strategy
 	}
+
+	for i, n := range this.Instance {
+		key := fmt.Sprintf("instances.%d", i)
+		field = append(field, key)
+		req[key] = n
+	}
+
 	return field, req
 }
 
@@ -342,6 +369,25 @@ func (this Service) RedeployService() (*SvcSMData, error) {
 	return this.generateRequest(3)
 }
 
+func (this Service) QueryInstance() (*SvcSMData, error) {
+	return this.generateRequest(4)
+}
+
+func (this Service) QuerySvcInfo() (*SvcSMData, error) {
+	return this.generateRequest(5)
+}
+
+func (this Service) DestoryInstance() (*SvcSMData, error) {
+	return this.generateRequest(6)
+}
+
+// generateRequest 生成操作请求
+// 每个请求中都存在公共部分,因此在这里只需要处理特殊操作对应的数据即可
+// 0 - 创建服务
+// 1 - 升级服务
+// 2 - 删除服务
+// 3 - 重新部署服务
+// 4 - 查询实例
 func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	var svcKind string
 	var debugStr string
@@ -362,6 +408,18 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		//	重新部署
 		svcKind = "RedeployClusterService"
 		debugStr = "重新部署"
+	case 4:
+		//	查询服务实例状态
+		svcKind = "DescribeServiceInstance"
+		debugStr = "查询服务实例"
+	case 5:
+		//	查询服务详情
+		svcKind = "DescribeClusterServiceInfo"
+		debugStr = "查询服务详情"
+	case 6:
+		//	删除实例
+		svcKind = "DeleteInstances"
+		debugStr = "删除实例"
 	}
 
 	field, reqmap := this.createSvc()
@@ -372,7 +430,7 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
 
 	if debug {
-		log.Printf("[%s服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", debugStr, public.API_URL+reqURL, this.SecretKey, signStr, sign)
+		log.Printf("[%s 服务信息]请求URL[%s]密钥[%s]签名内容[%s]生成签名[%s]\n", debugStr, public.API_URL+reqURL, this.SecretKey, signStr, sign)
 	}
 
 	resp, err := http.Get(public.API_URL + reqURL)
@@ -397,4 +455,5 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	}
 
 	return &ssmd, nil
+
 }
