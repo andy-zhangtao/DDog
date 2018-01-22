@@ -18,12 +18,14 @@ type SvcConf struct {
 	Id            bson.ObjectId            `json:"id,omitempty" bson:"_id,omitempty"`
 	Name          string                   `json:"name"`
 	Desc          string                   `json:"desc"`
+	SvcName       string                   `json:"svc_name"`     // 在K8s中的服务名
+	SvcNameBak    map[string]LoadBlance    `json:"svc_name_bak"` // 升级过程中的备份服务名
 	Replicas      int                      `json:"replicas"`
 	Namespace     string                   `json:"namespace"`
 	Netconf       []container.NetConfigure `json:"netconf"`
 	Status        int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
 	Msg           string                   `json:"msg"`
-	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败
+	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成
 	Instance      []SvcInstance            `json:"instance"`
 	LbConfig      LoadBlance               `json:"lb_config"`
 	BackID        string                   `json:"back_id"`
@@ -77,6 +79,24 @@ func (scf *SvcConf) ToString() (out string) {
 		out += fmt.Sprintf("\t\t\t\tBackContainer:[%s]\n", b.ToString())
 	}
 	return
+}
+
+func (scf *SvcConf) Copy(tcp *SvcConf) {
+	tcp.Id = scf.Id
+	tcp.Name = scf.Name
+	tcp.Desc = scf.Desc
+	tcp.SvcName = scf.SvcName
+	tcp.SvcNameBak = scf.SvcNameBak
+	tcp.Replicas = scf.Replicas
+	tcp.Namespace = scf.Namespace
+	tcp.Netconf = scf.Netconf
+	tcp.Status = scf.Status
+	tcp.Msg = scf.Msg
+	tcp.Deploy = scf.Deploy
+	tcp.Instance = scf.Instance
+	tcp.LbConfig = scf.LbConfig
+	tcp.BackID = scf.BackID
+	tcp.BackContainer = scf.BackContainer
 }
 
 func (sis *SvcInstance) ToString() (out string) {

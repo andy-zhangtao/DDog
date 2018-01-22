@@ -690,6 +690,13 @@
           },
           {
             "in": "query",
+            "name": "namespace",
+            "description": "如果命名空间为空，则使用默认命名空间",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "in": "query",
             "name": "id",
             "description": "配置ID,当提供服务名称时此项可不提供",
             "required": false,
