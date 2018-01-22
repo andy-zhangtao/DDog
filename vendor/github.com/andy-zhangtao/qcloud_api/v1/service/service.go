@@ -35,6 +35,7 @@ type Service struct {
 	PortMappings []PortMappings `json:"port_mappings"`
 	Strategy     string         `json:"strategy"`
 	Instance     []string       `json:"instance"`
+	ScaleTo      int            `json:"scale_to"`
 	SecretKey    string
 	sign         string
 }
@@ -325,6 +326,8 @@ func (this Service) createSvc() ([]string, map[string]string) {
 		req[key] = n
 	}
 
+	field = append(field, "scaleTo")
+	req["scaleTo"] = strconv.Itoa(this.ScaleTo)
 	return field, req
 }
 
@@ -388,6 +391,9 @@ func (this Service) DestoryInstance() (*SvcSMData, error) {
 // 2 - 删除服务
 // 3 - 重新部署服务
 // 4 - 查询实例
+// 5 - 查询服务详情
+// 6 - 删除实例
+// 7 - 修改实例个数
 func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	var svcKind string
 	var debugStr string
@@ -420,6 +426,10 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		//	删除实例
 		svcKind = "DeleteInstances"
 		debugStr = "删除实例"
+	case 7:
+		//	修改服务实例
+		svcKind = "ModifyServiceReplicas"
+		debugStr = "修改实例数量"
 	}
 
 	field, reqmap := this.createSvc()

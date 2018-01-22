@@ -32,7 +32,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "ce2d6a36767d90c38422845f2b395e921f2dbe8c"
+  revision = "be0d9b4f256f2c8ecfe900b069f3e1563fa9d739"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -116,10 +116,10 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/ugorji/go"
   packages = ["codec"]
   revision = "9831f2c3ac1068a78f50999a30db84270f647af6"
+  version = "v1.1"
 
 [[projects]]
   branch = "master"
@@ -189,8 +189,8 @@
     "tap",
     "transport"
   ]
-  revision = "7cea4cc846bcf00cbb27595b07da5de875ef7de9"
-  version = "v1.9.1"
+  revision = "6b51017f791ae1cfbec89c52efdf444b13b550ef"
+  version = "v1.9.2"
 
 [[projects]]
   branch = "v2"
@@ -207,6 +207,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c3ce17302b54eaa5278a43d70bfe491b725c21a065aed4a10ca486ea52e6a2e2"
+  inputs-digest = "d271946236e32efdc95ed07119c941c0a25583433fc69515edc22aaa5ca03cfc"
   solver-name = "gps-cdcl"
   solver-version = 1

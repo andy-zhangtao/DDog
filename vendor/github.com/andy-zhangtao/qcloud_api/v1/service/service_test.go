@@ -45,8 +45,10 @@ func TestService_CreateNewSerivce(t *testing.T) {
 		},
 	}
 
+	svc.ScaleTo = 5
+
 	field, regmap := svc.createSvc()
-	assert.Equal(t, 22, len(field), "The length of field error!")
+	assert.Equal(t, 23, len(field), "The length of field error!")
 
 	assert.Equal(t, "clustid", regmap["clusterId"], "clusterId:clustid Error")
 	assert.Equal(t, "namespace", regmap["namespace"], "namespace:namespace Error")
@@ -64,6 +66,7 @@ func TestService_CreateNewSerivce(t *testing.T) {
 	assert.Equal(t, "2", regmap["containers.0.healthCheck.0.healthNum"], "containers.0.healthCheck.0.healthNum:2 Error")
 	assert.Equal(t, "3", regmap["replicas"], "replicas:3 Error")
 	assert.Equal(t, "3", regmap["containers.0.healthCheck.0.unhealthNum"], "containers.0.healthCheck.0.unhealthNum:3 Error")
+	assert.Equal(t, "5", regmap["scaleTo"], "scaleTo:3 Error")
 	assert.Equal(t, "10", regmap["containers.0.healthCheck.0.timeOut"], "containers.0.healthCheck.0.timeOut:10 Error")
 	assert.Equal(t, "10", regmap["containers.0.healthCheck.0.intervalTime"], "containers.0.healthCheck.0.intervalTime:10 Error")
 	assert.Equal(t, "20", regmap["containers.0.healthCheck.0.delayTime"], "containers.0.healthCheck.0.delayTime:20  Error")
