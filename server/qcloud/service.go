@@ -83,7 +83,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	switch scf.Deploy {
 	case 0:
-		ss.Status = "ready"
+		ss.Status = "ready for deploy"
 	case 1:
 		ss.Status = "normal"
 	case 2:
@@ -154,7 +154,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 // 4. 延时30秒后启动检查
 // 5. 连续三次，间隔10秒，健康均失败则检查失败
 // 6. 每次检查超时时间为5秒
-// 7. 每个服务存在2个实例
+// 7. 每个服务默认存在2个实例
 func RunService(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("svcname")
@@ -205,7 +205,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		ClusterId:   md.ClusterID,
 		ServiceName: cf.Name,
 		ServiceDesc: cf.Desc,
-		Replicas:    2,
+		Replicas:    cf.Replicas,
 		Namespace:   cf.Namespace,
 		SecretKey:   md.Skey,
 	}
@@ -314,7 +314,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("[queryServiceInfo]ServiceConf[%v]\n", scf)
 		errIdx := 0
-		scf.Deploy = 0
+		//scf.Deploy = 0
 		// 轮询当前服务的运行状态
 		for {
 			resp, err := q.QuerySvcInfo()
