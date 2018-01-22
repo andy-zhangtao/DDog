@@ -13,7 +13,7 @@ import (
 )
 
 // SvcConf 服务配置信息
-// 默认情况下Replicas为1
+// 默认情况下Replicas为2
 type SvcConf struct {
 	Id            bson.ObjectId            `json:"id,omitempty" bson:"_id,omitempty"`
 	Name          string                   `json:"name"`
@@ -52,6 +52,50 @@ type SvcConfGroup struct {
 	Namespace string         `json:"namespace"`
 	Clusterid string         `json:"clusterid"`
 	Name      string         `json:"name"`
+}
+
+// ToString 格式化输出结构体内容
+func (scf *SvcConf) ToString() (out string) {
+	out += fmt.Sprintf("\n********[SvcConf]********\n")
+	out += fmt.Sprintf("ID:[%s]\n", scf.Id.Hex())
+	out += fmt.Sprintf("Name:[%s]\n", scf.Name)
+	out += fmt.Sprintf("Desc:[%s]\n", scf.Desc)
+	out += fmt.Sprintf("Replicas:[%d]\n", scf.Replicas)
+	out += fmt.Sprintf("Namespace:[%s]\n", scf.Namespace)
+	for _, n := range scf.Netconf {
+		out += fmt.Sprintf("\t\t\t\tNetConf:[%s]\n", n.ToString())
+	}
+	out += fmt.Sprintf("Status:[%d]\n", scf.Status)
+	out += fmt.Sprintf("Msg:[%s]\n", scf.Msg)
+	out += fmt.Sprintf("Deploy:[%d]\n", scf.Deploy)
+	for _, s := range scf.Instance {
+		out += fmt.Sprintf("\t\t\t\tInstance:[%s]\n", s.ToString())
+	}
+	out += fmt.Sprintf("LbConfig:[%s]\n", scf.LbConfig.ToString())
+	out += fmt.Sprintf("BackID:[%s]\n", scf.BackID)
+	for _, b := range scf.BackContainer {
+		out += fmt.Sprintf("\t\t\t\tBackContainer:[%s]\n", b.ToString())
+	}
+	return
+}
+
+func (sis *SvcInstance) ToString() (out string) {
+	out = ""
+	out += fmt.Sprintf("\n********[SvcInstance]********\n")
+	out += fmt.Sprintf("Name:[%s]\n", sis.Name)
+	out += fmt.Sprintf("Status:[%d]\n", sis.Status)
+	out += fmt.Sprintf("Msg:[%s]\n", sis.Msg)
+	return
+}
+
+func (lb *LoadBlance) ToString() (out string) {
+	out = ""
+	out += fmt.Sprintf("\n********[LoadBlance]********\n")
+	out += fmt.Sprintf("IP:[%s]\n", lb.IP)
+	for _, i := range lb.Port {
+		out += fmt.Sprintf("\t\t\t\tPort:[%d]\n", i)
+	}
+	return
 }
 
 func Conver(conf interface{}) (c *SvcConf, err error) {
@@ -179,7 +223,8 @@ func GenerateNetconifg(scf *SvcConf) (err error) {
 
 // CountInstances 计算本次需要升级实例名称
 // 返回挑选出来需要升级的实例名称,同时返回剩余可以用于升级的实例个数
-func (sc *SvcConf) CountInstances(scope float64) ([]string, int) {
+// 在更新Service—Config状态时需要同时知道哪些Instance是本次升级的，哪些Instance是本次挑选时落选的,因此把落选Instance一并返回
+func (sc *SvcConf) CountInstances(scope float64) ([]string, []string, int) {
 	/*先检索当前还没有升级的实例个数*/
 	var instances []SvcInstance
 	for _, is := range sc.Instance {
@@ -189,6 +234,8 @@ func (sc *SvcConf) CountInstances(scope float64) ([]string, int) {
 	}
 
 	var name []string
+	var leftName []string
+
 	maxNumber := math.Ceil(scope * float64(len(instances)))
 	number := int(maxNumber)
 	if number > 0 {
@@ -197,17 +244,11 @@ func (sc *SvcConf) CountInstances(scope float64) ([]string, int) {
 		}
 	}
 
-	for _, n := range name {
-		for _, is := range sc.Instance {
-			if is.Name == n {
-				is.Status = 4
-			}
-		}
+	for i := number; i < len(instances); i ++ {
+		leftName = append(leftName, instances[i].Name)
 	}
 
-	UpdateSvcConf(sc)
-
-	return name, len(instances) - number
+	return name, leftName, len(instances) - number
 }
 
 // BackupSvcConf 备份服务配置

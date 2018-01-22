@@ -6,6 +6,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"log"
 	"github.com/andy-zhangtao/DDog/const"
+	"fmt"
 )
 
 type Container struct {
@@ -19,6 +20,23 @@ type Container struct {
 	Idx  int               `json:"idx"`
 	Net  []NetConfigure    `json:"net"`
 	Port []int             `json:"port"`
+}
+
+func (c *Container) ToString() (out string) {
+	out = ""
+	out += fmt.Sprintf("\n********[Container]********\n")
+	out += fmt.Sprintf("ID:[%s]\n", c.ID.Hex())
+	out += fmt.Sprintf("Name:[%s]\n", c.Name)
+	out += fmt.Sprintf("Cmd:[%v]\n", c.Cmd)
+	out += fmt.Sprintf("Env:[%v]\n", c.Env)
+	out += fmt.Sprintf("Svc:[%s]\n", c.Svc)
+	out += fmt.Sprintf("Nsme:[%s]\n", c.Nsme)
+	out += fmt.Sprintf("Idx:[%d]\n", c.Idx)
+	for _, i := range c.Net {
+		out += fmt.Sprintf("Net:[%s]\n", i.ToString())
+	}
+	out += fmt.Sprintf("Port:[%v]\n", c.Port)
+	return
 }
 
 // NetConfigure 服务配置信息
@@ -36,6 +54,16 @@ type NetConfigure struct {
 	InPort     int `json:"in_port"`
 	OutPort    int `json:"out_port"`
 	Protocol   int `json:"protocol"`
+}
+
+func (net *NetConfigure) ToString() (out string) {
+	out = ""
+	out += fmt.Sprintf("\n********[NetConfigure]********\n")
+	out += fmt.Sprintf("AccessType:[%d]\n", net.AccessType)
+	out += fmt.Sprintf("InPort:[%d]\n", net.InPort)
+	out += fmt.Sprintf("OutPort:[%d]\n", net.OutPort)
+	out += fmt.Sprintf("Protocol:[%d]\n", net.Protocol)
+	return
 }
 
 // GetContainerByName 根据名称获取容器配置信息

@@ -656,14 +656,24 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rollCons, left := scf.CountInstances(scp)
+	rollCons, leftName, left := scf.CountInstances(scp)
 	if len(rollCons) == 0 {
 		tool.ReturnError(w, errors.New("No Instance Will Be Update!"))
 		return
 	}
 
-	log.Printf("[RollingUpService]Left Instances [%d]\n", left)
+	ins := scf.Instance
+	for _, n := range rollCons {
+		for i, is := range ins {
+			if is.Name == n {
+				ins[i].Status = 4
+			}
+		}
+	}
+
 	if left <= 0 {
+		scf.Deploy = 1
+		svcconf.UpdateSvcConf(scf)
 		return
 	}
 
@@ -678,10 +688,12 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 			SecretId: md.Sid,
 			Region:   md.Region,
 		},
-		ClusterId: md.ClusterID,
-		Namespace: scf.Namespace,
-		SecretKey: md.Skey,
-		Instance:  rollCons,
+		ClusterId:   md.ClusterID,
+		Namespace:   scf.Namespace,
+		ServiceName: scf.Name,
+		SecretKey:   md.Skey,
+		Instance:    rollCons,
+		Replicas:    scf.Replicas,
 	}
 
 	q.SetDebug(true)
@@ -698,6 +710,29 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var updateInstance = func(scf *svcconf.SvcConf, rollCons interface{}) {
+		/* 如果当前Instance实例中有LefeName中的记录，则表明是本次没有参与升级的 */
+		c, _ := rollCons.([]string)
+		ins := scf.Instance
+
+		for i, s := range ins {
+			for _, n := range c {
+				log.Printf("[asyncQueryServiceStatus] Plugin new name [%s] old name [%s] compare[%v] \n", s.Name, n, s.Name != n)
+				if s.Name != n {
+					ins[i].Status = 4
+				}
+			}
+		}
+
+		scf.Deploy = 3
+		scf.Instance = ins
+	}
+
+	go asyncQueryServiceStatus(scf.Name, scf.Namespace, q, scf, leftName, updateInstance)
+
+	scf.Instance = ins
+	scf.Deploy = 3
+	svcconf.UpdateSvcConf(scf)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 }
@@ -842,26 +877,6 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// FlowDeploy 流式发布
-// 将指定服务的实例按照顺序进行升级部署
-func FlowDeploy(w http.ResponseWriter, r *http.Request) {
-	svcname := r.URL.Query().Get("svcname")
-	if svcname == "" {
-		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
-		return
-	}
-
-	namespace := r.URL.Query().Get("namespace")
-	if namespace == "" {
-		namespace = _const.DefaultNameSpace
-		if namespace == "" {
-			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
-			return
-		}
-	}
-
-}
-
 // queryInstance 查询指定服务的实例状态
 func queryInstance(svc, namespace string) (instances []service.Instance, err error) {
 	md, err := metadata.GetMetaDataByRegion("")
@@ -931,4 +946,108 @@ func queryInstanceUseK8s(svc, namespace string) (instances []service.Instance, e
 	}
 	return
 
+}
+
+// 异步查询服务状态
+// 当查询结束时会更新服务状态
+// plugin 是每次查询结束时的回调函数
+func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcconf.SvcConf, para interface{}, plugin func(conf *svcconf.SvcConf, param interface{})) {
+	log.Printf("[asyncQueryServiceStatus]ServiceConf[%v]\n", scf)
+	errIdx := 0
+	scf.Deploy = 0
+	// 轮询当前服务的运行状态
+	for {
+		resp, err := q.QuerySvcInfo()
+		if err != nil {
+			log.Printf("[asyncQueryServiceStatus]QueryViaQCloud[%s]\n", err.Error())
+			errIdx ++
+		}
+
+		if errIdx == 3 {
+			scf.Deploy = 4
+			break
+		}
+
+		log.Printf("[asyncQueryServiceStatus]Service Info Status [%s]\n", resp.Data.ServiceInfo.Status)
+		if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
+			//先解析负载数据
+			lb := svcconf.LoadBlance{
+				IP: resp.Data.ServiceInfo.ServiceIp,
+			}
+
+			var port []int
+			for _, c := range resp.Data.ServiceInfo.PortMappings {
+				port = append(port, c.LbPort)
+			}
+			lb.Port = port
+			scf.LbConfig = lb
+
+			//succIns 成功启动的实例数
+			//正常情况下, 成功启动的实例数应该等于目标实例数(distIns)
+			succIns := 0
+			var sic []svcconf.SvcInstance
+			for {
+				if succIns >= q.Replicas {
+					scf.Instance = sic
+					scf.Deploy = 1
+					scf.Msg = ""
+					break
+				}
+				if errIdx == 3 {
+					scf.Deploy = 4
+					break
+				}
+
+				instances, err := queryInstance(svc, namespace)
+				if err != nil {
+					instances, err = queryInstanceUseK8s(svc, namespace)
+					if err != nil {
+						log.Printf("Error [asyncQueryServiceStatus]QueryInstance Error [%s] svc [%s] namespace [%s]\n", err.Error(), svc, namespace)
+						scf.Msg = err.Error()
+						errIdx ++
+					}
+				}
+
+				if _const.DEBUG {
+					log.Printf("[asyncQueryServiceStatus]QueryInstance [%v]\n", instances)
+				}
+
+				for _, inc := range instances {
+					statusFlag := 0
+					switch strings.ToLower(inc.Status) {
+					case "running":
+						statusFlag = 1
+						succIns ++
+						sic = append(sic, svcconf.SvcInstance{
+							Name:   inc.Name,
+							Msg:    inc.Reason,
+							Status: statusFlag,
+						})
+					case "waiting":
+						fallthrough
+					case "terminating":
+						fallthrough
+					case "terminated":
+						statusFlag = 2
+					case "notready":
+						statusFlag = 3
+					}
+				}
+				time.Sleep(3 * time.Second)
+			}
+		}
+		if scf.Deploy == 1 {
+			break
+		}
+		if scf.Deploy == 4 {
+			errIdx = 3
+		}
+		time.Sleep(5 * time.Second)
+	}
+	log.Printf("[asyncQueryServiceStatus]Update ServiceConf[%v]\n", scf)
+	if plugin != nil {
+		plugin(scf, para)
+	}
+	log.Printf("[asyncQueryServiceStatus]After Update ServiceConf[%s]\n", scf.ToString())
+	svcconf.UpdateSvcConf(scf)
 }
