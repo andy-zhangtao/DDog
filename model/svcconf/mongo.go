@@ -167,14 +167,14 @@ func GetSvcConfByID(id string) (*SvcConf, error) {
 
 func SaveSvcConf(scf *SvcConf) error {
 	if _const.DEBUG {
-		log.Printf("[SaveSvcConf] Save SvcConf [%v]\n", scf)
+		log.Printf("[SaveSvcConf mongo.go] Save SvcConf [%v]\n", scf)
 	}
 	return mongo.SaveSvcConfig(scf)
 }
 
 func UpdateSvcConf(scf *SvcConf) error {
 	if _const.DEBUG {
-		log.Printf("[UpdateSvcConf] DeleteSvcConfById [%s]\n", scf.Id.Hex())
+		log.Printf("[UpdateSvcConf mongo.go] DeleteSvcConfById [%s]\n", scf.Id.Hex())
 	}
 	err := mongo.DeleteSvcConfById(scf.Id.Hex())
 	if err != nil {

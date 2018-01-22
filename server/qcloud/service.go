@@ -671,7 +671,7 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if left <= 0 {
+	if left <= 0 && len(rollCons) == 0 {
 		scf.Deploy = 1
 		svcconf.UpdateSvcConf(scf)
 		return
@@ -716,10 +716,11 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 		ins := scf.Instance
 
 		for i, s := range ins {
+			ins[i].Status = 4
 			for _, n := range c {
 				log.Printf("[asyncQueryServiceStatus] Plugin new name [%s] old name [%s] compare[%v] \n", s.Name, n, s.Name != n)
-				if s.Name != n {
-					ins[i].Status = 4
+				if s.Name == n {
+					ins[i].Status = 1
 				}
 			}
 		}
