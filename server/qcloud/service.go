@@ -89,7 +89,13 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	case 2:
 		ss.Status = "updating"
 	case 3:
-		ss.Status = "rolling"
+		ss.Status = "rolling complete"
+		for _, i := range scf.Instance {
+			if i.Status != 4 {
+				ss.Status = "rolling"
+				break
+			}
+		}
 	case 4:
 		ss.Status = "failed"
 	}
@@ -739,7 +745,7 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 }
 
 // ConfirmRollService 确认升级完成. 只有当前状态为滚动升级中，并且所有实例状态都是升级成功的情况下才可调用此API
-func ConfirmRollService(w http.ResponseWriter, r *http.Request){
+func ConfirmRollService(w http.ResponseWriter, r *http.Request) {
 	svc := r.URL.Query().Get("svcname")
 	if svc == "" {
 		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
@@ -766,20 +772,20 @@ func ConfirmRollService(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	for _, i := range scf.Instance{
-		if i.Status != 4{
+	for _, i := range scf.Instance {
+		if i.Status != 4 {
 			tool.ReturnError(w, errors.New(_const.NotAllInstanceRollingUP))
 			return
 		}
 	}
 
 	scf.Deploy = 1
-	for i, _ := range scf.Instance{
+	for i, _ := range scf.Instance {
 		scf.Instance[i].Status = 1
 	}
 
 	err = svcconf.UpdateSvcConf(scf)
-	if err != nil{
+	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
