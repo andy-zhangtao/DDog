@@ -89,7 +89,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	case 2:
 		ss.Status = "updating"
 	case 3:
-		ss.Status = "rolling complete"
+		ss.Status = "rolling fully complete"
 		for _, i := range scf.Instance {
 			if i.Status != 4 {
 				ss.Status = "rolling"
@@ -98,6 +98,10 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	case 4:
 		ss.Status = "failed"
+	case 5:
+		ss.Status = "rolling partially complete"
+	case 6:
+		ss.Status = "rolling"
 	}
 
 	data, err := json.Marshal(&ss)
@@ -663,6 +667,12 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rollCons, leftName, left := scf.CountInstances(scp)
+	if left <= 0 && len(rollCons) == 0 {
+		scf.Deploy = 3
+		svcconf.UpdateSvcConf(scf)
+		return
+	}
+
 	if len(rollCons) == 0 {
 		tool.ReturnError(w, errors.New("No Instance Will Be Update!"))
 		return
@@ -675,12 +685,6 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 				ins[i].Status = 4
 			}
 		}
-	}
-
-	if left <= 0 && len(rollCons) == 0 {
-		scf.Deploy = 1
-		svcconf.UpdateSvcConf(scf)
-		return
 	}
 
 	md, err := metadata.GetMetaDataByRegion("")
@@ -731,14 +735,14 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		scf.Deploy = 3
+		scf.Deploy = 5
 		scf.Instance = ins
 	}
 
 	go asyncQueryServiceStatus(scf.Name, scf.Namespace, q, scf, leftName, updateInstance)
 
 	scf.Instance = ins
-	scf.Deploy = 3
+	scf.Deploy = 6
 	svcconf.UpdateSvcConf(scf)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
