@@ -282,7 +282,13 @@ func (sc *SvcConf) GetBackSvcConf() (bsc *SvcConf, err error) {
 	return GetSvcConfByID(sc.BackID)
 }
 
-func (sc *SvcConf) DeleteMySelf()(err error){
+func (sc *SvcConf) DeleteMySelf() (err error) {
+
+	if sc.BackID != "" {
+		/*删除备份*/
+		mongo.DeleteSvcConfById(sc.BackID)
+	}
+
 	err = mongo.DeleteSvcConfById(sc.Id.Hex())
 	return
 }

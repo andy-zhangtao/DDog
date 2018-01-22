@@ -748,6 +748,11 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
+// RollingUpServiceWithSvc 以Service为单位进行滚动升级
+// 当触发升级操作时, 以当前服务配置为模板，创建另外一个新的服务
+func RollingUpServiceWithSvc(w http.ResponseWriter, r *http.Request){
+
+}
 // ConfirmRollService 确认升级完成. 只有当前状态为滚动升级中，并且所有实例状态都是升级成功的情况下才可调用此API
 func ConfirmRollService(w http.ResponseWriter, r *http.Request) {
 	svc := r.URL.Query().Get("svcname")

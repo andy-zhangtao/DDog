@@ -191,14 +191,11 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 
 	q.SetDebug(true)
 
-	smd, err := q.DeleteService()
+	q.DeleteService()
+
+	err = container.DeleteAllContaienrUnderSvc(scf.Name, scf.Namespace)
 	if err != nil {
 		tool.ReturnError(w, err)
-		return
-	}
-
-	if smd.Code != 0 {
-		tool.ReturnError(w, errors.New(smd.Message))
 		return
 	}
 
