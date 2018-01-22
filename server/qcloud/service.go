@@ -1005,7 +1005,7 @@ func queryInstanceUseK8s(svc, namespace string) (instances []service.Instance, e
 func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcconf.SvcConf, para interface{}, plugin func(conf *svcconf.SvcConf, param interface{})) {
 	log.Printf("[asyncQueryServiceStatus]ServiceConf[%v]\n", scf)
 	errIdx := 0
-	scf.Deploy = 0
+	//scf.Deploy = 0
 	// 轮询当前服务的运行状态
 	for {
 		resp, err := q.QuerySvcInfo()
