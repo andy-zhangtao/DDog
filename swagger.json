@@ -393,24 +393,24 @@
         "tags": [
           "svc"
         ],
-        "summary": "删除配置数据",
-        "description": "删除指定服务配置数据",
+        "summary": "删除指定服务",
+        "description": "删除指定服务配置数据和此服务下面的所有实例",
         "produces": [
           "application/json"
         ],
         "parameters": [
           {
             "in": "query",
-            "name": "namespace",
-            "description": "命名空间名称,",
+            "name": "svcname",
             "required": true,
+            "description": "服务配置名称",
             "type": "string"
           },
           {
             "in": "query",
-            "name": "id",
-            "description": "配置ID,如果存在ID，则删除此ID所对应的配置信息。如果不上送ID，则删除此命名空间下的所有配置信息",
+            "name": "namespace",
             "required": false,
+            "description": "命名空间名称,为空则取默认值",
             "type": "string"
           }
         ],

@@ -281,3 +281,8 @@ func (sc *SvcConf) BackupSvcConf() error {
 func (sc *SvcConf) GetBackSvcConf() (bsc *SvcConf, err error) {
 	return GetSvcConfByID(sc.BackID)
 }
+
+func (sc *SvcConf) DeleteMySelf()(err error){
+	err = mongo.DeleteSvcConfById(sc.Id.Hex())
+	return
+}

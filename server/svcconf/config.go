@@ -16,6 +16,9 @@ import (
 	"fmt"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"net/url"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
 )
 
 // CPort 容器端口数据
@@ -148,27 +151,84 @@ func QuerySvcConf(w http.ResponseWriter, r *http.Request) {
 
 }
 func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
+	svc := r.URL.Query().Get("svcname")
+	if svc == "" {
+		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
+		return
+	}
 
-	//w.Header().Set("Content-Type", "application/json")
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		nsme := r.URL.Query().Get("namespace")
-		if nsme == "" {
+	namespace := r.URL.Query().Get("namespace")
+	if namespace == "" {
+		namespace = _const.DefaultNameSpace
+		if namespace == "" {
 			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 			return
 		}
-		err := mongo.DeleteSvcConfByNs(nsme)
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	} else {
-		err := mongo.DeleteSvcConfById(id)
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
 	}
+
+	scf, err := svcconf.GetSvcConfByName(svc, namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	md, err := metadata.GetMetaDataByRegion("")
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId:   md.ClusterID,
+		Namespace:   scf.Namespace,
+		ServiceName: scf.Name,
+		SecretKey:   md.Skey,
+	}
+
+	q.SetDebug(true)
+
+	smd, err := q.DeleteService()
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	if smd.Code != 0 {
+		tool.ReturnError(w, errors.New(smd.Message))
+		return
+	}
+
+	err = scf.DeleteMySelf()
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+
+	tool.ReturnResp(w, []byte("Delete Succ!"))
+	return
+	//id := r.URL.Query().Get("id")
+	//if id == "" {
+	//	nsme := r.URL.Query().Get("namespace")
+	//	if nsme == "" {
+	//		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
+	//		return
+	//	}
+	//	err := mongo.DeleteSvcConfByNs(nsme)
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//} else {
+	//	err := mongo.DeleteSvcConfById(id)
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//}
 }
 func checkConf(conf *svcconf.SvcConf) error {
 	if conf.Name == "" {
@@ -179,8 +239,9 @@ func checkConf(conf *svcconf.SvcConf) error {
 		conf.Namespace = _const.DefaultNameSpace
 	}
 
+	/*默认实例数为2，要不然没法做蓝绿发布*/
 	if conf.Replicas == 0 {
-		conf.Replicas = 1
+		conf.Replicas = 2
 	}
 
 	conf.Name = strings.Replace(strings.ToLower(conf.Name), " ", "-", -1)
@@ -322,7 +383,7 @@ func UpdateNetPort(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG{
+	if _const.DEBUG {
 		log.Printf("[UpdateNetPort] NetConfigure [%s]\n", pb)
 	}
 
@@ -339,7 +400,7 @@ func UpdateNetPort(w http.ResponseWriter, r *http.Request) {
 		tool.ReturnError(w, err)
 		return
 	}
-	if _const.DEBUG{
+	if _const.DEBUG {
 		log.Printf("[UpdateNetPort] Compare NetConfigure Is change? [%v]!\n", isChange)
 	}
 
