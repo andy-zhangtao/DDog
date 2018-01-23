@@ -28,7 +28,16 @@ var globalChan chan int
 var globalMap map[string]chan int
 
 func getChan(gc string) (chan int) {
-	return globalMap[gc]
+	/*需要判断是否有不存在的chan，否则有可能会产生阻塞*/
+	if c, ok := globalMap[gc]; ok {
+		return c
+	} else {
+		tc := make(chan int)
+		go func() {
+			<-tc
+		}()
+		return tc
+	}
 }
 
 func setChan(gc string) {
@@ -353,15 +362,16 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		tcf, _ := c["tempSvc"].(*svcconf.SvcConf)
 		isupgrade, _ := c["upgrade"].(bool)
 		sn, _ := c["rollsvc"].(string) /*本次升级的服务名*/
-		if isupgrade {
+
+		if isupgrade && scf.Deploy == 1 {
 			scf.SvcNameBak[sn] = scf.LbConfig
 			scf.LbConfig = tcf.LbConfig
 			//scf.Instance = tcf.Instance
 			scf.Netconf = tcf.Netconf
 			scf.Deploy = 6
 			svcconf.UpdateSvcConf(scf)
-			getChan(cf.SvcName) <- 1
 		}
+		getChan(cf.SvcName) <- 1
 	}
 
 	tcf := new(svcconf.SvcConf)
@@ -1245,6 +1255,8 @@ func queryInstanceUseK8s(svc, namespace string) (instances []service.Instance, e
 func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcconf.SvcConf, para interface{}, plugin func(conf *svcconf.SvcConf, param interface{})) {
 	log.Printf("[asyncQueryServiceStatus]ServiceConf[%v]\n", scf)
 	errIdx := 0
+	jinx := 0 /*意想不到的崩溃次数,也作为失败的一种判断指标*/
+	scf.Msg = ""
 	//scf.Deploy = 0
 	// 轮询当前服务的运行状态
 	for {
@@ -1261,9 +1273,25 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 
 		/*需要判断K8s是否出错,以免出现无效查询*/
 		if resp.Code != 0 {
-			scf.Deploy = 4
+			errIdx ++
 			scf.Msg = resp.Message
 			break
+		}
+
+		if jinx == 10 && strings.ToLower(resp.Data.ServiceInfo.Status) != "normal" {
+			scf.Deploy = 4
+			for key, _ := range resp.Data.ServiceInfo.ReasonMap {
+				scf.Msg += key + ";"
+			}
+			break
+		}
+
+		if strings.ToLower(resp.Data.ServiceInfo.Status) != "normal" {
+			for key, _ := range resp.Data.ServiceInfo.ReasonMap {
+				if key == "容器进程崩溃" {
+					jinx ++
+				}
+			}
 		}
 
 		log.Printf("[asyncQueryServiceStatus]Service Info Status [%s]\n", resp.Data.ServiceInfo.Status)
