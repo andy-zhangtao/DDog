@@ -19,7 +19,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/svcconf"
 )
 
-var _VERSION_ = "unknown"
+var _VERSION_ = "v0.1.1"
 var _APIVERSION_ = "/v1"
 
 func main() {
