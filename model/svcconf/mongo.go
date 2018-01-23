@@ -18,12 +18,14 @@ type SvcConf struct {
 	Id            bson.ObjectId            `json:"id,omitempty" bson:"_id,omitempty"`
 	Name          string                   `json:"name"`
 	Desc          string                   `json:"desc"`
+	SvcName       string                   `json:"svc_name"`     // 在K8s中的服务名
+	SvcNameBak    map[string]LoadBlance    `json:"svc_name_bak"` // 升级过程中的备份服务名
 	Replicas      int                      `json:"replicas"`
 	Namespace     string                   `json:"namespace"`
 	Netconf       []container.NetConfigure `json:"netconf"`
 	Status        int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
 	Msg           string                   `json:"msg"`
-	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败
+	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成 6 - 数据同步 7-回滚中 8-升级确认中
 	Instance      []SvcInstance            `json:"instance"`
 	LbConfig      LoadBlance               `json:"lb_config"`
 	BackID        string                   `json:"back_id"`
@@ -60,6 +62,8 @@ func (scf *SvcConf) ToString() (out string) {
 	out += fmt.Sprintf("ID:[%s]\n", scf.Id.Hex())
 	out += fmt.Sprintf("Name:[%s]\n", scf.Name)
 	out += fmt.Sprintf("Desc:[%s]\n", scf.Desc)
+	out += fmt.Sprintf("SvcName:[%s]\n", scf.SvcName)
+	out += fmt.Sprintf("SvcNameBak:[%v]\n", scf.SvcNameBak)
 	out += fmt.Sprintf("Replicas:[%d]\n", scf.Replicas)
 	out += fmt.Sprintf("Namespace:[%s]\n", scf.Namespace)
 	for _, n := range scf.Netconf {
@@ -77,6 +81,25 @@ func (scf *SvcConf) ToString() (out string) {
 		out += fmt.Sprintf("\t\t\t\tBackContainer:[%s]\n", b.ToString())
 	}
 	return
+}
+
+// 将当前结构体的数据复制给tcp
+func (scf *SvcConf) Copy(tcp *SvcConf) {
+	tcp.Id = scf.Id
+	tcp.Name = scf.Name
+	tcp.Desc = scf.Desc
+	tcp.SvcName = scf.SvcName
+	tcp.SvcNameBak = scf.SvcNameBak
+	tcp.Replicas = scf.Replicas
+	tcp.Namespace = scf.Namespace
+	tcp.Netconf = scf.Netconf
+	tcp.Status = scf.Status
+	tcp.Msg = scf.Msg
+	tcp.Deploy = scf.Deploy
+	tcp.Instance = scf.Instance
+	tcp.LbConfig = scf.LbConfig
+	tcp.BackID = scf.BackID
+	tcp.BackContainer = scf.BackContainer
 }
 
 func (sis *SvcInstance) ToString() (out string) {
@@ -225,6 +248,7 @@ func GenerateNetconifg(scf *SvcConf) (err error) {
 // 返回挑选出来需要升级的实例名称,同时返回剩余可以用于升级的实例个数
 // 在更新Service—Config状态时需要同时知道哪些Instance是本次升级的，哪些Instance是本次挑选时落选的,因此把落选Instance一并返回
 func (sc *SvcConf) CountInstances(scope float64) ([]string, []string, int) {
+
 	/*先检索当前还没有升级的实例个数*/
 	var instances []SvcInstance
 	for _, is := range sc.Instance {
@@ -237,6 +261,7 @@ func (sc *SvcConf) CountInstances(scope float64) ([]string, []string, int) {
 	var leftName []string
 
 	maxNumber := math.Ceil(scope * float64(len(instances)))
+	log.Printf("[CountInstance] Ready Roll Up [%v] Service, In Face I Can Support [%v] Services \n", scope, maxNumber)
 	number := int(maxNumber)
 	if number > 0 {
 		for i := 0; i < number; i ++ {
@@ -282,7 +307,13 @@ func (sc *SvcConf) GetBackSvcConf() (bsc *SvcConf, err error) {
 	return GetSvcConfByID(sc.BackID)
 }
 
-func (sc *SvcConf) DeleteMySelf()(err error){
+func (sc *SvcConf) DeleteMySelf() (err error) {
+
+	if sc.BackID != "" {
+		/*删除备份*/
+		mongo.DeleteSvcConfById(sc.BackID)
+	}
+
 	err = mongo.DeleteSvcConfById(sc.Id.Hex())
 	return
 }

@@ -172,6 +172,11 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if scf == nil{
+		tool.ReturnError(w, errors.New(_const.SVCNoExist))
+		return
+	}
+
 	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -185,20 +190,35 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 		},
 		ClusterId:   md.ClusterID,
 		Namespace:   scf.Namespace,
-		ServiceName: scf.Name,
+		ServiceName: scf.SvcName,
 		SecretKey:   md.Skey,
 	}
 
 	q.SetDebug(true)
 
-	smd, err := q.DeleteService()
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
+	q.DeleteService()
+
+	/*删除可能存在的升级服务*/
+	for k, _ := range scf.SvcNameBak {
+		q := service.Service{
+			Pub: public.Public{
+				SecretId: md.Sid,
+				Region:   md.Region,
+			},
+			ClusterId:   md.ClusterID,
+			Namespace:   scf.Namespace,
+			ServiceName: k,
+			SecretKey:   md.Skey,
+		}
+
+		q.SetDebug(true)
+
+		q.DeleteService()
 	}
 
-	if smd.Code != 0 {
-		tool.ReturnError(w, errors.New(smd.Message))
+	err = container.DeleteAllContaienrUnderSvc(scf.Name, scf.Namespace)
+	if err != nil {
+		tool.ReturnError(w, err)
 		return
 	}
 
