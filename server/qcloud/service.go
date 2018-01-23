@@ -250,6 +250,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		case 2:
 			q.AccessType = "SvcLBTypeInner"
 		}
+	} else {
+		q.AccessType = "None"
 	}
 
 	var cons []service.Containers
@@ -281,15 +283,32 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 		var hk []service.HealthCheck
 
-		for _, n := range cn.Net {
+		/*如果对外提供网络端口，则使用TCP的健康检测，否则使用CMD方式的健康检测*/
+		if len(cn.Net) > 0 {
+			for _, n := range cn.Net {
+				shk := service.HealthCheck{
+					Type:        service.LiveCheck,
+					UnhealthNum: 5,
+					DelayTime:   30,
+					CheckMethod: service.CheckMethodTCP,
+				}
+				shk.GenerateTCPCheck(n.InPort)
+
+				hk = append(hk, shk)
+				shk.Type = service.ReadyCheck
+				hk = append(hk, shk)
+			}
+		} else {
+			/*当前默认使用ps -ef |grep svcname来作为*/
 			shk := service.HealthCheck{
 				Type:        service.LiveCheck,
 				UnhealthNum: 5,
 				DelayTime:   30,
-				CheckMethod: service.CheckMethodTCP,
+				CheckMethod: service.CheckMethodCmd,
 			}
-			shk.GenerateTCPCheck(n.InPort)
-
+			cmd := fmt.Sprintf("/bin/sh -c \"ps -ef | grep %s |grep -v grep\"", cf.Name)
+			log.Printf("[RunService] Cmd Check [%s]\n", cmd)
+			shk.GenerateCmdCheck(cmd)
 			hk = append(hk, shk)
 			shk.Type = service.ReadyCheck
 			hk = append(hk, shk)
@@ -311,6 +330,14 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	resp, err := q.CreateNewSerivce()
 	if err != nil {
 		tool.ReturnError(w, err)
+		return
+	}
+
+	if resp.Code != 0 {
+		cf.Deploy = 4
+		cf.Msg = resp.Message
+		svcconf.UpdateSvcConf(cf)
+		tool.ReturnError(w, errors.New(resp.Message))
 		return
 	}
 
@@ -1229,6 +1256,13 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 
 		if errIdx == 3 {
 			scf.Deploy = 4
+			break
+		}
+
+		/*需要判断K8s是否出错,以免出现无效查询*/
+		if resp.Code != 0 {
+			scf.Deploy = 4
+			scf.Msg = resp.Message
 			break
 		}
 
