@@ -25,7 +25,7 @@ type SvcConf struct {
 	Netconf       []container.NetConfigure `json:"netconf"`
 	Status        int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
 	Msg           string                   `json:"msg"`
-	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成 6-回滚中
+	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成 6 - 数据同步 7-回滚中
 	Instance      []SvcInstance            `json:"instance"`
 	LbConfig      LoadBlance               `json:"lb_config"`
 	BackID        string                   `json:"back_id"`
@@ -62,6 +62,8 @@ func (scf *SvcConf) ToString() (out string) {
 	out += fmt.Sprintf("ID:[%s]\n", scf.Id.Hex())
 	out += fmt.Sprintf("Name:[%s]\n", scf.Name)
 	out += fmt.Sprintf("Desc:[%s]\n", scf.Desc)
+	out += fmt.Sprintf("SvcName:[%s]\n", scf.SvcName)
+	out += fmt.Sprintf("SvcNameBak:[%v]\n", scf.SvcNameBak)
 	out += fmt.Sprintf("Replicas:[%d]\n", scf.Replicas)
 	out += fmt.Sprintf("Namespace:[%s]\n", scf.Namespace)
 	for _, n := range scf.Netconf {
@@ -81,6 +83,7 @@ func (scf *SvcConf) ToString() (out string) {
 	return
 }
 
+// 将当前结构体的数据复制给tcp
 func (scf *SvcConf) Copy(tcp *SvcConf) {
 	tcp.Id = scf.Id
 	tcp.Name = scf.Name
