@@ -1514,7 +1514,7 @@
           "container"
         ],
         "summary": "检查容器配置数据是否存在",
-        "description": "如果配置数据不存在则直接创建, 如果已经存在则进行更新",
+        "description": "如果配置数据不存在则直接创建, 如果已经存在则进行更新. 如果上传端口，则使用TCP类型的健康/准备检查。 如果没有对外网络端口，则使用CMD方式的健康/准备检查。 当前的CMD为 \"ps -ef |grep [svc name]|grep -v grep\" ",
         "produces": [
           "application/json"
         ],
