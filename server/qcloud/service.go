@@ -39,6 +39,14 @@ func setChan(gc string) {
 	globalMap[gc] = make(chan int)
 }
 
+// closeChan 关闭并且删除
+func closeChan(gc string) {
+	if c, ok := globalMap[gc]; ok {
+		close(c)
+		delete(globalMap, gc)
+	}
+
+}
 func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	var id string
@@ -800,12 +808,12 @@ func RollingUpServiceWithSvc(w http.ResponseWriter, r *http.Request) {
 	scp := 0.5
 	scope := r.URL.Query().Get("percent")
 	if scope != "" {
-		scp, err := strconv.Atoi(scope)
-		if err != nil {
-			scp = scp / 100
+		sc, err := strconv.Atoi(scope)
+		if err == nil {
+			scp = float64(sc) / float64(100)
 		}
 	}
-
+	log.Printf("[RollingUpServiceWithSvc] Need Rolling Up [%v] Services\n", scp)
 	scf, err := svcconf.GetSvcConfByName(svc, namespace)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -835,6 +843,7 @@ func RollingUpServiceWithSvc(w http.ResponseWriter, r *http.Request) {
 	RunService(w, r)
 
 	<-getChan(scf.SvcName)
+	closeChan(scf.SvcName)
 
 	/*开始缩容*/
 	/*在RunService中已经修改了部分状态,所以更新当前服务状态*/
@@ -908,29 +917,86 @@ func ConfirmRollService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if scf.Deploy != 3 {
+	/*只有当前可用实例为0，并且状态为滚动部署完成时才可以使用确认功能*/
+	if scf.Deploy != 5 || len(scf.Instance) != 0 {
 		tool.ReturnError(w, errors.New(_const.NotRollingUP))
 		return
 	}
 
-	for _, i := range scf.Instance {
-		if i.Status != 4 {
-			tool.ReturnError(w, errors.New(_const.NotAllInstanceRollingUP))
-			return
-		}
-	}
-
-	scf.Deploy = 1
-	for i, _ := range scf.Instance {
-		scf.Instance[i].Status = 1
-	}
-
-	err = svcconf.UpdateSvcConf(scf)
+	/*随机挑选一个服务，然后将实例数扩展为预定值*/
+	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
+	sn := ""
+	for k, _ := range scf.SvcNameBak {
+		sn = k
+		break
+	}
+
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId:   md.ClusterID,
+		ServiceName: sn,
+		Namespace:   scf.Namespace,
+		ScaleTo:     scf.Replicas,
+		SecretKey:   md.Skey,
+	}
+
+	q.SetDebug(true)
+	q.Replicas = scf.Replicas
+	_, err = q.ModeifyInstance()
+	if err != nil {
+		tool.ReturnError(w, err)
+		return
+	}
+	go func(esn string, scf *svcconf.SvcConf) {
+		// esn 是正在确认的服务,不需要删除
+		for s, _ := range scf.SvcNameBak {
+			if s != esn {
+				q := service.Service{
+					Pub: public.Public{
+						SecretId: md.Sid,
+						Region:   md.Region,
+					},
+					ClusterId:   md.ClusterID,
+					ServiceName: s,
+					Namespace:   scf.Namespace,
+					ScaleTo:     scf.Replicas,
+					SecretKey:   md.Skey,
+				}
+
+				q.SetDebug(true)
+				q.DeleteService()
+			}
+		}
+
+		q := service.Service{
+			Pub: public.Public{
+				SecretId: md.Sid,
+				Region:   md.Region,
+			},
+			ClusterId:   md.ClusterID,
+			ServiceName: scf.SvcName,
+			Namespace:   scf.Namespace,
+			ScaleTo:     scf.Replicas,
+			SecretKey:   md.Skey,
+		}
+		q.SetDebug(true)
+		q.DeleteService()
+	}(sn, scf)
+	scf.Deploy = 8
+	svcconf.UpdateSvcConf(scf)
+	asyncQueryServiceStatus(sn, scf.Namespace, q, scf, nil, nil)
+	scf.Deploy = 1
+	scf.SvcName = sn
+	scf.SvcNameBak = nil
+	svcconf.UpdateSvcConf(scf)
 	tool.ReturnResp(w, []byte("Confirm Success"))
 	return
 }

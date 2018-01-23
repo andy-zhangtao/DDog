@@ -25,7 +25,7 @@ type SvcConf struct {
 	Netconf       []container.NetConfigure `json:"netconf"`
 	Status        int                      `json:"status"` // 0 - 处理成功 1 - 准备解析网络配置 2 - 开始解析网络配置 3 - 网络解析配置失败
 	Msg           string                   `json:"msg"`
-	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成 6 - 数据同步 7-回滚中
+	Deploy        int                      `json:"deploy"` // 0 - 未部署 1 - 部署成功 2 - 部署中 3 - 蓝绿部署中 4 - 部署失败 5-滚动部署部分完成 6 - 数据同步 7-回滚中 8-升级确认中
 	Instance      []SvcInstance            `json:"instance"`
 	LbConfig      LoadBlance               `json:"lb_config"`
 	BackID        string                   `json:"back_id"`
@@ -248,6 +248,7 @@ func GenerateNetconifg(scf *SvcConf) (err error) {
 // 返回挑选出来需要升级的实例名称,同时返回剩余可以用于升级的实例个数
 // 在更新Service—Config状态时需要同时知道哪些Instance是本次升级的，哪些Instance是本次挑选时落选的,因此把落选Instance一并返回
 func (sc *SvcConf) CountInstances(scope float64) ([]string, []string, int) {
+
 	/*先检索当前还没有升级的实例个数*/
 	var instances []SvcInstance
 	for _, is := range sc.Instance {
@@ -260,6 +261,7 @@ func (sc *SvcConf) CountInstances(scope float64) ([]string, []string, int) {
 	var leftName []string
 
 	maxNumber := math.Ceil(scope * float64(len(instances)))
+	log.Printf("[CountInstance] Ready Roll Up [%v] Service, In Face I Can Support [%v] Services \n", scope, maxNumber)
 	number := int(maxNumber)
 	if number > 0 {
 		for i := 0; i < number; i ++ {

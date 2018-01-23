@@ -172,6 +172,11 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if scf == nil{
+		tool.ReturnError(w, errors.New(_const.SVCNoExist))
+		return
+	}
+
 	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		tool.ReturnError(w, err)
