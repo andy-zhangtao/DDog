@@ -32,7 +32,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "358223fff891791ac786e9678bd661ba9d5a926f"
+  revision = "0c57f1f5852ca7ac98952c38f249d310bfbc0743"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -48,8 +48,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "374dc5743f05003f25d7c21e7ff94784d2726276"
-  version = "v3.3.0-rc.3"
+  revision = "ea6360f5508aa1d32281d184319a41097b7dd79c"
+  version = "v3.3.0-rc.4"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -83,7 +83,7 @@
     "ptypes/duration",
     "ptypes/timestamp"
   ]
-  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
+  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -133,7 +133,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
+  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
 
 [[projects]]
   branch = "master"
@@ -160,7 +160,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "a8101f21cf983e773d0c1133ebc5424792003214"
+  revision = "4eb30f4778eed4c258ba66527a0d4f9ec8a36c45"
 
 [[projects]]
   name = "google.golang.org/grpc"
