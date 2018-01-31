@@ -153,6 +153,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 // svcname 服务配置名称, 此名称应该在创建服务之前首先创建。
 // namespace 命名空间名称, 如果为空则为默认值
 // upgrade 是否为升级操作. 默认为false。
+// 在创建服务前，会尝试关闭正在运行的服务
 // 当在创建服务时，会使用以下默认参数
 // 1. 默认启用健康检查和准备就绪检查。
 // 2. 上述两种检查使用TCP端口检查方式
@@ -222,6 +223,28 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cf.SvcName = sn
 	}
+
+	if cf.SvcName != "" {
+		go func() {
+			q := service.Service{
+				Pub: public.Public{
+					SecretId: md.Sid,
+					Region:   md.Region,
+				},
+				ClusterId:   md.ClusterID,
+				ServiceName: cf.SvcName,
+				Namespace:   cf.Namespace,
+				SecretKey:   md.Skey,
+			}
+
+			_, err := q.DeleteService()
+			if err != nil {
+				tool.ReturnError(w, err)
+				return
+			}
+		}()
+	}
+
 	q := service.Service{
 		Pub: public.Public{
 			SecretId: md.Sid,
@@ -327,7 +350,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			ContainerName: cnns.Name,
 			Image:         cnns.Img,
 			//HealthCheck:   hk,
-			Envs:          cnns.Env,
+			Envs: cnns.Env,
 		})
 	}
 

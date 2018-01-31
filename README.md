@@ -23,6 +23,9 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
+### v0.5.1
+* 在创建服务之前会尝试删除当前正在运行的服务
+
 ### v0.1.2
 
 * 剥离服务扫描功能
