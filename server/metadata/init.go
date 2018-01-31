@@ -21,20 +21,20 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var md metadata.MetaData
-	err = json.Unmarshal(data, &md)
+	var tmd metadata.MetaData
+	err = json.Unmarshal(data, &tmd)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
-	if md, err := metadata.GetMetaDataByRegion(md.Region); err != nil {
+	if md, err := metadata.GetMetaDataByRegion(tmd.Region); err != nil {
 		tool.ReturnError(w, err)
 		return
-	} else if md.Sid != "" {
+	} else if md != nil {
 		tool.ReturnError(w, errors.New(_const.MetaDataDupilcate))
 		return
-	} else if err = metadata.SaveMetaData(*md); err != nil {
+	} else if err = metadata.SaveMetaData(tmd); err != nil {
 		tool.ReturnError(w, err)
 		return
 	}

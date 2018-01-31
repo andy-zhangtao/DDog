@@ -27,6 +27,7 @@ func check() error {
 }
 
 func init() {
+	log.Println("=====Connect Mongo=====")
 	err := check()
 	if err != nil {
 		log.Panic(err)
@@ -83,7 +84,7 @@ func FindMetaDataByRegion(region string) (md interface{}, err error) {
 }
 
 // FindAllMetaData 检索所有的MetaData数据
-func FindAllMetaData()(md []interface{}, err error){
+func FindAllMetaData() (md []interface{}, err error) {
 	err = MongoMetadataCol().Find(nil).All(&md)
 	return
 }

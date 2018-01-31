@@ -13,6 +13,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/container"
 	"strings"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"os"
 )
 
 func CreateContainer(w http.ResponseWriter, r *http.Request) {
@@ -162,6 +163,16 @@ func checkContainer(con *container.Container) error {
 
 	if con.Idx == 0 {
 		con.Idx = 1
+	}
+
+	if con.Env == nil {
+		con.Env = map[string]string{
+			"svcname": con.Svc,
+			"log_opt": os.Getenv(_const.EnvDefaultLogOpt),
+		}
+	} else {
+		con.Env["svcname"] = con.Svc
+		con.Env["log_opt"] = os.Getenv(_const.EnvDefaultLogOpt)
 	}
 
 	return nil

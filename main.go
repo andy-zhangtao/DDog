@@ -3,9 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
-
-	"github.com/andy-zhangtao/DDog/server/dns"
-	_ "github.com/andy-zhangtao/DDog/server/etcd"
+	//"github.com/andy-zhangtao/DDog/server/dns"
+	//_ "github.com/andy-zhangtao/DDog/server/etcd"
 	_ "github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -17,12 +16,14 @@ import (
 	"os"
 	"github.com/andy-zhangtao/DDog/server/container"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
+	"fmt"
 )
 
 var _VERSION_ = "v0.1.1"
 var _APIVERSION_ = "/v1"
 
 func main() {
+	fmt.Println("===================")
 	log.Println(getVersion())
 	region := os.Getenv(_const.EnvRegion)
 	if region == "" {
@@ -101,10 +102,10 @@ func namespaceAPI(r *mux.Router) *mux.Router {
 }
 
 func dnsAPI(r *mux.Router) *mux.Router {
-	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.SaveDNS).Methods(http.MethodPost)
-	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.DeleDNS).Methods(http.MethodDelete)
-	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.GetDNS).Methods(http.MethodGet)
-	r.HandleFunc(getApiPath(_const.AddSvcIP), handler.AddSvcDnsAR).Methods(http.MethodPost)
+	//r.HandleFunc(getApiPath(_const.DnsMetaData), dns.SaveDNS).Methods(http.MethodPost)
+	//r.HandleFunc(getApiPath(_const.DnsMetaData), dns.DeleDNS).Methods(http.MethodDelete)
+	//r.HandleFunc(getApiPath(_const.DnsMetaData), dns.GetDNS).Methods(http.MethodGet)
+	//r.HandleFunc(getApiPath(_const.AddSvcIP), handler.AddSvcDnsAR).Methods(http.MethodPost)
 	return r
 }
 
