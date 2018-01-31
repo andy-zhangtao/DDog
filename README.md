@@ -20,3 +20,11 @@ A tool for auto generate coredns configure file
 - DDOG_MONGO_NAME: mongo用户名 
 - DDOG_MONGO_PASSWD: mongo口令
 - DDOG_DEBUG: 是否输出调试信息,默认为false
+
+# Change Log
+
+### v0.1.2
+
+* 剥离服务扫描功能
+* 配合Docker Logging Plugin(logchain)，增加默认环境变量
+* 去掉健康检测和就绪检测
