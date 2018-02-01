@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/andy-zhangtao/DDog/const"
 	"math"
+	"github.com/Sirupsen/logrus"
 )
 
 // SvcConf 服务配置信息
@@ -196,9 +197,12 @@ func SaveSvcConf(scf *SvcConf) error {
 }
 
 func UpdateSvcConf(scf *SvcConf) error {
-	if _const.DEBUG {
-		log.Printf("[UpdateSvcConf mongo.go] DeleteSvcConfById [%s]\n", scf.Id.Hex())
-	}
+	//if _const.DEBUG {
+	//	log.Printf("[UpdateSvcConf mongo.go] DeleteSvcConfById [%s]\n", scf.Id.Hex())
+	//}
+	logrus.WithFields(logrus.Fields{
+		"svc_conf_id": scf.Id.Hex(),
+	}).Info("DeleteSvcConfById")
 	err := mongo.DeleteSvcConfById(scf.Id.Hex())
 	if err != nil {
 		return err

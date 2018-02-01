@@ -23,6 +23,9 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
+### v0.5.2 (pre-release)
+* 使用logrus日志框架替换原生log框架
+
 ### v0.5.1
 * 在创建服务之前会尝试删除当前正在运行的服务
 

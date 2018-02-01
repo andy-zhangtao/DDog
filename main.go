@@ -20,8 +20,9 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-var _VERSION_ = "v0.5.2"
+var _VERSION_ = "-unknown-"
 var _APIVERSION_ = "/v1"
+var _INNER_VERSION_ = "v0.5.2"
 
 func init() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
@@ -55,7 +56,7 @@ func main() {
 }
 
 func getVersion() string {
-	return _VERSION_
+	return _INNER_VERSION_ + _VERSION_
 }
 
 func getApiPath(url string) string {
@@ -97,8 +98,8 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.QuerySvcStatus), qcloud.GetSampleSVCInfo).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.UpdateSvcConfig), svcconf.UpdateNetPort).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.RollUpService), qcloud.RollingUpServiceWithSvc).Methods(http.MethodPost)
-	r.HandleFunc(getApiPath(_const.ConfirmService), qcloud.ConfirmRollService).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.RollBackService), qcloud.RollBackService).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.ConfirmService), qcloud.ConfirmRollService).Methods(http.MethodPost)
 	return r
 }
 

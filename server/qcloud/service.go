@@ -154,7 +154,6 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 // svcname 服务配置名称, 此名称应该在创建服务之前首先创建。
 // namespace 命名空间名称, 如果为空则为默认值
 // upgrade 是否为升级操作. 默认为false。
-// 在创建服务前，会尝试关闭正在运行的服务
 // 当在创建服务时，会使用以下默认参数
 // 1. 默认启用健康检查和准备就绪检查。
 // 2. 上述两种检查使用TCP端口检查方式
@@ -200,9 +199,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if _const.DEBUG {
-		log.Printf("[RunService] Svc Conf [%v]\n", cf)
-	}
+	//if _const.DEBUG {
+	//	log.Printf("[RunService] Svc Conf [%v]\n", cf)
+	//}
+
+	logrus.WithFields(logrus.Fields{
+		"svc_conf": cf,
+	}).Info("RunService")
 
 	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
@@ -225,34 +228,34 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		cf.SvcName = sn
 	}
 
-	if cf.SvcName != "" {
-		go func() {
-			q := service.Service{
-				Pub: public.Public{
-					SecretId: md.Sid,
-					Region:   md.Region,
-				},
-				ClusterId:   md.ClusterID,
-				ServiceName: cf.SvcName,
-				Namespace:   cf.Namespace,
-				SecretKey:   md.Skey,
-			}
-
-			resp, err := q.DeleteService()
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"error":err.Error(),
-				}).Error("Delete Service Error")
-			}
-
-			if resp.Code != 0 {
-				logrus.WithFields(logrus.Fields{
-					"resp_code":resp.Code,
-					"resp_reason":resp.Message,
-				}).Warn("Delete Service Failed")
-			}
-		}()
-	}
+	//if cf.SvcName != "" {
+	//	go func() {
+	//		q := service.Service{
+	//			Pub: public.Public{
+	//				SecretId: md.Sid,
+	//				Region:   md.Region,
+	//			},
+	//			ClusterId:   md.ClusterID,
+	//			ServiceName: cf.SvcName,
+	//			Namespace:   cf.Namespace,
+	//			SecretKey:   md.Skey,
+	//		}
+	//
+	//		resp, err := q.DeleteService()
+	//		if err != nil {
+	//			logrus.WithFields(logrus.Fields{
+	//				"error": err.Error(),
+	//			}).Error("Delete Service Error")
+	//		}
+	//
+	//		if resp.Code != 0 {
+	//			logrus.WithFields(logrus.Fields{
+	//				"resp_code":   resp.Code,
+	//				"resp_reason": resp.Message,
+	//			}).Warn("Delete Service Failed")
+	//		}
+	//	}()
+	//}
 
 	q := service.Service{
 		Pub: public.Public{
@@ -629,9 +632,15 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 		r.URL.RawQuery = oldPath + "&upgrade=false"
 	}
 
-	if _const.DEBUG {
-		log.Printf("[DeployService] Deploy Type [%v] [%s] [%s]\n", isUpgrade, r.URL.String(), oldPath)
-	}
+	//if _const.DEBUG {
+	//	log.Printf("[DeployService] Deploy Type [%v] [%s] [%s]\n", isUpgrade, r.URL.String(), oldPath)
+	//}
+
+	logrus.WithFields(logrus.Fields{
+		"isUpgrade": isUpgrade,
+		"url":       r.URL.String(),
+		"oldPath":   oldPath,
+	}).Info("DeployService")
 
 	RunService(w, r)
 
@@ -941,6 +950,7 @@ func RollingUpServiceWithSvc(w http.ResponseWriter, r *http.Request) {
 		tool.ReturnError(w, err)
 		return
 	}
+
 	/*当前ScaleTo的值就是预期的实例数,如果不赋值，在异步采集状态时，就会直接退出*/
 	q.Replicas = left
 	var plugin = func(scf *svcconf.SvcConf, data interface{}) {

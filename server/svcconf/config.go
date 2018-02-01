@@ -19,6 +19,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/Sirupsen/logrus"
 )
 
 // CPort 容器端口数据
@@ -172,7 +173,7 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if scf == nil{
+	if scf == nil {
 		tool.ReturnError(w, errors.New(_const.SVCNoExist))
 		return
 	}
@@ -213,7 +214,21 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 
 		q.SetDebug(true)
 
-		q.DeleteService()
+		resp, err := q.DeleteService()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error":   err.Error(),
+				"svcname": k,
+			}).Error("Delete Service Error")
+		}
+
+		if resp.Code != 0 {
+			logrus.WithFields(logrus.Fields{
+				"resp_code": resp.Code,
+				"svcname":   k,
+				"msg":       resp.Message,
+			}).Warn("Delete Service Failed")
+		}
 	}
 
 	err = container.DeleteAllContaienrUnderSvc(scf.Name, scf.Namespace)
