@@ -17,14 +17,24 @@ import (
 	"github.com/andy-zhangtao/DDog/server/container"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 )
 
-var _VERSION_ = "v0.1.1"
+var _VERSION_ = "v0.5.2"
 var _APIVERSION_ = "/v1"
+
+func init() {
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.DebugLevel)
+}
 
 func main() {
 	fmt.Println("===================")
-	log.Println(getVersion())
+	logrus.WithFields(logrus.Fields{
+		"version": getVersion(),
+	}).Info("DDOG VERSION")
+	//logrus.Println(getVersion())
 	region := os.Getenv(_const.EnvRegion)
 	if region == "" {
 		log.Panic(_const.EnvRegionNotFound)

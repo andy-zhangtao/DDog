@@ -22,6 +22,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"time"
+	"github.com/Sirupsen/logrus"
 )
 
 var globalChan chan int
@@ -237,10 +238,18 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 				SecretKey:   md.Skey,
 			}
 
-			_, err := q.DeleteService()
+			resp, err := q.DeleteService()
 			if err != nil {
-				tool.ReturnError(w, err)
-				return
+				logrus.WithFields(logrus.Fields{
+					"error":err.Error(),
+				}).Error("Delete Service Error")
+			}
+
+			if resp.Code != 0 {
+				logrus.WithFields(logrus.Fields{
+					"resp_code":resp.Code,
+					"resp_reason":resp.Message,
+				}).Warn("Delete Service Failed")
 			}
 		}()
 	}
