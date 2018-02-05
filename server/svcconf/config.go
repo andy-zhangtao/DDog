@@ -20,6 +20,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/Sirupsen/logrus"
+	"github.com/andy-zhangtao/DDog/bridge"
 )
 
 // CPort 容器端口数据
@@ -28,6 +29,10 @@ type CPort struct {
 	Img  string                   `json:"img"`
 	Net  []container.NetConfigure `json:"net"`
 }
+
+const (
+	ModuleName = "svcconf"
+)
 
 func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 
@@ -151,6 +156,9 @@ func QuerySvcConf(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 
 }
+
+// DeleteSvcConf 销毁服务配置
+// 销毁服务所有资源,包括数据库资源, 服务实例资源
 func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 	svc := r.URL.Query().Get("svcname")
 	if svc == "" {
@@ -165,6 +173,25 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
 			return
 		}
+	}
+
+	data, err := json.Marshal(_const.DestoryMsg{
+		Svcname:   svc,
+		Namespace: namespace,
+	})
+
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"Marshal DestoryMsg Error":err,
+		}).Error(ModuleName)
+		tool.ReturnError(w, errors.New(err.Error()))
+		return
+	}
+
+	err = bridge.SendDestoryMsg(string(data))
+	if err != nil{
+		tool.ReturnError(w, errors.New(err.Error()))
+		return
 	}
 
 	scf, err := svcconf.GetSvcConfByName(svc, namespace)

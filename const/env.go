@@ -3,7 +3,7 @@ package _const
 import (
 	"os"
 	"strconv"
-	"log"
+	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -21,6 +21,7 @@ const (
 	EnvK8sEndpoint   = "DDOG_K8S_ENDPOINT"
 	EnvK8sToken      = "DDOG_K8S_TOKEN"
 	EnvDefaultLogOpt = "DDOG_LOG_OPT"
+	EnvNsqdEndpoint  = "DDOG_NSQD_ENDPOINT"
 )
 
 var DEBUG = false
@@ -63,18 +64,25 @@ func init() {
 
 	K8sEndpoint = os.Getenv(EnvK8sEndpoint)
 	if K8sEndpoint == "" {
-		log.Println("DDOG_K8S_ENDPOINT Empty!")
+		logrus.Println("DDOG_K8S_ENDPOINT Empty!")
 	}
 
 	K8sToken = os.Getenv(EnvK8sToken)
 	if K8sToken == "" {
-		log.Println("DDOG_K8S_TOKEN Empty! ")
+		logrus.Println("DDOG_K8S_TOKEN Empty! ")
 	}
 
-	log.Printf("默认命名空间[%s]\n", DefaultNameSpace)
+	logrus.Printf("默认命名空间[%s]", DefaultNameSpace)
 	if DEBUG {
-		log.Println("启动DEBUG模式")
+		logrus.Println("启动DEBUG模式")
 	} else {
-		log.Println("关闭DEBUG模式")
+		logrus.Println("关闭DEBUG模式")
 	}
+
+	if os.Getenv(EnvNsqdEndpoint) == "" {
+		logrus.WithFields(logrus.Fields{
+			"Env Empty": EnvNsqdEndpoint,
+		}).Panic(EnvNsqdEndpoint)
+	}
+
 }

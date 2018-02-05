@@ -12,9 +12,8 @@ A tool for auto generate coredns configure file
 - DDOG_MONGO_DB: mongo数据库名称
 - DDOG_REGION: 集群所在区域   
 - DDOG_MONGO_ENDPOINT: mongo链接信息
-- DDOG_ETCD_ENDPOINT：ETCD链接信息
-- DDOG_GOBLIN_ENDPOINT: Goblin地址 (与docker daemon进行交互,解析镜像网络信息)
 - DDOG_NAME_SPACE: 默认命名空间
+- DDOG_NSQD_ENDPOINT: NSQ链接地址
    
 以下变量为可选项
 - DDOG_MONGO_NAME: mongo用户名 
@@ -23,8 +22,10 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
-### v0.5.2 (pre-release)
+
+### v0.6.1
 * 使用logrus日志框架替换原生log框架
+* 使用Nsq作为任务分发工具
 
 ### v0.5.1
 * 在创建服务之前会尝试删除当前正在运行的服务
