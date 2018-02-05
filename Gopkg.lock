@@ -54,8 +54,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "ea6360f5508aa1d32281d184319a41097b7dd79c"
-  version = "v3.3.0-rc.4"
+  revision = "c23606781f63d09917a1e7abfcefeb337a9608ea"
+  version = "v3.3.0"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -76,8 +76,8 @@
     "proto",
     "protoc-gen-gogo/descriptor"
   ]
-  revision = "342cbe0a04158f6dcb03ca0079991a51a4248c02"
-  version = "v0.5"
+  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -90,6 +90,12 @@
   ]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  revision = "553a641470496b2327abcac10b36396bd98e45c9"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -108,6 +114,12 @@
   packages = ["."]
   revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
   version = "v1.6.1"
+
+[[projects]]
+  name = "github.com/nsqio/go-nsq"
+  packages = ["."]
+  revision = "eee57a3ac4174c55924125bb15eeeda8cffb6e6f"
+  version = "v1.0.7"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -145,7 +157,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "0ed95abb35c445290478a5348a7b38bb154135fd"
+  revision = "2fb46b16b8dda405028c50f7c7f0f9dd1fa6bfb1"
 
 [[projects]]
   branch = "master"
@@ -154,7 +166,7 @@
     "unix",
     "windows"
   ]
-  revision = "3dbebcf8efb6a5011a60c2b4591c1022a759af8a"
+  revision = "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 
 [[projects]]
   branch = "master"
@@ -228,6 +240,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "758a7cd12e97ce389909ea6d143d6525b95c3830ee83c0744cdb0485001c8b87"
+  inputs-digest = "69eb19a29ebd2347cd0c3415a92117f24d78d112c5226f6ea2eac80f66c3e5ad"
   solver-name = "gps-cdcl"
   solver-version = 1

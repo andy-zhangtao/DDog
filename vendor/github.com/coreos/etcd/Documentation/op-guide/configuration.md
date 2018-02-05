@@ -1,6 +1,11 @@
 # Configuration flags
 
-etcd is configurable through command-line flags and environment variables. Options set on the command line take precedence over those from the environment.
+etcd is configurable through a configuration file, various command-line flags, and environment variables.
+
+A reusable configuration file is a YAML file made with name and value of one or more command-line flags described below. In order to use this file, specify the file path as a value to the `--config-file` flag. The [sample configuration file][sample-config-file] can be used as a starting point to create a new configuration file as needed.
+
+Options set on the command line take precedence over those from the environment. If a configuration file is provided, other command line flags and environment variables will be ignored.
+For example, `etcd --config-file etcd.conf.yml.sample --data-dir /tmp` will ignore the `--data-dir` flag.
 
 The format of environment variable for flag `--my-flag` is `ETCD_MY_FLAG`. It applies to all flags.
 
@@ -266,12 +271,12 @@ The security flags help to [build a secure etcd cluster][security].
 + env variable: ETCD_PEER_CA_FILE
 
 ### --peer-cert-file
-+ Path to the peer server TLS cert file.
++ Path to the peer server TLS cert file. This is the cert for peer-to-peer traffic, used both for server and client.
 + default: ""
 + env variable: ETCD_PEER_CERT_FILE
 
 ### --peer-key-file
-+ Path to the peer server TLS key file.
++ Path to the peer server TLS key file. This is the key for peer-to-peer traffic, used both for server and client.
 + default: ""
 + env variable: ETCD_PEER_KEY_FILE
 
@@ -332,6 +337,7 @@ Follow the instructions when using these flags.
 ### --config-file
 + Load server configuration from a file.
 + default: ""
++ example: [sample configuration file][sample-config-file]
 
 ## Profiling flags
 
@@ -369,3 +375,4 @@ Follow the instructions when using these flags.
 [security]: security.md
 [systemd-intro]: http://freedesktop.org/wiki/Software/systemd/
 [tuning]: ../tuning.md#time-parameters
+[sample-config-file]: ../../etcd.conf.yml.sample
