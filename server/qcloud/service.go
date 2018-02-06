@@ -69,7 +69,6 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	var nsme string
 	name := r.URL.Query().Get("svcname")
 	if name != "" {
-		//	如果上传服务名称，则直接重新部署此服务
 		nsme = r.URL.Query().Get("namespace")
 		if nsme == "" {
 			nsme = _const.DefaultNameSpace
@@ -125,22 +124,22 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch scf.Deploy {
-	case 0:
+	case _const.NeedDeploy:
 		ss.Status = "ready for deploy"
-	case 1:
+	case _const.DeploySuc:
 		ss.Status = "normal"
 		ss.ULb = sm
-	case 2:
+	case _const.DeployIng:
 		ss.Status = "updating"
-	case 3:
+	case _const.BGDeployING:
 		ss.Status = "rolling fully complete"
 		ss.ULb = sm
-	case 4:
+	case _const.DeployFailed:
 		ss.Status = "failed"
-	case 5:
+	case _const.RollingUpIng:
 		ss.Status = "rolling partially complete"
 		ss.ULb = sm
-	case 6:
+	case _const.DeployStatusSync:
 		ss.Status = "rolling"
 	}
 
@@ -378,7 +377,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			ContainerName: cnns.Name,
 			Image:         cnns.Img,
 			HealthCheck:   hk,
-			Envs: cnns.Env,
+			Envs:          cnns.Env,
 		})
 	}
 
@@ -393,7 +392,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if resp.Code != 0 {
-		cf.Deploy = 4
+		cf.Deploy = _const.DeployFailed
 		cf.Msg = resp.Message
 		svcconf.UpdateSvcConf(cf)
 		tool.ReturnError(w, errors.New(resp.Message))
@@ -413,12 +412,12 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		isupgrade, _ := c["upgrade"].(bool)
 		sn, _ := c["rollsvc"].(string) /*本次升级的服务名*/
 
-		if isupgrade && scf.Deploy == 1 {
+		if isupgrade && scf.Deploy == _const.DeploySuc {
 			scf.SvcNameBak[sn] = scf.LbConfig
 			scf.LbConfig = tcf.LbConfig
 			//scf.Instance = tcf.Instance
 			scf.Netconf = tcf.Netconf
-			scf.Deploy = 6
+			scf.Deploy = _const.DeployStatusSync
 			svcconf.UpdateSvcConf(scf)
 		}
 		getChan(cf.SvcName) <- 1
@@ -432,7 +431,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		"rollsvc": sn,
 	}, plugin)
 
-	cf.Deploy = 2
+	cf.Deploy = _const.DeployIng
 	svcconf.UpdateSvcConf(cf)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("EQXC-Run-Svc", "200")
@@ -646,7 +645,7 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 	//	r.URL.RawQuery = oldPath + "&upgrade=false"
 	//}
 
-	r.URL.RawQuery = oldPath + "&upgrade=true"
+	r.URL.RawQuery = oldPath + "&upgrade=false"
 	logrus.WithFields(logrus.Fields{
 		"url":     r.URL.String(),
 		"oldPath": oldPath,
