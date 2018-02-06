@@ -23,6 +23,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"time"
 	"github.com/Sirupsen/logrus"
+	"github.com/andy-zhangtao/DDog/bridge"
 )
 
 var globalChan chan int
@@ -199,13 +200,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//if _const.DEBUG {
-	//	log.Printf("[RunService] Svc Conf [%v]\n", cf)
-	//}
-
-	logrus.WithFields(logrus.Fields{
-		"svc_conf": cf,
-	}).Info("RunService")
+	logrus.WithFields(logrus.Fields{"svc_conf": cf,}).Info("RunService")
 
 	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
@@ -214,18 +209,36 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sn := cf.Name + "-" + gt.GetTimeStamp(10)
-	if cf.SvcName != "" {
-		/*当前存在正式服务，则此操作应该是升级操作*/
-		isUpgrade = true
-		if len(cf.SvcNameBak) == 0 {
-			cf.SvcNameBak = map[string]svcconf.LoadBlance{
-				sn: svcconf.LoadBlance{},
+	isUpgrade, err = strconv.ParseBool(r.URL.Query().Get("upgrade"))
+	if err != nil {
+		isUpgrade = false
+	}
+
+	if isUpgrade {
+		// 服务直接升级,不需要通过蓝绿发布
+		if cf.SvcName != "" {
+			data, _ := json.Marshal(_const.DestoryMsg{
+				Svcname:   cf.SvcName,
+				Namespace: cf.Namespace,
+			})
+			bridge.SendDestoryMsg(string(data))
+		}
+		cf.SvcName = sn
+	} else {
+		//蓝绿发布
+		if cf.SvcName != "" {
+			/*当前存在正式服务，则此操作应该是升级操作*/
+			isUpgrade = true
+			if len(cf.SvcNameBak) == 0 {
+				cf.SvcNameBak = map[string]svcconf.LoadBlance{
+					sn: svcconf.LoadBlance{},
+				}
+			} else {
+				cf.SvcNameBak[sn] = svcconf.LoadBlance{}
 			}
 		} else {
-			cf.SvcNameBak[sn] = svcconf.LoadBlance{}
+			cf.SvcName = sn
 		}
-	} else {
-		cf.SvcName = sn
 	}
 
 	//if cf.SvcName != "" {
@@ -590,56 +603,52 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	md, err := metadata.GetMetaDataByRegion("")
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-	q := service.Svc{
-		Pub: public.Public{
-			SecretId: md.Sid,
-			Region:   md.Region,
-		},
-		ClusterId: md.ClusterID,
-		Namespace: cf.Namespace,
-		SecretKey: md.Skey,
-	}
-	q.SetDebug(true)
-	resp, err := q.QuerySampleInfo()
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-
-	isUpgrade := false
-	for _, r := range resp.Data.Services {
-		if _const.DEBUG {
-			log.Printf("[DeployService] Find Svc Dist:[%s] Current:[%s]\n", cf.Name, r.ServiceName)
-		}
-		if strings.Compare(r.ServiceName, cf.Name) == 0 {
-			isUpgrade = true
-			break
-		}
-	}
-
+	//md, err := metadata.GetMetaDataByRegion("")
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
+	//q := service.Svc{
+	//	Pub: public.Public{
+	//		SecretId: md.Sid,
+	//		Region:   md.Region,
+	//	},
+	//	ClusterId: md.ClusterID,
+	//	Namespace: cf.Namespace,
+	//	SecretKey: md.Skey,
+	//}
+	//q.SetDebug(true)
+	//resp, err := q.QuerySampleInfo()
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
+	//
+	//isUpgrade := false
+	//for _, r := range resp.Data.Services {
+	//	if _const.DEBUG {
+	//		log.Printf("[DeployService] Find Svc Dist:[%s] Current:[%s]\n", cf.Name, r.ServiceName)
+	//	}
+	//	if strings.Compare(r.ServiceName, cf.Name) == 0 {
+	//		isUpgrade = true
+	//		break
+	//	}
+	//}
+	//
 	oldPath := r.URL.RawQuery + "&namespace=" + cf.Namespace
-
-	if isUpgrade {
-		// 进行蓝绿发布
-		r.URL.RawQuery = oldPath + "&upgrade=true"
-	} else {
-		// 同时发布
-		r.URL.RawQuery = oldPath + "&upgrade=false"
-	}
-
-	//if _const.DEBUG {
-	//	log.Printf("[DeployService] Deploy Type [%v] [%s] [%s]\n", isUpgrade, r.URL.String(), oldPath)
+	//
+	//if isUpgrade {
+	//	// 进行蓝绿发布
+	//	r.URL.RawQuery = oldPath + "&upgrade=true"
+	//} else {
+	//	// 同时发布
+	//	r.URL.RawQuery = oldPath + "&upgrade=false"
 	//}
 
+	r.URL.RawQuery = oldPath + "&upgrade=true"
 	logrus.WithFields(logrus.Fields{
-		"isUpgrade": isUpgrade,
-		"url":       r.URL.String(),
-		"oldPath":   oldPath,
+		"url":     r.URL.String(),
+		"oldPath": oldPath,
 	}).Info("DeployService")
 
 	RunService(w, r)

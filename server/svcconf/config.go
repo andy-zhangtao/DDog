@@ -682,18 +682,41 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
+	// 当只需要删除单个服务时(例如整体服务升级，不需要通过蓝绿发布时),此时服务名为 SVC-xxx格式
+	// 在数据库中肯定无法找到相对应的记录，因此数据库记录不作为必须条件
+	// 当数据库有记录时，删除其名下所有服务
+	// 当数据库没有记录时，直接删除当前服务
+	md, err := metadata.GetMetaDataByRegion("")
+	if err != nil {
+		return err
+	}
 	scf, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
 	if err != nil {
 		return err
 	}
 
 	if scf == nil {
-		return errors.New(_const.SVCNoExist)
-	}
+		q := service.Service{
+			Pub: public.Public{
+				SecretId: md.Sid,
+				Region:   md.Region,
+			},
+			ClusterId:   md.ClusterID,
+			Namespace:   msg.Namespace,
+			ServiceName: msg.Svcname,
+			SecretKey:   md.Skey,
+		}
 
-	md, err := metadata.GetMetaDataByRegion("")
-	if err != nil {
-		return err
+		q.SetDebug(true)
+
+		resp, err := q.DeleteService()
+		if err != nil {
+			return err
+		}
+		if resp.Code != 0 {
+			return errors.New(resp.Message)
+		}
+		return nil
 	}
 
 	q := service.Service{
@@ -741,7 +764,7 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 				"resp_code": resp.Code,
 				"svcname":   k,
 				"msg":       resp.Message,
-			}).Warn("Delete Service Failed")
+			}).Error("Delete Service Failed")
 		}
 	}
 
