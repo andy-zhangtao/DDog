@@ -21,6 +21,8 @@ A tool for auto generate coredns configure file
 - DDOG_DEBUG: 是否输出调试信息,默认为false
 
 # Change Log
+### v0.6.2
+* DDog在创建服务时启用健康检测和就绪检测
 
 ### v0.6.1
 * DDog将所有log替换为logrus

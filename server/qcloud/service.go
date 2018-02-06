@@ -377,7 +377,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		cons = append(cons, service.Containers{
 			ContainerName: cnns.Name,
 			Image:         cnns.Img,
-			//HealthCheck:   hk,
+			HealthCheck:   hk,
 			Envs: cnns.Env,
 		})
 	}
