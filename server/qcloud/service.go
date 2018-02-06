@@ -17,7 +17,6 @@ import (
 	"github.com/andy-zhangtao/DDog/k8s"
 	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
 	gt "github.com/andy-zhangtao/gogather/time"
-	"log"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/model/metadata"
@@ -28,6 +27,10 @@ import (
 
 var globalChan chan int
 var globalMap map[string]chan int
+
+const (
+	ModuleName = "QCloud Service"
+)
 
 func getChan(gc string) (chan int) {
 	/*需要判断是否有不存在的chan，否则有可能会产生阻塞*/
@@ -92,7 +95,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	scf, err = svcconf.GetSvcConfByName(name, nsme)
 	if err != nil {
-		log.Printf("[GetSampleSVCInfo] GetSvcConfByName Error svc[%s] namespace[%s] \n", name, nsme)
+		logrus.WithFields(logrus.Fields{"Error": err, "svcname": name, "namespace": nsme, "Operation": "GetSampleSVCInfo"}).Info(ModuleName)
 		tool.ReturnError(w, err)
 		return
 	}
@@ -143,7 +146,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(&ss)
 	if err != nil {
-		log.Printf("[GetSampleSVCInfo] Convert Byte Error [%v]\n", ss)
+		logrus.WithFields(logrus.Fields{"Marshal Error": err, "origin data": ss, "Operation": "GetSampleSVCInfo"}).Info(ModuleName)
 		tool.ReturnError(w, err)
 	}
 
@@ -364,7 +367,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 				CheckMethod: service.CheckMethodCmd,
 			}
 			cmd := fmt.Sprintf("/bin/sh -c \"ps -ef | grep %s |grep -v grep\"", cf.Name)
-			log.Printf("[RunService] Cmd Check [%s]\n", cmd)
+			logrus.WithFields(logrus.Fields{"Cmd Check": cmd, "Operation": "RunService"}).Info(ModuleName)
 			shk.GenerateCmdCheck(cmd)
 			hk = append(hk, shk)
 			shk.Type = service.ReadyCheck
@@ -381,9 +384,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	q.Containers = cons
 
-	if _const.DEBUG {
-		log.Printf("[RunService] QCloud Request [%v] Object Deploy Type [%v] \n", q, isUpgrade)
-	}
+	logrus.WithFields(logrus.Fields{"QCloud Request": q, "Deploy Type": isUpgrade}).Info(ModuleName)
 
 	resp, err := q.CreateNewSerivce()
 	if err != nil {
@@ -748,7 +749,7 @@ func RollingUpService(w http.ResponseWriter, r *http.Request) {
 		for i, s := range ins {
 			ins[i].Status = 4
 			for _, n := range c {
-				log.Printf("[asyncQueryServiceStatus] Plugin new name [%s] old name [%s] compare[%v] \n", s.Name, n, s.Name != n)
+				logrus.WithFields(logrus.Fields{"New Name": s.Name, "Old Name": n}).Info(ModuleName)
 				if s.Name == n {
 					ins[i].Status = 1
 				}
@@ -866,7 +867,7 @@ func RollBackService(w http.ResponseWriter, r *http.Request) {
 		q.SetDebug(true)
 		_, err = q.DeleteService()
 		if err != nil {
-			log.Printf("[RollBackService] Delete Upgrade Server Error [%s]\n", err.Error())
+			logrus.WithFields(logrus.Fields{"Delete Upgrade Service Error": err}).Error(ModuleName)
 		}
 	}
 
@@ -901,7 +902,7 @@ func RollingUpServiceWithSvc(w http.ResponseWriter, r *http.Request) {
 			scp = float64(sc) / float64(100)
 		}
 	}
-	log.Printf("[RollingUpServiceWithSvc] Need Rolling Up [%v] Services\n", scp)
+	logrus.WithFields(logrus.Fields{"Need Rolling Up": scp}).Info(ModuleName)
 	scf, err := svcconf.GetSvcConfByName(svc, namespace)
 	if err != nil {
 		tool.ReturnError(w, err)
@@ -923,9 +924,7 @@ func RollingUpServiceWithSvc(w http.ResponseWriter, r *http.Request) {
 	/*创建升级服务*/
 	r.URL.RawQuery += fmt.Sprintf("&namespace=%s&replicas=%d", scf.Namespace, len(rollCons))
 
-	if _const.DEBUG {
-		log.Printf("[RollingUpServcieWithSvc] Request URL[%s]\n", r.URL.String())
-	}
+	logrus.WithFields(logrus.Fields{"Request URL": r.URL.String()}).Info(ModuleName)
 
 	setChan(scf.SvcName)
 	RunService(w, r)
@@ -1109,9 +1108,7 @@ func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[RunSvcGroup]clusterid:[%s]namespace:[%s]svcgroup:[%s]\n", clusterid, namespace, svcConfGroup)
-	}
+	logrus.WithFields(logrus.Fields{"clusterid": clusterid, "namespace": namespace, "svcgroup": svcConfGroup}).Info(ModuleName)
 
 	sg, err := mongo.GetSvcConfGroupByName(svcConfGroup, namespace)
 	if err != nil {
@@ -1125,9 +1122,7 @@ func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[RunSvcGroup]svcg:[%v]\n", svcg)
-	}
+	logrus.WithFields(logrus.Fields{"svcg": svcg}).Info(ModuleName)
 
 	svcPair := zsort.SortByValue(svcg.SvcGroup)
 	rawQuery := r.URL.RawQuery
@@ -1141,15 +1136,11 @@ func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 
 		r.URL.RawQuery = rawQuery + "&svcname=" + svcPair[i].Key
 
-		if _const.DEBUG {
-			log.Printf("[RunSvcGroup]Deploy svcname :[%s] All header:[%v] \n", svcPair[i].Key, r.URL.Query())
-		}
+		logrus.WithFields(logrus.Fields{"Deploy Svcname": svcPair[i].Key, "Header": r.URL.Query()}).Info(ModuleName)
 
 		w.Header().Del("EQXC-Run-Svc")
 		DeployService(w, r)
-		if _const.DEBUG {
-			log.Printf("[RunSvcGroup]Deploy svcname :[%s] Response:[%v] \n", svcPair[i].Key, w.Header())
-		}
+		logrus.WithFields(logrus.Fields{"Deploy SvcName": svcPair[i].Key, "Response": w.Header()}).Info(ModuleName)
 
 		if w.Header().Get("EQXC-Run-Svc") != "200" {
 			return
@@ -1182,9 +1173,7 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[UninstallSvcGroup]clusterid:[%s]namespace:[%s]svcgroup:[%s]\n", clusterid, namespace, svcConfGroup)
-	}
+	logrus.Printf("[UninstallSvcGroup]clusterid:[%s]namespace:[%s]svcgroup:[%s]\n", clusterid, namespace, svcConfGroup)
 
 	sg, err := mongo.GetSvcConfGroupByName(svcConfGroup, namespace)
 	if err != nil {
@@ -1198,9 +1187,7 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[UninstallSvcGroup]svcg:[%v]\n", svcg)
-	}
+	logrus.Printf("[UninstallSvcGroup]svcg:[%v]\n", svcg)
 
 	svcPair := zsort.SortByValue(svcg.SvcGroup)
 	rawQuery := r.URL.RawQuery
@@ -1214,15 +1201,11 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 	for i := len(svcPair) - 1; i >= 0; i -- {
 		r.URL.RawQuery = rawQuery + "&svcname=" + svcPair[i].Key
 
-		if _const.DEBUG {
-			log.Printf("[UninstallSvcGroup]Delete svcname :[%s] All header:[%v] \n", svcPair[i].Key, r.URL.Query())
-		}
+		logrus.Printf("[UninstallSvcGroup]Delete svcname :[%s] All header:[%v] \n", svcPair[i].Key, r.URL.Query())
 
 		w.Header().Del("EQXC-Run-Svc")
 		DeleteService(w, r)
-		if _const.DEBUG {
-			log.Printf("[UninstallSvcGroup]Delete svcname :[%s] Response:[%v] \n", svcPair[i].Key, w.Header())
-		}
+		logrus.Printf("[UninstallSvcGroup]Delete svcname :[%s] Response:[%v] \n", svcPair[i].Key, w.Header())
 
 		if w.Header().Get("EQXC-Run-Svc") != "200" {
 			return
@@ -1254,9 +1237,7 @@ func queryInstance(svc, namespace string) (instances []service.Instance, err err
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[queryInstance] Query Instance [%v] \n", resp)
-	}
+	logrus.Printf("[queryInstance] Query Instance [%v] \n", resp)
 
 	if resp.Code != 0 {
 		err = errors.New(resp.Message)
@@ -1294,9 +1275,7 @@ func queryInstanceUseK8s(svc, namespace string) (instances []service.Instance, e
 		})
 	}
 
-	if _const.DEBUG {
-		log.Printf("[queryInstanceUseK8s] K8s [%v]  instances [%v] \n", k8p, instances)
-	}
+	logrus.Printf("[queryInstanceUseK8s] K8s [%v]  instances [%v] \n", k8p, instances)
 	return
 
 }
@@ -1305,7 +1284,8 @@ func queryInstanceUseK8s(svc, namespace string) (instances []service.Instance, e
 // 当查询结束时会更新服务状态
 // plugin 是每次查询结束时的回调函数
 func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcconf.SvcConf, para interface{}, plugin func(conf *svcconf.SvcConf, param interface{})) {
-	log.Printf("[asyncQueryServiceStatus]ServiceConf[%v]\n", scf)
+	logrus.WithFields(logrus.Fields{"ServiceConf": scf}).Info(ModuleName)
+
 	errIdx := 0
 	jinx := 0 /*意想不到的崩溃次数,也作为失败的一种判断指标*/
 	scf.Msg = ""
@@ -1314,7 +1294,7 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 	for {
 		resp, err := q.QuerySvcInfo()
 		if err != nil {
-			log.Printf("[asyncQueryServiceStatus]QueryViaQCloud[%s]\n", err.Error())
+			logrus.WithFields(logrus.Fields{"QueryViaQCloud Error": err}).Error(ModuleName)
 			errIdx ++
 		}
 
@@ -1346,7 +1326,8 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 			}
 		}
 
-		log.Printf("[asyncQueryServiceStatus]Service Info Status [%s]\n", resp.Data.ServiceInfo.Status)
+		logrus.WithFields(logrus.Fields{"Service": resp.Data.ServiceInfo.ServiceName, "Status": resp.Data.ServiceInfo.Status}).Info(ModuleName)
+
 		if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
 			//先解析负载数据
 			lb := svcconf.LoadBlance{
@@ -1369,15 +1350,14 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 				if err != nil {
 					instances, err = queryInstanceUseK8s(svc, namespace)
 					if err != nil {
-						log.Printf("Error [asyncQueryServiceStatus]QueryInstance Error [%s] svc [%s] namespace [%s]\n", err.Error(), svc, namespace)
+						logrus.WithFields(logrus.Fields{"QueryInstance Error": err, "svc": svc, "namespace": namespace}).Error(ModuleName)
 						scf.Msg = err.Error()
 						errIdx ++
 					}
 				}
 
-				if _const.DEBUG {
-					log.Printf("[asyncQueryServiceStatus]QueryInstance [%v]\n", instances)
-				}
+				logrus.WithFields(logrus.Fields{"QueryInstance": instances}).Info(ModuleName)
+
 				var sic []svcconf.SvcInstance
 				for _, inc := range instances {
 					statusFlag := 0
@@ -1420,10 +1400,13 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 		}
 		time.Sleep(5 * time.Second)
 	}
-	log.Printf("[asyncQueryServiceStatus]Update ServiceConf[%v]\n", scf)
+
+	logrus.WithFields(logrus.Fields{"Update ServiceConf": scf}).Info(ModuleName)
+
 	if plugin != nil {
 		plugin(scf, para)
 	}
-	log.Printf("[asyncQueryServiceStatus]After Update ServiceConf[%s]\n", scf.ToString())
+	logrus.WithFields(logrus.Fields{"After Update ServiceConf": scf.ToString()}).Info(ModuleName)
+
 	svcconf.UpdateSvcConf(scf)
 }

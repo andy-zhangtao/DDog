@@ -4,9 +4,9 @@ import (
 	"os"
 	"github.com/andy-zhangtao/DDog/const"
 	"errors"
-	"log"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/Sirupsen/logrus"
 )
 
 var endpoint = os.Getenv(_const.EnvMongo)
@@ -14,6 +14,10 @@ var username = os.Getenv(_const.EnvMongoName)
 var password = os.Getenv(_const.EnvMongoPasswd)
 var dbname = os.Getenv(_const.EnvMongoDB)
 var session *mgo.Session
+
+const (
+	ModuleName = "Mongo InIt"
+)
 
 func check() error {
 	if endpoint == "" {
@@ -27,10 +31,10 @@ func check() error {
 }
 
 func init() {
-	log.Println("=====Connect Mongo=====")
+	logrus.Println("=====Connect Mongo=====")
 	err := check()
 	if err != nil {
-		log.Panic(err)
+		logrus.Panic(err)
 	}
 
 	if username != "" || password != "" {
@@ -53,7 +57,7 @@ func init() {
 		panic(err)
 	}
 
-	log.Printf("Mongo Server[%s]\n", b.Version)
+	logrus.WithFields(logrus.Fields{"Mongo Server": b.Version}).Info(ModuleName)
 }
 
 func GetSession() *mgo.Session {
@@ -161,7 +165,6 @@ func DeleteAllNamespaceByCID(clusterID string) error {
 		return err
 	}
 
-	log.Println(change.Removed, change.Matched)
 	if change.Removed == 0 {
 		return errors.New("There is no match record!")
 	}

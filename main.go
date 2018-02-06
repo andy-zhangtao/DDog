@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	//"github.com/andy-zhangtao/DDog/server/dns"
 	//_ "github.com/andy-zhangtao/DDog/server/etcd"
@@ -12,7 +11,8 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/client/handler"
 	"github.com/andy-zhangtao/DDog/server/metadata"
-	_ "github.com/andy-zhangtao/DDog/const"
+	//_ "github.com/andy-zhangtao/DDog/const"
+	_ "github.com/andy-zhangtao/DDog/pre-check"
 	"os"
 	"github.com/andy-zhangtao/DDog/server/container"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
@@ -22,7 +22,11 @@ import (
 
 var _VERSION_ = "-unknown-"
 var _APIVERSION_ = "/v1"
-var _INNER_VERSION_ = "v0.5.2"
+var _INNER_VERSION_ = "v0.6.1"
+
+const (
+	ModuleName = "DDog Main"
+)
 
 func init() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
@@ -31,15 +35,14 @@ func init() {
 }
 
 func main() {
-	fmt.Println("===================")
-	logrus.WithFields(logrus.Fields{
-		"version": getVersion(),
-	}).Info("DDOG VERSION")
-	//logrus.Println(getVersion())
 	region := os.Getenv(_const.EnvRegion)
 	if region == "" {
-		log.Panic(_const.EnvRegionNotFound)
+		logrus.WithFields(logrus.Fields{"Region Not Found": _const.EnvRegion}).Panic(ModuleName)
 	}
+
+	fmt.Println("===================")
+	logrus.WithFields(logrus.Fields{"version": getVersion(),}).Info("DDOG VERSION")
+
 	//go watch.Go(region)
 	r := mux.NewRouter()
 	r = dnsAPI(r)
@@ -52,7 +55,7 @@ func main() {
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
-	log.Println(http.ListenAndServe(":8000", handlers.CORS(headersOk, originsOk, methodsOk)(r)))
+	logrus.Println(http.ListenAndServe(":8000", handlers.CORS(headersOk, originsOk, methodsOk)(r)))
 }
 
 func getVersion() string {

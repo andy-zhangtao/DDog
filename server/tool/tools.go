@@ -10,7 +10,11 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/url"
-	"log"
+	"github.com/Sirupsen/logrus"
+)
+
+const (
+	ModuleName = "Tools"
 )
 
 type HttpError struct {
@@ -120,7 +124,7 @@ func InspectImgInfo(conname, svcname, namespace, imgname string, callback func(e
 
 	}()
 	err := <-errChan
-	log.Printf("[InspectImgInfo][==Ready to invoke callback]\n")
+	logrus.WithFields(logrus.Fields{"Ready to invoke callback": svcname}).Info(ModuleName)
 	callback(err)
 	return nil
 }

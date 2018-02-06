@@ -9,11 +9,15 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"strconv"
 	"github.com/andy-zhangtao/DDog/server/tool"
-	"log"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"strings"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"os"
+	"github.com/Sirupsen/logrus"
+)
+
+const (
+	ModuleName = "Container Operation"
 )
 
 func CreateContainer(w http.ResponseWriter, r *http.Request) {
@@ -31,9 +35,7 @@ func CreateContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
-	}
+	logrus.WithFields(logrus.Fields{"Request Body": string(data)}).Info(ModuleName)
 
 	_, isExist, err := isExistContainer(&con)
 	if err != nil {
@@ -193,9 +195,7 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
-	}
+	logrus.WithFields(logrus.Fields{"Request Body": string(data), "Operation": "UpgradeContainer"}).Info(ModuleName)
 
 	_, isExist, err := isExistContainer(&con)
 	if err != nil {
@@ -231,17 +231,13 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 // isExistContainer 检查容器配置是否存在
 // 如果存在则返回TRUE，否则返回FALSE
 func isExistContainer(con *container.Container) (old *container.Container, isExist bool, err error) {
-	if _const.DEBUG {
-		log.Printf("[IsExistContainer] Receive Request Body:[%v] \n", con)
-	}
+	logrus.WithFields(logrus.Fields{"Request Body": con, "Operation": "IsExistContainer"}).Info(ModuleName)
 
 	if err = checkContainer(con); err != nil {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[IsExistContainer] After Check [%v]\n", con)
-	}
+	logrus.WithFields(logrus.Fields{"After Check": con, "Operation": "IsExistContainer"}).Info(ModuleName)
 
 	tcon, err := container.GetContainerByName(con.Name, con.Svc, con.Nsme)
 	if err != nil {
@@ -268,9 +264,7 @@ func CheckContainer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _const.DEBUG {
-		log.Printf("[CreateContainer] Receive Request Body:[%s] \n", string(data))
-	}
+	logrus.WithFields(logrus.Fields{"Request Body": string(data), "Operation": "CheckContainer"}).Info(ModuleName)
 
 	var nt []container.NetConfigure
 	for _, p := range con.Port {
@@ -295,9 +289,7 @@ func CheckContainer(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, err)
 			return
 		}
-		if _const.DEBUG {
-			log.Printf("[UpdateNetPort] Compare NetConfigure Is change? [%v]!\n", isChange)
-		}
+		logrus.WithFields(logrus.Fields{"Compare NetConfigure Is change?": isChange, "Operation": CheckContainer}).Info(ModuleName)
 
 		if isChange {
 			scf, err := svcconf.GetSvcConfByName(con.Svc, con.Nsme)

@@ -22,10 +22,14 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
-
 ### v0.6.1
+* DDog将所有log替换为logrus
+
+### v0.6.0
 * 使用logrus日志框架替换原生log框架
 * 使用Nsq作为任务分发工具
+* 将删除服务功能由同步改为异步
+* 修复DDog直接直接升级时不会删除旧服务的问题
 
 ### v0.5.1
 * 在创建服务之前会尝试删除当前正在运行的服务
