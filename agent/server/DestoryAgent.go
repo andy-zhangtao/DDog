@@ -47,7 +47,7 @@ func (this *AgentNsq) RunDestoryAgent() {
 
 			err = json.Unmarshal(m.Body, &msg)
 			if err != nil {
-				logrus.WithFields(logrus.Fields{"Unmarshal Msg": err, "Origin Byte": string(m.Body)}).Info(ModuleName)
+				logrus.WithFields(logrus.Fields{"Unmarshal Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
 				continue
 			}
 
