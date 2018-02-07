@@ -28,7 +28,7 @@ func main() {
 
 	switch(os.Getenv("DDOG_AGENT_NAME")) {
 	case agents.MonitorAgentName:
-		mm := &agents.MonitorAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.MonitorMsgName}
+		mm := &agents.MonitorAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.MonitorAgentName}
 		go mm.Run()
 		<-mm.StopChan
 

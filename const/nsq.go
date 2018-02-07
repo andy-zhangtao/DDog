@@ -4,6 +4,7 @@ package _const
 
 const (
 	SvcDestroyMsg = "DestroySvc"
+	SvcMonitorMsg = "MonitorSvc"
 )
 
 type DestoryMsg struct {
