@@ -6,7 +6,7 @@ client: agent/*.go
 	cd agent;go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o $(name)-agent
 	mv agent/ddog-agent bin/ddog-agent
 
-build:
+build: *.go
 	go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o $(name)
 
 run: build

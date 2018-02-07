@@ -22,7 +22,7 @@ import (
 
 var _VERSION_ = "-unknown-"
 var _APIVERSION_ = "/v1"
-var _INNER_VERSION_ = "v0.6.3"
+var _INNER_VERSION_ = "v0.6.4"
 
 const (
 	ModuleName = "DDog Main"
@@ -59,7 +59,7 @@ func main() {
 }
 
 func getVersion() string {
-	return _INNER_VERSION_ + _VERSION_
+	return _INNER_VERSION_ +"-"+ _VERSION_
 }
 
 func getApiPath(url string) string {

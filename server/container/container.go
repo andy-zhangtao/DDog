@@ -306,12 +306,17 @@ func CheckContainer(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			tool.ReturnError(w, err)
-		} else {
-			tool.ReturnResp(w, []byte("Container Check Succ!"))
+			return
 		}
 		err = upgreadeContaienr(&con)
 	} else {
 		err = createContainer(&con)
+	}
+
+	if err != nil {
+		tool.ReturnError(w, err)
+	} else {
+		tool.ReturnResp(w, []byte("Container Check Succ!"))
 	}
 
 	return
