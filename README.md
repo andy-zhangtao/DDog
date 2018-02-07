@@ -22,9 +22,12 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
-### v0.6.3
+### v0.6.4
 * DDog修复以下issue:
  - 首次创建容器配置时,respon body为空的问题
+
+### v0.6.3
+* 修复升级服务后无法获取服务状态的问题
 
 ### v0.6.2
 * DDog在创建服务时启用健康检测和就绪检测
