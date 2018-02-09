@@ -7,6 +7,7 @@ import (
 	"log"
 	"github.com/andy-zhangtao/DDog/const"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 )
 
 type Container struct {
@@ -208,9 +209,8 @@ func UpgradeContainerNetByName(conname, svcname, namespace string, net []NetConf
 		return false
 	}
 
-	if _const.DEBUG {
-		log.Printf("[UpgradeContainerNetByName] Compare Net Array Length [%v]\n", len(con.Net) == 0 || len(net) > len(con.Net))
-	}
+	logrus.WithFields(logrus.Fields{"len(con.Net)": len(con.Net), "len(net)": len(net)}).Info("UpgradeContainerNetByName Compare Net Array Length")
+
 	if len(con.Net) == 0 || len(net) > len(con.Net) {
 		isChange = true
 	} else {

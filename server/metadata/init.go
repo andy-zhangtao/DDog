@@ -8,7 +8,6 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"errors"
 	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/DDog/model/cluster"
 )
@@ -39,7 +38,6 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bridge.GetMetaChan() <- 1
 	return
 }
 
@@ -152,6 +150,5 @@ func UpdataMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bridge.GetMetaChan() <- 1
 	return
 }

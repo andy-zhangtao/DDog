@@ -46,6 +46,7 @@ func init() {
 	logrus.WithFields(logrus.Fields{
 		"Connect Nsq Succes": producer.String(),
 	}).Info(ModuleName)
+
 }
 
 // SendDestoryMsg 发布销毁服务的消息

@@ -22,9 +22,14 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
+### v0.6.5
+* 修复调用svcconf check接口，预期结果不幂等的问题
+* 调整升级规则，当直接调用Svcconf Deploy接口时按照直接升级来处理
+
 ### v0.6.4
 * DDog修复以下issue:
  - 首次创建容器配置时,respon body为空的问题
+ - 修复注册集群元数据时响应超时的问题
 
 ### v0.6.3
 * 修复升级服务后无法获取服务状态的问题

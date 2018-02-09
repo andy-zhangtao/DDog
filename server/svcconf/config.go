@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"log"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"fmt"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"net/url"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
@@ -444,7 +443,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		Msg:  "SvcConfig Upgrade",
 	}
 
-	fmt.Println(conf)
+	logrus.WithFields(logrus.Fields{"New Svc Conf": conf}).Info(ModuleName)
 	cf, err := mongo.GetSvcConfByName(conf.Name, conf.Namespace)
 	if cf == nil {
 		err = checkConf(&conf)
@@ -467,6 +466,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		svcconf.MergerSvc(nc, &conf)
 		err = mongo.DeleteSvcConfById(nc.Id.Hex())
 		if err != nil {
 			tool.ReturnError(w, err)
@@ -474,6 +474,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		}
 
 		conf.Id = nc.Id
+		logrus.WithFields(logrus.Fields{"Replace Svc Conf": conf, "Old Svc Conf": nc}).Info(ModuleName)
 		if err = mongo.SaveSvcConfig(conf); err != nil {
 			tool.ReturnError(w, err)
 			return

@@ -22,7 +22,7 @@ import (
 
 var _VERSION_ = "-unknown-"
 var _APIVERSION_ = "/v1"
-var _INNER_VERSION_ = "v0.6.4"
+var _INNER_VERSION_ = "v0.6.5"
 
 const (
 	ModuleName = "DDog Main"

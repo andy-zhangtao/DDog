@@ -184,7 +184,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	isUpgrade := false
+	isUpgrade := true
 
 	cf, err := svcconf.GetSvcConfByName(name, nsme)
 	if err != nil {
@@ -242,35 +242,6 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			cf.SvcName = sn
 		}
 	}
-
-	//if cf.SvcName != "" {
-	//	go func() {
-	//		q := service.Service{
-	//			Pub: public.Public{
-	//				SecretId: md.Sid,
-	//				Region:   md.Region,
-	//			},
-	//			ClusterId:   md.ClusterID,
-	//			ServiceName: cf.SvcName,
-	//			Namespace:   cf.Namespace,
-	//			SecretKey:   md.Skey,
-	//		}
-	//
-	//		resp, err := q.DeleteService()
-	//		if err != nil {
-	//			logrus.WithFields(logrus.Fields{
-	//				"error": err.Error(),
-	//			}).Error("Delete Service Error")
-	//		}
-	//
-	//		if resp.Code != 0 {
-	//			logrus.WithFields(logrus.Fields{
-	//				"resp_code":   resp.Code,
-	//				"resp_reason": resp.Message,
-	//			}).Warn("Delete Service Failed")
-	//		}
-	//	}()
-	//}
 
 	q := service.Service{
 		Pub: public.Public{
@@ -412,12 +383,16 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		isupgrade, _ := c["upgrade"].(bool)
 		sn, _ := c["rollsvc"].(string) /*本次升级的服务名*/
 
-		if isupgrade && scf.Deploy == _const.DeploySuc {
+		//如果服务部署成功。需要根据部署类型来判断是否需要退出
+		//如果是直接升级类型的,直接退出
+		//如果是灰度发布类型的,可以进行后续升级
+		if scf.Deploy == _const.DeploySuc {
 			scf.SvcNameBak[sn] = scf.LbConfig
 			scf.LbConfig = tcf.LbConfig
-			//scf.Instance = tcf.Instance
 			scf.Netconf = tcf.Netconf
-			scf.Deploy = _const.DeployStatusSync
+			if !isupgrade {
+				scf.Deploy = _const.DeployStatusSync
+			}
 			svcconf.UpdateSvcConf(scf)
 		}
 		getChan(cf.SvcName) <- 1
@@ -645,7 +620,7 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 	//	r.URL.RawQuery = oldPath + "&upgrade=false"
 	//}
 
-	r.URL.RawQuery = oldPath + "&upgrade=false"
+	r.URL.RawQuery = oldPath + "&upgrade=true"
 	logrus.WithFields(logrus.Fields{
 		"url":     r.URL.String(),
 		"oldPath": oldPath,

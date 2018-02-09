@@ -1,7 +1,7 @@
 package monitor
 
 import (
-	"github.com/pkg/errors"
+	"errors"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 )
