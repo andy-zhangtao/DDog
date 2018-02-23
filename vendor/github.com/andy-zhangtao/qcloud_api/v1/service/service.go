@@ -414,6 +414,10 @@ func (this Service) ModeifyInstance() (*SvcSMData, error) {
 	return this.generateRequest(MODIFYSVCINSTANCE)
 }
 
+func (this Service) DescribeServiceEvent() (*SvcSMData, error) {
+	return this.generateRequest(DESCRIBESERVICEEVENT)
+}
+
 // generateRequest 生成操作请求
 // 每个请求中都存在公共部分,因此在这里只需要处理特殊操作对应的数据即可
 // 0 - 创建服务
