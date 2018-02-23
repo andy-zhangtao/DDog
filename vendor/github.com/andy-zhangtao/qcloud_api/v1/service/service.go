@@ -15,7 +15,7 @@ import (
 var debug = false
 
 const (
-	CREATE_SVC        = iota
+	CREATE_SVC           = iota
 	UPGRADE_SVC
 	DELETE_SVC
 	REDEPLOY_SVC
@@ -23,6 +23,7 @@ const (
 	QUERYSVCINFO
 	DELETESVCINSTANCE
 	MODIFYSVCINSTANCE
+	DESCRIBESERVICEEVENT
 )
 
 type Svc struct {
@@ -85,6 +86,7 @@ type SvcData_data struct {
 	Services    []SvcData_data_services `json:"services"`
 	Instance    []Instance              `json:"instances"`
 	ServiceInfo ServiceInfo             `json:"service"`
+	EventList   []Event_data_eventList  `json:"eventList"`
 }
 
 type SvcSMData struct {
@@ -108,6 +110,19 @@ type SvcInstance struct {
 	CodeDesc string        `json:"codedesc"`
 	Url      string        `json:"request"`
 	Data     Instance_data `json:"data"`
+}
+
+// 事件数据
+type Event_data_eventList struct {
+	FirstSeen string `json:"firstseen"`
+	LastSeen  string `json:"lastseen"`
+	Count     int    `json:"count"`
+	Level     string `json:"level"`
+	ObjType   string `json:"objtype"`
+	ObjName   string `json:"objname"`
+	Reason    string `json:"reason"`
+	SrcReason string `json:"srcreason"`
+	Message   string `json:"message"`
 }
 
 func (this Svc) querySampleInfo() ([]string, map[string]string) {
@@ -445,6 +460,10 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 		//	修改服务实例
 		svcKind = "ModifyServiceReplicas"
 		debugStr = "修改实例数量"
+	case DESCRIBESERVICEEVENT:
+		//	获取服务实例集群事件
+		svcKind = "DescribeServiceEvent"
+		debugStr = "获取服务事件"
 	}
 
 	field, reqmap := this.createSvc()
