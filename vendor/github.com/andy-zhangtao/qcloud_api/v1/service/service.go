@@ -14,6 +14,18 @@ import (
 
 var debug = false
 
+const (
+	CREATE_SVC           = iota
+	UPGRADE_SVC
+	DELETE_SVC
+	REDEPLOY_SVC
+	QUERYSVCINSTANCE
+	QUERYSVCINFO
+	DELETESVCINSTANCE
+	MODIFYSVCINSTANCE
+	DESCRIBESERVICEEVENT
+)
+
 type Svc struct {
 	Pub          public.Public `json:"pub"`
 	ClusterId    string        `json:"cluster_id"`
@@ -74,6 +86,7 @@ type SvcData_data struct {
 	Services    []SvcData_data_services `json:"services"`
 	Instance    []Instance              `json:"instances"`
 	ServiceInfo ServiceInfo             `json:"service"`
+	EventList   []Event_data_eventList  `json:"eventList"`
 }
 
 type SvcSMData struct {
@@ -97,6 +110,19 @@ type SvcInstance struct {
 	CodeDesc string        `json:"codedesc"`
 	Url      string        `json:"request"`
 	Data     Instance_data `json:"data"`
+}
+
+// 事件数据
+type Event_data_eventList struct {
+	FirstSeen string `json:"firstseen"`
+	LastSeen  string `json:"lastseen"`
+	Count     int    `json:"count"`
+	Level     string `json:"level"`
+	ObjType   string `json:"objtype"`
+	ObjName   string `json:"objname"`
+	Reason    string `json:"reason"`
+	SrcReason string `json:"srcreason"`
+	Message   string `json:"message"`
 }
 
 func (this Svc) querySampleInfo() ([]string, map[string]string) {
@@ -165,7 +191,7 @@ func (this Service) SetDebug(isDebug bool) {
 func (this Service) CreateNewSerivce() (*SvcSMData, error) {
 	// 新建服务,不需要填写升级策略
 	this.Strategy = ""
-	return this.generateRequest(0)
+	return this.generateRequest(CREATE_SVC)
 }
 
 func (this Service) createSvc() ([]string, map[string]string) {
@@ -219,10 +245,10 @@ func (this Service) createSvc() ([]string, map[string]string) {
 		for k := range c.Envs {
 			key := fmt.Sprintf("containers.%d.envs.%d.name", i, n)
 			field = append(field, key)
-			req[key] = url.QueryEscape(k)
+			req[key] = k
 			key = fmt.Sprintf("containers.%d.envs.%d.value", i, n)
 			field = append(field, key)
-			req[key] = url.QueryEscape(c.Envs[k])
+			req[key] = c.Envs[k]
 			n++
 		}
 
@@ -365,27 +391,27 @@ func (this Service) UpgradeService() (*SvcSMData, error) {
 }
 
 func (this Service) DeleteService() (*SvcSMData, error) {
-	return this.generateRequest(2)
+	return this.generateRequest(DELETE_SVC)
 }
 
 func (this Service) RedeployService() (*SvcSMData, error) {
-	return this.generateRequest(3)
+	return this.generateRequest(REDEPLOY_SVC)
 }
 
 func (this Service) QueryInstance() (*SvcSMData, error) {
-	return this.generateRequest(4)
+	return this.generateRequest(QUERYSVCINSTANCE)
 }
 
 func (this Service) QuerySvcInfo() (*SvcSMData, error) {
-	return this.generateRequest(5)
+	return this.generateRequest(QUERYSVCINFO)
 }
 
 func (this Service) DestoryInstance() (*SvcSMData, error) {
-	return this.generateRequest(6)
+	return this.generateRequest(DELETESVCINSTANCE)
 }
 
 func (this Service) ModeifyInstance() (*SvcSMData, error) {
-	return this.generateRequest(7)
+	return this.generateRequest(MODIFYSVCINSTANCE)
 }
 
 // generateRequest 生成操作请求
@@ -402,38 +428,42 @@ func (this Service) generateRequest(kind int) (*SvcSMData, error) {
 	var svcKind string
 	var debugStr string
 	switch kind {
-	case 0:
+	case CREATE_SVC:
 		//	创建
 		svcKind = "CreateClusterService"
 		debugStr = "创建"
-	case 1:
+	case UPGRADE_SVC:
 		//	升级
 		svcKind = "ModifyClusterService"
 		debugStr = "升级"
-	case 2:
+	case DELETE_SVC:
 		//	删除
 		svcKind = "DeleteClusterService"
 		debugStr = "删除"
-	case 3:
+	case REDEPLOY_SVC:
 		//	重新部署
 		svcKind = "RedeployClusterService"
 		debugStr = "重新部署"
-	case 4:
+	case QUERYSVCINSTANCE:
 		//	查询服务实例状态
 		svcKind = "DescribeServiceInstance"
 		debugStr = "查询服务实例"
-	case 5:
+	case QUERYSVCINFO:
 		//	查询服务详情
 		svcKind = "DescribeClusterServiceInfo"
 		debugStr = "查询服务详情"
-	case 6:
+	case DELETESVCINSTANCE:
 		//	删除实例
 		svcKind = "DeleteInstances"
 		debugStr = "删除实例"
-	case 7:
+	case MODIFYSVCINSTANCE:
 		//	修改服务实例
 		svcKind = "ModifyServiceReplicas"
 		debugStr = "修改实例数量"
+	case DESCRIBESERVICEEVENT:
+		//	获取服务实例集群事件
+		svcKind = "DescribeServiceEvent"
+		debugStr = "获取服务事件"
 	}
 
 	field, reqmap := this.createSvc()
