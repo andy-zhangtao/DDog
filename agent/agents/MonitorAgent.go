@@ -6,6 +6,11 @@ import (
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/model/monitor"
 	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"strings"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -54,6 +59,8 @@ func (this *MonitorAgent) Run() {
 				continue
 			}
 
+			go this.handlerMsg(&msg)
+
 			m.Finish()
 		}
 	}()
@@ -71,10 +78,55 @@ func (this *MonitorAgent) Run() {
 
 func SendMonitor(msg []byte) {
 	logrus.WithFields(logrus.Fields{"Monitor Msg": string(msg)}).Info(ModuleName)
-
 }
 
 // distMsg 消息分发
 func (this *MonitorAgent) distMsg(msg *monitor.MonitorModule) error {
 	return msg.Save()
+}
+
+// handlerMsg 处理消息
+func (this *MonitorAgent) handlerMsg(msg *monitor.MonitorModule) error {
+	switch msg.Kind {
+	case RetriAgentName:
+		return this.stopSVC(msg)
+	}
+
+	return nil
+}
+
+// stopSVC 停掉服务并且将其置位失败
+func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error{
+	md, err := metadata.GetMetaDataByRegion("")
+	if err != nil {
+		logrus.WithFields(logrus.Fields{MonitorAgentName: "Get MetaData Error!", "error": err}).Error(MonitorAgentName)
+		this.StopChan <- 1
+	}
+
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId: md.ClusterID,
+		Namespace: msg.Namespace,
+		SecretKey: md.Skey,
+		ServiceName:msg.Svcname,
+	}
+
+	_, err = q.DeleteService()
+	if err != nil{
+		return err
+	}
+
+	name := strings.Join(strings.Split(msg.Svcname,"-")[:2],"-")
+	logrus.WithFields(logrus.Fields{"Stop Svc":name, "namespace":msg.Namespace}).Info(MonitorAgentName)
+	sc, err := svcconf.GetSvcConfByName(name, msg.Namespace)
+	if err != nil{
+		return err
+	}
+
+	sc.Status = _const.DeployFailed
+
+	return svcconf.UpdateSvcConf(sc)
 }
