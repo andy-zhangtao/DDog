@@ -24,7 +24,7 @@ func init() {
 
 func main() {
 
-	logrus.WithFields(logrus.Fields{"Version": "v0.6.4"}).Info(ModuleName)
+	logrus.WithFields(logrus.Fields{"Version": "v0.6.6"}).Info(ModuleName)
 
 	switch(os.Getenv("DDOG_AGENT_NAME")) {
 	case agents.MonitorAgentName:
@@ -32,6 +32,10 @@ func main() {
 		go mm.Run()
 		<-mm.StopChan
 
+	case agents.RetriAgentName:
+		ret := &agents.RetriAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.RetriAgentName, Namespace: []string{}}
+		go ret.Run()
+		<-ret.StopChan
 	default:
 		agn := &agents.AgentNsq{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.DestoryAgent}
 

@@ -17,6 +17,7 @@ const (
 	ModuleName       = "DDog-Agent-Nsq"
 	DestoryAgent     = "DestoryAgent"
 	MonitorAgentName = "MonitorAgent"
+	RetriAgentName   = "RetriAgent"
 )
 
 type AgentNsq struct {

@@ -6,6 +6,14 @@ A tool for auto generate coredns configure file
 ## How to Run?
 推荐使用封装好的镜像:`vikings/ddog`
 
+* MakeFile Command
+    - make client 构建Agent客户端
+    - make runclient 构建Agent客户端并且同时运行
+    - make build 构建DDog主程序
+    - make run 构建DDog主程序并且运行
+    - make agent-release 构建Agent可发布版本
+    - make srv-release 构建DDog可发布版本
+    - make release 同时构建Agent DDog可发布版本
 ## ENV Reference
 以下变量不允许为空
 
