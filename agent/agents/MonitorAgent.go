@@ -126,7 +126,7 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error{
 		return err
 	}
 
-	sc.Status = _const.DeployFailed
-
+	sc.Deploy = _const.DeployFailed
+	sc.Msg = msg.Msg
 	return svcconf.UpdateSvcConf(sc)
 }
