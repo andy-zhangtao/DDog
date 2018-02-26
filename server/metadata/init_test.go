@@ -7,7 +7,6 @@ import (
 	"github.com/andy-zhangtao/go-unit-test-suite/io-ut"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"net/url"
 	"github.com/andy-zhangtao/DDog/server/mongo"
@@ -15,11 +14,6 @@ import (
 )
 
 func TestStartup(t *testing.T) {
-	go func() {
-		ret := <-bridge.GetMetaChan()
-		assert.Equal(t, 1, ret, "The status code should be 1")
-	}()
-
 	r := new(http.Request)
 	w := new(http_ut.TestResponseWriter)
 

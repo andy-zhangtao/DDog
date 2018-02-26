@@ -50,8 +50,9 @@ func GetMetaData(region string) (metadata.MetaData, error) {
 	if err != nil {
 		return *md, err
 	}
-	if md.Sid == "" {
-		return *md, errors.New(region + " Metadata 获取为空")
+
+	if md == nil || md.Sid == "" {
+		return metadata.MetaData{}, errors.New(region + " Metadata 获取为空")
 	}
 
 	return *md, nil

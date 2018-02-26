@@ -12,7 +12,6 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/cvm"
 	"github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"time"
-	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/server/metadata"
 )
 
@@ -47,11 +46,11 @@ func Go(region string) {
 			} else {
 				log.Println("当前MetaData数据为空")
 			}
-		case <-bridge.GetMetaChan():
-			w, err = getMetaData(region)
-			if err != nil {
-				log.Printf("获取MetaData失败[%s]\n", err.Error())
-			}
+			//case <-bridge.GetMetaChan():
+			//	w, err = getMetaData(region)
+			//	if err != nil {
+			//		log.Printf("获取MetaData失败[%s]\n", err.Error())
+			//	}
 		}
 	}
 

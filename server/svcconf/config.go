@@ -86,6 +86,7 @@ func GetSvcConf(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id := r.URL.Query().Get("id")
 	if id == "" {
+		nsme = strings.Replace(strings.ToLower(nsme), " ", "-", -1)
 		conf, err := mongo.GetSvcConfNs(nsme)
 		if err != nil {
 			tool.ReturnError(w, err)
@@ -182,15 +183,14 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"Marshal DestoryMsg Error": err,
-		}).Error(ModuleName)
+		logrus.WithFields(logrus.Fields{"Marshal DestoryMsg Error": err,}).Error(ModuleName)
 		tool.ReturnError(w, errors.New(err.Error()))
 		return
 	}
 
 	err = bridge.SendDestoryMsg(string(data))
 	if err != nil {
+		logrus.WithFields(logrus.Fields{"DestorySvc Error": err,}).Error(ModuleName)
 		tool.ReturnError(w, errors.New(err.Error()))
 		return
 	}

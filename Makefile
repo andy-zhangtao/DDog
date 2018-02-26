@@ -22,7 +22,7 @@ agent-release: agent/*.go
 	@echo "ddog-agent build complete"
 
 srv-release: *.go *.md
-	docker run -it --rm -e DDOG_MONGO_ENDPOINT=127.0.0.1:27017 -e DDOG_MONGO_DB=cloud -v ${PWD}:/go/src/github.com/andy-zhangtao/DDog vikings/golang:unit-test-mongo /go/src/github.com/andy-zhangtao/DDog ddog -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)"
+	docker run -it --rm -e DDOG_MONGO_ENDPOINT=127.0.0.1:27017 -e DDOG_MONGO_DB=cloud -e DDOG_NSQD_ENDPOINT=127.0.0.1:4150 -v ${PWD}:/go/src/github.com/andy-zhangtao/DDog vikings/golang:unitTest-v1.0.7 /go/src/github.com/andy-zhangtao/DDog ddog -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)"
 	ls -ltr bin/
 	@echo "############"
 	@echo "ddog build complete"
