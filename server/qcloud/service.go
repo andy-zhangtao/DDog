@@ -350,7 +350,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			HealthCheck:   hk,
 			Envs:          cnns.Env,
 			Cpu:           500,
-			CpuLimits:     1000,
+			CpuLimits:     1500,
 			Memory:        300,
 			MemoryLimits:  800,
 		})
