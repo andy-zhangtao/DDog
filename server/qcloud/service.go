@@ -352,7 +352,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			Cpu:           500,
 			CpuLimits:     1000,
 			Memory:        300,
-			MemoryLimits:  600,
+			MemoryLimits:  800,
 		})
 	}
 
