@@ -38,7 +38,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "acefef88ab3cb8455f35583be170c0de2d7b44e7"
+  revision = "515ab8f323d73734f1b925019a4046bec24beb14"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -166,7 +166,7 @@
     "unix",
     "windows"
   ]
-  revision = "c1138c84af3a9927aee1a1b8b7ce06c9b7ea52bc"
+  revision = "f6cff0780e542efa0c8e864dc8fa522808f6a598"
 
 [[projects]]
   name = "golang.org/x/text"

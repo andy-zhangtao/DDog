@@ -58,6 +58,10 @@ type Containers struct {
 	Envs          map[string]string `json:"envs"`
 	Command       string            `json:"command"`
 	HealthCheck   []HealthCheck     `json:"health_check"`
+	Cpu           int               `json:"cpu"`
+	CpuLimits     int               `json:"cpuLimits"`
+	Memory        int               `json:"memory"`
+	MemoryLimits  int               `json:"memoryLimits"`
 }
 
 type PortMappings struct {
@@ -313,6 +317,21 @@ func (this Service) createSvc() ([]string, map[string]string) {
 			}
 
 		}
+		key := fmt.Sprintf("containers.%d.cpu", i)
+		field = append(field, key)
+		req[key] = strconv.Itoa(c.Cpu)
+
+		key = fmt.Sprintf("containers.%d.cpuLimits", i)
+		field = append(field, key)
+		req[key] = strconv.Itoa(c.CpuLimits)
+
+		key = fmt.Sprintf("containers.%d.memory", i)
+		field = append(field, key)
+		req[key] = strconv.Itoa(c.Memory)
+
+		key = fmt.Sprintf("containers.%d.memoryLimits", i)
+		field = append(field, key)
+		req[key] = strconv.Itoa(c.MemoryLimits)
 	}
 
 	for i, p := range this.PortMappings {
