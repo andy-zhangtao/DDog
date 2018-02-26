@@ -329,7 +329,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 				hk = append(hk, shk)
 			}
 		} else {
-			/*当前默认使用ps -ef |grep svcname来作为*/
+			/*当前默认使用ps -ef |grep svcname来作为无端口的健康检测*/
 			shk := service.HealthCheck{
 				Type:        service.LiveCheck,
 				UnhealthNum: 5,
@@ -349,6 +349,10 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			Image:         cnns.Img,
 			HealthCheck:   hk,
 			Envs:          cnns.Env,
+			Cpu:           500,
+			CpuLimits:     1000,
+			Memory:        300,
+			MemoryLimits:  600,
 		})
 	}
 
@@ -1301,7 +1305,7 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 					jinx ++
 				}
 			}
-		}else if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
+		} else if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
 			//先解析负载数据
 			lb := svcconf.LoadBlance{
 				IP: resp.Data.ServiceInfo.ServiceIp,
