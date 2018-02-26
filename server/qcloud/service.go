@@ -1280,7 +1280,8 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 		/*需要判断K8s是否出错,以免出现无效查询*/
 		if resp.Code != 0 {
 			errIdx ++
-			scf.Msg = resp.Message
+			scf.Deploy = 4
+			//scf.Msg = resp.Message
 			break
 		}
 
@@ -1292,17 +1293,15 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 			break
 		}
 
+		logrus.WithFields(logrus.Fields{"Service": resp.Data.ServiceInfo.ServiceName, "Status": resp.Data.ServiceInfo.Status, "ReasonMap": resp.Data.ServiceInfo.ReasonMap}).Info(ModuleName)
+
 		if strings.ToLower(resp.Data.ServiceInfo.Status) != "normal" {
 			for key, _ := range resp.Data.ServiceInfo.ReasonMap {
-				if key == "容器进程崩溃" {
+				if key == "容器进程崩溃" || strings.Contains(key, "失败") {
 					jinx ++
 				}
 			}
-		}
-
-		logrus.WithFields(logrus.Fields{"Service": resp.Data.ServiceInfo.ServiceName, "Status": resp.Data.ServiceInfo.Status}).Info(ModuleName)
-
-		if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
+		}else if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
 			//先解析负载数据
 			lb := svcconf.LoadBlance{
 				IP: resp.Data.ServiceInfo.ServiceIp,
@@ -1366,6 +1365,7 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 				time.Sleep(3 * time.Second)
 			}
 		}
+
 		if scf.Deploy == 1 {
 			break
 		}

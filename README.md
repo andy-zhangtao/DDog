@@ -30,6 +30,9 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
+### v0.6.6
+* 调整创建服务时的状态轮询策略,当遇到多次失败后，将此服务置为失败
+
 ### v0.6.5
 * 修复调用svcconf check接口，预期结果不幂等的问题
 * 调整升级规则，当直接调用Svcconf Deploy接口时按照直接升级来处理
