@@ -315,6 +315,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		_const.EnvMongoDB:       os.Getenv(_const.EnvMongoDB),
 		"DDOG_AGENT_SPIDER_SVC": cf.Name,
 		"DDOG_AGENT_SPIDER_NS":  cf.Namespace,
+		"svcname":               cf.Name + "_sidecar",
+		"log_opt":               os.Getenv(_const.EnvDefaultLogOpt),
 	}
 
 	var sidePort []string
