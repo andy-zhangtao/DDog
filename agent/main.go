@@ -36,6 +36,11 @@ func main() {
 		ret := &agents.RetriAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.RetriAgentName, Namespace: []string{}}
 		go ret.Run()
 		<-ret.StopChan
+
+	case agents.SpiderAgentName:
+		ret := &agents.SpiderAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.RetriAgentName, Namespace: []string{}}
+		go ret.Run()
+		<-ret.StopChan
 	default:
 		agn := &agents.AgentNsq{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.DestoryAgent}
 

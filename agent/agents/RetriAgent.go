@@ -15,7 +15,7 @@ import (
 )
 
 /**
-RetriDog
+RetriAgent
 在指定的命名空间中检索当前失败次数过多的服务实例
 当发现有失败次数太多的服务实例之后，RetriDog将会
 尝试获取失败原因，并且通知MonitorAgent.然后关闭
