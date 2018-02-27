@@ -139,7 +139,8 @@ func (this *SpiderAgent) Run() {
 
 	} else {
 		logrus.WithFields(logrus.Fields{"Return": "Nothing To Do"}).Error(SpiderAgentName)
-		this.StopChan <- 0
+		//不能退出,否则k8s会认为此服务处于异常状态
+		//this.StopChan <- 0
 	}
 }
 
