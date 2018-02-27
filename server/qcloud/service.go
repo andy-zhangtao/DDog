@@ -23,6 +23,7 @@ import (
 	"time"
 	"github.com/Sirupsen/logrus"
 	"github.com/andy-zhangtao/DDog/bridge"
+	"os"
 )
 
 var globalChan chan int
@@ -297,6 +298,27 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//	添加side car容器
+	sideCar := service.Containers{
+		ContainerName: _const.SideCarName,
+		Image:         _const.SideCarImg,
+		Memory:        30,
+		MemoryLimits:  80,
+	}
+
+	sideCarEnv := map[string]string{
+		_const.EnvNsqdEndpoint:  os.Getenv(_const.EnvNsqdEndpoint),
+		"DDOG_AGENT_NAME":       "SpiderAgent",
+		_const.EnvMongo:         os.Getenv(_const.EnvMongo),
+		_const.EnvMongoName:     os.Getenv(_const.EnvMongoName),
+		_const.EnvMongoPasswd:   os.Getenv(_const.EnvMongoPasswd),
+		_const.EnvMongoDB:       os.Getenv(_const.EnvMongoDB),
+		"DDOG_AGENT_SPIDER_SVC": cf.Name,
+		"DDOG_AGENT_SPIDER_NS":  cf.Namespace,
+	}
+
+	var sidePort []string
+
 	for _, cn := range containers {
 		var cnns container.Container
 		data, err := bson.Marshal(cn)
@@ -327,6 +349,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 				hk = append(hk, shk)
 				shk.Type = service.ReadyCheck
 				hk = append(hk, shk)
+				/*生成sidecar port*/
+				sidePort = append(sidePort, strconv.Itoa(n.InPort))
 			}
 		} else {
 			/*当前默认使用ps -ef |grep svcname来作为无端口的健康检测*/
@@ -356,6 +380,12 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	sideCar.Envs = sideCarEnv
+	if len(sidePort) > 0 {
+		sideCarEnv["DDOG_AGENT_SPIDER_PORT"] = strings.Join(sidePort, ";")
+	}
+
+	cons = append(cons, sideCar)
 	q.Containers = cons
 
 	logrus.WithFields(logrus.Fields{"QCloud Request": q, "Deploy Type": isUpgrade}).Info(ModuleName)

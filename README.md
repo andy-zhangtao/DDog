@@ -30,6 +30,9 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
+### v0.6.8
+* 每个服务都增加一个sidecar,用来侦测服务状态
+
 ### v0.6.7
 * 增加资源限额. 默认CPU:0.5,CPU上限:1.5,Memory:300,Memory上限:800
 
