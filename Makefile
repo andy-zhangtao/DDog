@@ -3,6 +3,7 @@
 name = ddog
 
 client: agent/*.go
+	rm -rf bin/ddog-agent
 	cd agent;go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o $(name)-agent
 	mv agent/ddog-agent bin/ddog-agent
 
