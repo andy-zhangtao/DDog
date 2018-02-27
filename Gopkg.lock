@@ -70,6 +70,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/drael/GOnetstat"
+  packages = ["."]
+  revision = "a08125f5157d481dd0d0355c021467bd8c84eb6d"
+
+[[projects]]
   name = "github.com/gogo/protobuf"
   packages = [
     "gogoproto",
@@ -114,6 +120,12 @@
   packages = ["."]
   revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
   version = "v1.6.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/go-ps"
+  packages = ["."]
+  revision = "4fdf99ab29366514c69ccccddab5dc58b8d84062"
 
 [[projects]]
   name = "github.com/nsqio/go-nsq"
@@ -241,6 +253,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "69eb19a29ebd2347cd0c3415a92117f24d78d112c5226f6ea2eac80f66c3e5ad"
+  inputs-digest = "c609b893df80706e217b457247c2d29d96c8035bca79c6275ed0bdb77c20a3e3"
   solver-name = "gps-cdcl"
   solver-version = 1
