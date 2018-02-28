@@ -41,6 +41,7 @@ type SpiderMsg struct {
 // 此时Spider就不需要再检查，开始上报检查结果
 var needCheck bool
 var msg = ""
+var errNum = 0
 
 func (this *SpiderAgent) Run() {
 	logrus.WithFields(logrus.Fields{SpiderAgentName: "Start"}).Info(SpiderAgentName)
@@ -85,17 +86,7 @@ func (this *SpiderAgent) Run() {
 		}
 		logrus.WithFields(logrus.Fields{"Check Port": this.Port}).Info(SpiderAgentName)
 		for {
-			//now := time.Now()
-			//next := now.Add(time.Second * 3)
-			//next = time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), next.Minute(), next.Second(), 0, next.Location())
-			//t := time.NewTimer(next.Sub(now))
-			//logrus.WithFields(logrus.Fields{"needCheck": needCheck, "port": this.Port, "下次端口采集时间为": next.Format("200601021504")}).Info(SpiderAgentName)
-
 			select {
-			//case <-t.C:
-			//if needCheck {
-			//
-			//}
 			case p := <-this.AlivaChan:
 				if p <= 1 {
 					needCheck = false
@@ -104,21 +95,18 @@ func (this *SpiderAgent) Run() {
 					this.checkPort()
 				}
 
-				if !needCheck && msg != "" {
+				/*errNum == 60几乎等同为1分钟*/
+				if (!needCheck && msg != "") || (errNum == 60) {
 					data, _ := json.Marshal(monitor.MonitorModule{
 						Kind:      this.Name,
 						Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
 						Namespace: os.Getenv("DDOG_AGENT_SPIDER_NS"),
 						Msg:       msg,
 					})
-					//sm := SpiderMsg{Name: this.Name, Svcname: , Msg: msg}
-					//data, err := json.Marshal(&sm)
-					//if err != nil {
-					//	logrus.WithFields(logrus.Fields{"Marshal Error": err}).Error(SpiderAgentName)
-					//}
 
 					bridge.SendMonitorMsg(string(data))
 					msg = ""
+					errNum = 0
 				}
 			}
 		}
@@ -155,7 +143,7 @@ func (this *SpiderAgent) checkPort() {
 
 	for _, td := range tcp_data {
 		logrus.WithFields(logrus.Fields{"tcp": td}).Info(SpiderAgentName)
-		if strings.ToUpper(td.State) == "LISTEN"{
+		if strings.ToUpper(td.State) == "LISTEN" {
 			if _, ok := portMap[td.Port]; ok {
 				delete(portMap, td.Port)
 			}
@@ -163,14 +151,16 @@ func (this *SpiderAgent) checkPort() {
 	}
 
 	if len(portMap) != 0 {
+		msg = ""
+		errNum ++
 		for k, _ := range portMap {
-			msg = fmt.Sprintf("Port[%d] Check Failed. ", k)
+			msg += fmt.Sprintf("Port[%d] Check Failed. ", k)
 		}
 		logrus.WithFields(logrus.Fields{"msg": msg}).Info(SpiderAgentName)
-	}else{
+	} else {
 		/* do nothing*/
-		logrus.WithFields(logrus.Fields{"check end":true}).Info(SpiderAgentName)
-		<- make(chan int)
+		logrus.WithFields(logrus.Fields{"check end": true}).Info(SpiderAgentName)
+		<-make(chan int)
 	}
 
 }
