@@ -6,13 +6,12 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/Sirupsen/logrus"
-	"reflect"
 )
 
 const (
 	ModuleName = "MonitorModule"
 )
+
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
 type MonitorModule struct {
 	Id        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
@@ -21,6 +20,7 @@ type MonitorModule struct {
 	Namespace string        `json:"namespace"`
 	Status    string        `json:"status"`
 	Msg       string        `json:"msg"`
+	Ip        []string      `json:"ip"`
 	Num       int           `json:"num"`
 }
 
@@ -50,7 +50,7 @@ func (mm *MonitorModule) Save() error {
 		}
 
 		err = nil
-		logrus.WithFields(logrus.Fields{"type":reflect.TypeOf(oom),"value":oom}).Info(ModuleName)
+		//logrus.WithFields(logrus.Fields{"type": reflect.TypeOf(oom), "value": oom}).Info(ModuleName)
 		om, err := conver(oom)
 		if err != nil {
 			return err
@@ -58,6 +58,24 @@ func (mm *MonitorModule) Save() error {
 
 		om.Msg = mm.Msg
 		om.Num ++
+
+		if len(om.Ip) > 0 {
+			isCheck := false
+			for _, p := range om.Ip {
+				if p == mm.Ip[0] {
+					isCheck = true
+					break
+				}
+			}
+
+			if !isCheck {
+				om.Ip = append(om.Ip, mm.Ip...)
+			}
+		} else {
+			om.Ip = mm.Ip
+		}
+		/*Merge MonitorMsg*/
+		mm = om
 		return mongo.ReplaceMonitor(om.Id.Hex(), om)
 	}
 
@@ -65,6 +83,35 @@ func (mm *MonitorModule) Save() error {
 	return mongo.SaveMonitor(mm)
 }
 
+// GetMonitroModule 获取指定类型的监控信息
+func GetMonitroModule(kind, svcname, namespace string) (*MonitorModule, error){
+	oom, err := mongo.MongoGetMonitorByName(kind, svcname, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	err = nil
+	//logrus.WithFields(logrus.Fields{"type": reflect.TypeOf(oom), "value": oom}).Info(ModuleName)
+	return conver(oom)
+}
+
+func (mm *MonitorModule) Replace() error{
+	oom, err := mongo.MongoGetMonitorByName(mm.Kind, mm.Svcname, mm.Namespace)
+	if err != nil {
+		if tool.IsNotFound(err) {
+			return mongo.SaveMonitor(mm)
+		}
+		return err
+	}
+
+	err = nil
+	om, err := conver(oom)
+	if err != nil {
+		return err
+	}
+
+	return mongo.ReplaceMonitor(om.Id.Hex(), mm)
+}
 func conver(m interface{}) (mm *MonitorModule, err error) {
 	data, err := bson.Marshal(m)
 	if err != nil {

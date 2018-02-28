@@ -18,23 +18,26 @@ import (
 
 /**
 SpiderAgent
-服务探针，用来探查服务是否健康。
- */
+服务检查探针，用来探查服务是否健康。
+如果检查失败，则通知MonitorAgent销毁.
+如果检查成功，则通过StatusAgent更新状态.
+*/
 type SpiderAgent struct {
 	Name        string
 	NsqEndpoint string
 	Namespace   []string
 	Port        []int64
 	Cmd         string
+	Ip          string
 	StopChan    chan int
 	AlivaChan   chan int
 }
 
-type SpiderMsg struct {
-	Name    string
-	Svcname string
-	Msg     string
-}
+//type SpiderMsg struct {
+//	Name    string
+//	Svcname string
+//	Msg     string
+//}
 
 // 只有当目标服务处于活动状态的时候才需要开始检测,
 // 如果目标服务被Kill掉，则可以认为K8s健康检测失败
@@ -102,6 +105,7 @@ func (this *SpiderAgent) Run() {
 						Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
 						Namespace: os.Getenv("DDOG_AGENT_SPIDER_NS"),
 						Msg:       msg,
+						Ip:        []string{this.Ip},
 					})
 
 					bridge.SendMonitorMsg(string(data))
@@ -147,7 +151,10 @@ func (this *SpiderAgent) checkPort() {
 			if _, ok := portMap[td.Port]; ok {
 				delete(portMap, td.Port)
 			}
+		} else {
+			this.Ip = td.Ip
 		}
+
 	}
 
 	if len(portMap) != 0 {
@@ -158,11 +165,19 @@ func (this *SpiderAgent) checkPort() {
 		}
 		logrus.WithFields(logrus.Fields{"msg": msg}).Info(SpiderAgentName)
 	} else {
-		/* do nothing*/
+		/* Task End */
 		logrus.WithFields(logrus.Fields{"check end": true}).Info(SpiderAgentName)
+		data, _ := json.Marshal(monitor.MonitorModule{
+			Kind:      this.Name,
+			Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
+			Namespace: os.Getenv("DDOG_AGENT_SPIDER_NS"),
+			Msg:       "ok",
+			Ip:        []string{this.Ip},
+		})
+
+		bridge.SendMonitorMsg(string(data))
 		<-make(chan int)
 	}
-
 }
 
 func (this *SpiderAgent) checkCmd() {
