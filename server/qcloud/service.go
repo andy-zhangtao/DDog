@@ -302,8 +302,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	sideCar := service.Containers{
 		ContainerName: _const.SideCarName,
 		Image:         _const.SideCarImg,
-		Memory:        30,
-		MemoryLimits:  80,
+		Memory:        10,
+		MemoryLimits:  20,
 	}
 
 	sideCarEnv := map[string]string{
