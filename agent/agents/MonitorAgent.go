@@ -12,6 +12,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"strings"
 	"strconv"
+	"time"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -170,9 +171,55 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 		if sc.Replicas == len(mm.Ip) {
 			/*clear msg*/
 			mm.Destory()
-			sc.Deploy = _const.DeploySuc
-			sc.Msg = msg.Msg
-			return svcconf.UpdateSvcConf(sc)
+			/*获取负载信息*/
+			md, err := metadata.GetMetaDataByRegion("")
+			if err != nil {
+				sc.Deploy = _const.DeploySuc
+				sc.Msg = msg.Msg
+				return svcconf.UpdateSvcConf(sc)
+			}
+
+			q := service.Service{
+				Pub: public.Public{
+					SecretId: md.Sid,
+					Region:   md.Region,
+				},
+				ClusterId:   md.ClusterID,
+				Namespace:   msg.Namespace,
+				SecretKey:   md.Skey,
+				ServiceName: sc.SvcName,
+			}
+			q.SetDebug(true)
+
+			for {
+
+				resp, err := q.QuerySvcInfo()
+
+				if err != nil || resp.Code != 0 {
+					sc.Deploy = _const.DeploySuc
+					sc.Msg = msg.Msg
+					return svcconf.UpdateSvcConf(sc)
+				}
+
+				if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
+					lb := svcconf.LoadBlance{
+						IP: resp.Data.ServiceInfo.ServiceIp,
+					}
+
+					var port []int
+					for _, c := range resp.Data.ServiceInfo.PortMappings {
+						port = append(port, c.LbPort)
+					}
+					lb.Port = port
+					sc.LbConfig = lb
+					sc.Deploy = _const.DeploySuc
+					sc.Msg = msg.Msg
+					return svcconf.UpdateSvcConf(sc)
+				}
+
+				time.Sleep(3 * time.Second)
+			}
+
 		}
 	} else {
 		/*clear msg*/

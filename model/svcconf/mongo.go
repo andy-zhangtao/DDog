@@ -200,9 +200,7 @@ func UpdateSvcConf(scf *SvcConf) error {
 	//if _const.DEBUG {
 	//	log.Printf("[UpdateSvcConf mongo.go] DeleteSvcConfById [%s]\n", scf.Id.Hex())
 	//}
-	logrus.WithFields(logrus.Fields{
-		"svc_conf_id": scf.Id.Hex(),
-	}).Info("DeleteSvcConfById")
+	logrus.WithFields(logrus.Fields{"svc_conf_id": scf.Id.Hex(),"data":scf}).Info("DeleteSvcConfById")
 	err := mongo.DeleteSvcConfById(scf.Id.Hex())
 	if err != nil {
 		return err
