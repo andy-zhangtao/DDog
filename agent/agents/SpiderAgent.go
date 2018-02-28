@@ -155,8 +155,10 @@ func (this *SpiderAgent) checkPort() {
 
 	for _, td := range tcp_data {
 		logrus.WithFields(logrus.Fields{"tcp": td}).Info(SpiderAgentName)
-		if _, ok := portMap[td.Port]; ok {
-			delete(portMap, td.Port)
+		if strings.ToUpper(td.State) == "LISTEN"{
+			if _, ok := portMap[td.Port]; ok {
+				delete(portMap, td.Port)
+			}
 		}
 	}
 
@@ -165,6 +167,10 @@ func (this *SpiderAgent) checkPort() {
 			msg = fmt.Sprintf("Port[%d] Check Failed. ", k)
 		}
 		logrus.WithFields(logrus.Fields{"msg": msg}).Info(SpiderAgentName)
+	}else{
+		/* do nothing*/
+		logrus.WithFields(logrus.Fields{"check end":true}).Info(SpiderAgentName)
+		<- make(chan int)
 	}
 
 }

@@ -11,7 +11,13 @@
 * RetriAgent
     > 状态监测Agent，主动检索命名空间中的服务状态。发现有失败服务之后，告之MonitorAgent,同时将此服务标记为失败
 
+* SpiderAgent
+    > 服务探针Agent, 伴随服务同步启动，用来侦测服务状态是否正常
+
 ## Change Log
+
+* v0.6.7
+ - 增加SidecarAgent
 
 * v0.6.6
  - 增加状态检查Agent RetirAgent
