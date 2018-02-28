@@ -6,6 +6,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -76,6 +77,7 @@ func (mm *MonitorModule) Save() error {
 		}
 		/*Merge MonitorMsg*/
 		mm = om
+		logrus.WithFields(logrus.Fields{"OldMsg": om, "NewMsg": mm}).Info(ModuleName)
 		return mongo.ReplaceMonitor(om.Id.Hex(), om)
 	}
 
@@ -84,7 +86,7 @@ func (mm *MonitorModule) Save() error {
 }
 
 // GetMonitroModule 获取指定类型的监控信息
-func GetMonitroModule(kind, svcname, namespace string) (*MonitorModule, error){
+func GetMonitroModule(kind, svcname, namespace string) (*MonitorModule, error) {
 	oom, err := mongo.MongoGetMonitorByName(kind, svcname, namespace)
 	if err != nil {
 		return nil, err
@@ -95,7 +97,11 @@ func GetMonitroModule(kind, svcname, namespace string) (*MonitorModule, error){
 	return conver(oom)
 }
 
-func (mm *MonitorModule) Replace() error{
+func (mm *MonitorModule) Destory() error {
+	return mongo.DeleteMonitorBySvc(mm.Kind, mm.Svcname, mm.Namespace)
+}
+
+func (mm *MonitorModule) Replace() error {
 	oom, err := mongo.MongoGetMonitorByName(mm.Kind, mm.Svcname, mm.Namespace)
 	if err != nil {
 		if tool.IsNotFound(err) {

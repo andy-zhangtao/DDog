@@ -60,7 +60,13 @@ func (this *MonitorAgent) Run() {
 				continue
 			}
 
-			go this.handlerMsg(&msg)
+			logrus.WithFields(logrus.Fields{"HandlerMsg svc": msg.Svcname, "namespace": msg.Namespace, "msg": msg.Msg, "ip": msg.Ip}).Info(this.Name)
+			go func() {
+				err = this.handlerMsg(&msg)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(ModuleName)
+				}
+			}()
 
 			m.Finish()
 		}
@@ -108,10 +114,10 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
 
 	name := ""
 	ss := strings.Split(msg.Svcname, "-")
-	_, err = strconv.ParseInt(ss[len(ss)-1],10,64)
-	if err != nil{
+	_, err = strconv.ParseInt(ss[len(ss)-1], 10, 64)
+	if err != nil {
 		name = msg.Svcname
-	}else{
+	} else {
 		/*最后一个字段如果不包含字母，那么就是自动生成的时间戳*/
 		name = strings.Join(strings.Split(msg.Svcname, "-")[:len(ss)-2], "-")
 	}
@@ -156,20 +162,21 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 			return err
 		}
 
-		if sc.Replicas == len(msg.Ip) {
-			/*clear msg ip*/
-			msg.Ip = []string{}
-			msg.Num = 0
-			msg.Replace()
+		mm, err := monitor.GetMonitroModule(msg.Kind, msg.Svcname, msg.Namespace)
+		if err != nil {
+			return err
+		}
+
+		if sc.Replicas == len(mm.Ip) {
+			/*clear msg*/
+			mm.Destory()
 			sc.Deploy = _const.DeploySuc
 			sc.Msg = msg.Msg
 			return svcconf.UpdateSvcConf(sc)
 		}
 	} else {
-		/*clear msg ip*/
-		msg.Ip = []string{}
-		msg.Num = 0
-		msg.Replace()
+		/*clear msg*/
+		msg.Destory()
 		return this.stopSVC(msg)
 	}
 

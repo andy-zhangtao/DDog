@@ -75,3 +75,8 @@ func DeleteMonitorByKindAndStatus(kind, status string) (err error) {
 	_, err = MongoMonitor().RemoveAll(bson.M{"kind": kind, "status": status})
 	return
 }
+
+func DeleteMonitorBySvc(kind, svcname, namespace string) (err error) {
+	_, err = MongoMonitor().RemoveAll(bson.M{"kind": kind, "svcname": svcname, "namespace": namespace})
+	return
+}
