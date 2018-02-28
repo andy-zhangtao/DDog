@@ -412,35 +412,35 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var plugin = func(scf *svcconf.SvcConf, data interface{}) {
-		c, _ := data.(map[string]interface{})
-
-		tcf, _ := c["tempSvc"].(*svcconf.SvcConf)
-		isupgrade, _ := c["upgrade"].(bool)
-		sn, _ := c["rollsvc"].(string) /*本次升级的服务名*/
-
-		//如果服务部署成功。需要根据部署类型来判断是否需要退出
-		//如果是直接升级类型的,直接退出
-		//如果是灰度发布类型的,可以进行后续升级
-		if scf.Deploy == _const.DeploySuc {
-			scf.SvcNameBak[sn] = scf.LbConfig
-			scf.LbConfig = tcf.LbConfig
-			scf.Netconf = tcf.Netconf
-			if !isupgrade {
-				scf.Deploy = _const.DeployStatusSync
-			}
-			svcconf.UpdateSvcConf(scf)
-		}
-		getChan(cf.SvcName) <- 1
-	}
+	//var plugin = func(scf *svcconf.SvcConf, data interface{}) {
+	//	c, _ := data.(map[string]interface{})
+	//
+	//	tcf, _ := c["tempSvc"].(*svcconf.SvcConf)
+	//	isupgrade, _ := c["upgrade"].(bool)
+	//	sn, _ := c["rollsvc"].(string) /*本次升级的服务名*/
+	//
+	//	//如果服务部署成功。需要根据部署类型来判断是否需要退出
+	//	//如果是直接升级类型的,直接退出
+	//	//如果是灰度发布类型的,可以进行后续升级
+	//	if scf.Deploy == _const.DeploySuc {
+	//		scf.SvcNameBak[sn] = scf.LbConfig
+	//		scf.LbConfig = tcf.LbConfig
+	//		scf.Netconf = tcf.Netconf
+	//		if !isupgrade {
+	//			scf.Deploy = _const.DeployStatusSync
+	//		}
+	//		svcconf.UpdateSvcConf(scf)
+	//	}
+	//	getChan(cf.SvcName) <- 1
+	//}
 
 	tcf := new(svcconf.SvcConf)
 	cf.Copy(tcf)
-	go asyncQueryServiceStatus(sn, nsme, q, cf, map[string]interface{}{
-		"upgrade": isUpgrade,
-		"tempSvc": tcf,
-		"rollsvc": sn,
-	}, plugin)
+	//go asyncQueryServiceStatus(sn, nsme, q, cf, map[string]interface{}{
+	//	"upgrade": isUpgrade,
+	//	"tempSvc": tcf,
+	//	"rollsvc": sn,
+	//}, plugin)
 
 	cf.Deploy = _const.DeployIng
 	svcconf.UpdateSvcConf(cf)
