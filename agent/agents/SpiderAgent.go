@@ -98,8 +98,8 @@ func (this *SpiderAgent) Run() {
 					this.checkPort()
 				}
 
-				/*errNum == 60几乎等同为1分钟*/
-				if (!needCheck && msg != "") || (errNum == 60) {
+				/*errNum == 60*4几乎等同为4分钟*/
+				if (!needCheck && msg != "") || (errNum == 60*4) {
 					data, _ := json.Marshal(monitor.MonitorModule{
 						Kind:      this.Name,
 						Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
@@ -146,7 +146,7 @@ func (this *SpiderAgent) checkPort() {
 	}
 
 	for _, td := range tcp_data {
-		logrus.WithFields(logrus.Fields{"tcp": td}).Info(SpiderAgentName)
+		//logrus.WithFields(logrus.Fields{"tcp": td}).Info(SpiderAgentName)
 		if strings.ToUpper(td.State) == "LISTEN" {
 			if _, ok := portMap[td.Port]; ok {
 				delete(portMap, td.Port)
