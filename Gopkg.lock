@@ -180,7 +180,6 @@
   ]
   revision = "f6cff0780e542efa0c8e864dc8fa522808f6a598"
 
-[[projects]]
   name = "golang.org/x/text"
   packages = [
     "collate",
