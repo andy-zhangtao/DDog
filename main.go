@@ -1,11 +1,9 @@
 package main
 
 import (
-	"log"
 	"net/http"
-
-	"github.com/andy-zhangtao/DDog/server/dns"
-	_ "github.com/andy-zhangtao/DDog/server/etcd"
+	//"github.com/andy-zhangtao/DDog/server/dns"
+	//_ "github.com/andy-zhangtao/DDog/server/etcd"
 	_ "github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -13,21 +11,38 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/client/handler"
 	"github.com/andy-zhangtao/DDog/server/metadata"
-	_ "github.com/andy-zhangtao/DDog/const"
+	//_ "github.com/andy-zhangtao/DDog/const"
+	_ "github.com/andy-zhangtao/DDog/pre-check"
 	"os"
 	"github.com/andy-zhangtao/DDog/server/container"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
+	"fmt"
+	"github.com/Sirupsen/logrus"
 )
 
-var _VERSION_ = "v0.1.1"
+var _VERSION_ = "-unknown-"
 var _APIVERSION_ = "/v1"
+var _INNER_VERSION_ = "v0.6.8"
+
+const (
+	ModuleName = "DDog Main"
+)
+
+func init() {
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(logrus.DebugLevel)
+}
 
 func main() {
-	log.Println(getVersion())
 	region := os.Getenv(_const.EnvRegion)
 	if region == "" {
-		log.Panic(_const.EnvRegionNotFound)
+		logrus.WithFields(logrus.Fields{"Region Not Found": _const.EnvRegion}).Panic(ModuleName)
 	}
+
+	fmt.Println("===================")
+	logrus.WithFields(logrus.Fields{"version": getVersion(),}).Info("DDOG VERSION")
+
 	//go watch.Go(region)
 	r := mux.NewRouter()
 	r = dnsAPI(r)
@@ -40,11 +55,11 @@ func main() {
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
-	log.Println(http.ListenAndServe(":8000", handlers.CORS(headersOk, originsOk, methodsOk)(r)))
+	logrus.Println(http.ListenAndServe(":8000", handlers.CORS(headersOk, originsOk, methodsOk)(r)))
 }
 
 func getVersion() string {
-	return _VERSION_
+	return _INNER_VERSION_ +"-"+ _VERSION_
 }
 
 func getApiPath(url string) string {
@@ -86,8 +101,8 @@ func serviceAPI(r *mux.Router) *mux.Router {
 	r.HandleFunc(getApiPath(_const.QuerySvcStatus), qcloud.GetSampleSVCInfo).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.UpdateSvcConfig), svcconf.UpdateNetPort).Methods(http.MethodGet)
 	r.HandleFunc(getApiPath(_const.RollUpService), qcloud.RollingUpServiceWithSvc).Methods(http.MethodPost)
-	r.HandleFunc(getApiPath(_const.ConfirmService), qcloud.ConfirmRollService).Methods(http.MethodPost)
 	r.HandleFunc(getApiPath(_const.RollBackService), qcloud.RollBackService).Methods(http.MethodPost)
+	r.HandleFunc(getApiPath(_const.ConfirmService), qcloud.ConfirmRollService).Methods(http.MethodPost)
 	return r
 }
 
@@ -101,10 +116,10 @@ func namespaceAPI(r *mux.Router) *mux.Router {
 }
 
 func dnsAPI(r *mux.Router) *mux.Router {
-	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.SaveDNS).Methods(http.MethodPost)
-	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.DeleDNS).Methods(http.MethodDelete)
-	r.HandleFunc(getApiPath(_const.DnsMetaData), dns.GetDNS).Methods(http.MethodGet)
-	r.HandleFunc(getApiPath(_const.AddSvcIP), handler.AddSvcDnsAR).Methods(http.MethodPost)
+	//r.HandleFunc(getApiPath(_const.DnsMetaData), dns.SaveDNS).Methods(http.MethodPost)
+	//r.HandleFunc(getApiPath(_const.DnsMetaData), dns.DeleDNS).Methods(http.MethodDelete)
+	//r.HandleFunc(getApiPath(_const.DnsMetaData), dns.GetDNS).Methods(http.MethodGet)
+	//r.HandleFunc(getApiPath(_const.AddSvcIP), handler.AddSvcDnsAR).Methods(http.MethodPost)
 	return r
 }
 

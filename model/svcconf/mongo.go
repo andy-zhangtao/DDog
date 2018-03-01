@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/andy-zhangtao/DDog/const"
 	"math"
+	"github.com/Sirupsen/logrus"
 )
 
 // SvcConf 服务配置信息
@@ -196,9 +197,10 @@ func SaveSvcConf(scf *SvcConf) error {
 }
 
 func UpdateSvcConf(scf *SvcConf) error {
-	if _const.DEBUG {
-		log.Printf("[UpdateSvcConf mongo.go] DeleteSvcConfById [%s]\n", scf.Id.Hex())
-	}
+	//if _const.DEBUG {
+	//	log.Printf("[UpdateSvcConf mongo.go] DeleteSvcConfById [%s]\n", scf.Id.Hex())
+	//}
+	logrus.WithFields(logrus.Fields{"svc_conf_id": scf.Id.Hex(),"data":scf}).Info("DeleteSvcConfById")
 	err := mongo.DeleteSvcConfById(scf.Id.Hex())
 	if err != nil {
 		return err
@@ -316,4 +318,50 @@ func (sc *SvcConf) DeleteMySelf() (err error) {
 
 	err = mongo.DeleteSvcConfById(sc.Id.Hex())
 	return
+}
+
+func MergerSvc(oldSvc, newSvc *SvcConf) {
+	if newSvc.Name == "" {
+		newSvc.Name = oldSvc.Name
+	}
+
+	if newSvc.Desc == "" {
+		newSvc.Desc = oldSvc.Desc
+	}
+
+	if newSvc.SvcName == ""{
+		newSvc.SvcName = oldSvc.SvcName
+	}
+
+	if len(newSvc.SvcNameBak) == 0{
+		newSvc.SvcNameBak = oldSvc.SvcNameBak
+	}
+
+	if newSvc.Replicas == 0 {
+		newSvc.Replicas = oldSvc.Replicas
+	}
+
+	if newSvc.Namespace == ""{
+		newSvc.Namespace = oldSvc.Namespace
+	}
+
+	if len(newSvc.Netconf) == 0{
+		newSvc.Netconf = oldSvc.Netconf
+	}
+
+	if len(newSvc.Instance) == 0 {
+		newSvc.Instance = oldSvc.Instance
+	}
+
+	if newSvc.LbConfig.IP == ""{
+		newSvc.LbConfig = oldSvc.LbConfig
+	}
+
+	if newSvc.BackID == ""{
+		newSvc.BackID = oldSvc.BackID
+	}
+
+	if len(newSvc.BackContainer) == 0 {
+		newSvc.BackContainer = oldSvc.BackContainer
+	}
 }

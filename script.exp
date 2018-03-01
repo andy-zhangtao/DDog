@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+spawn echo "=== Ready to push ==="
+spawn git branch
+spawn git config --global user.email $env(GITEMAIL)
+spawn git config --global user.name $env(GITUSR)
+spawn git add -f *
+spawn git commit -m "Add Vendor Package"
+spawn git push
+expect "Username"
+send "$env(GITUSR)\n"
+expect "Password"
+send "$env(GITPASS)\n"
+interact
+set timeout 30

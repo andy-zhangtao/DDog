@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/model/container"
+	"strings"
 )
 
 var svc = svcconf.SvcConf{
@@ -57,18 +58,19 @@ func TestGetSvcConf(t *testing.T) {
 	var c svcconf.SvcConf
 	json.Unmarshal(w.Input, &c)
 
-	assert.Equal(t, svc.Name, c.Name, "The name error")
-	assert.Equal(t, svc.Namespace, c.Namespace, "The name error")
+	assert.Equal(t, strings.ToLower(svc.Name), c.Name, "The name error")
+	assert.Equal(t, strings.ToLower(svc.Namespace), c.Namespace, "The name error")
 
 	r.URL = new(url.URL)
 	r.URL.RawQuery = "namespace=SVC_NSME"
 	GetSvcConf(w, r)
 	var cs []svcconf.SvcConf
+
 	json.Unmarshal(w.Input, &cs)
 
 	assert.Equal(t, 0, w.StatusCode, "The status code should be 0")
-	assert.Equal(t, svc.Name, cs[0].Name, "The name error")
-	assert.Equal(t, svc.Namespace, cs[0].Namespace, "The name error")
+	assert.Equal(t, strings.ToLower(svc.Name), cs[0].Name, "The name error")
+	assert.Equal(t, strings.ToLower(svc.Namespace), cs[0].Namespace, "The name error")
 }
 
 func TestUpgradeSvcConf(t *testing.T) {
@@ -97,12 +99,8 @@ func TestDeleteSvcConf(t *testing.T) {
 	w := new(http_ut.TestResponseWriter)
 
 	r.URL = new(url.URL)
-	r.URL.RawQuery = "namespace=SVC_NSME&id=" + id
+	r.URL.RawQuery = "namespace=SVC_NSME&svcname=SVCCONF&id=" + id
 
 	DeleteSvcConf(w, r)
 	assert.Equal(t, 0, w.StatusCode, "The status code should be 0")
-	r.URL.RawQuery = "namespace=SVC_NSME&id=" + id
-	GetSvcConf(w, r)
-
-	assert.Equal(t, 500, w.StatusCode, "The status code should be 500")
 }

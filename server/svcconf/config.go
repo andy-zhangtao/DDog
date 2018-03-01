@@ -13,13 +13,16 @@ import (
 	"strconv"
 	"log"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"fmt"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"net/url"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/Sirupsen/logrus"
+	"github.com/andy-zhangtao/DDog/bridge"
 )
+
+type Operation struct{}
 
 // CPort 容器端口数据
 type CPort struct {
@@ -27,6 +30,10 @@ type CPort struct {
 	Img  string                   `json:"img"`
 	Net  []container.NetConfigure `json:"net"`
 }
+
+const (
+	ModuleName = "svcconf"
+)
 
 func CreateSvcConf(w http.ResponseWriter, r *http.Request) {
 
@@ -79,6 +86,7 @@ func GetSvcConf(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id := r.URL.Query().Get("id")
 	if id == "" {
+		nsme = strings.Replace(strings.ToLower(nsme), " ", "-", -1)
 		conf, err := mongo.GetSvcConfNs(nsme)
 		if err != nil {
 			tool.ReturnError(w, err)
@@ -150,6 +158,9 @@ func QuerySvcConf(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 
 }
+
+// DeleteSvcConf 销毁服务配置
+// 销毁服务所有资源,包括数据库资源, 服务实例资源
 func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 	svc := r.URL.Query().Get("svcname")
 	if svc == "" {
@@ -166,89 +177,36 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	scf, err := svcconf.GetSvcConfByName(svc, namespace)
+	data, err := json.Marshal(_const.DestoryMsg{
+		Svcname:   svc,
+		Namespace: namespace,
+	})
+
 	if err != nil {
-		tool.ReturnError(w, err)
+		logrus.WithFields(logrus.Fields{"Marshal DestoryMsg Error": err,}).Error(ModuleName)
+		tool.ReturnError(w, errors.New(err.Error()))
 		return
 	}
 
-	if scf == nil{
-		tool.ReturnError(w, errors.New(_const.SVCNoExist))
-		return
-	}
-
-	md, err := metadata.GetMetaDataByRegion("")
+	err = bridge.SendDestoryMsg(string(data))
 	if err != nil {
-		tool.ReturnError(w, err)
+		logrus.WithFields(logrus.Fields{"DestorySvc Error": err,}).Error(ModuleName)
+		tool.ReturnError(w, errors.New(err.Error()))
 		return
 	}
 
-	q := service.Service{
-		Pub: public.Public{
-			SecretId: md.Sid,
-			Region:   md.Region,
-		},
-		ClusterId:   md.ClusterID,
-		Namespace:   scf.Namespace,
-		ServiceName: scf.SvcName,
-		SecretKey:   md.Skey,
-	}
-
-	q.SetDebug(true)
-
-	q.DeleteService()
-
-	/*删除可能存在的升级服务*/
-	for k, _ := range scf.SvcNameBak {
-		q := service.Service{
-			Pub: public.Public{
-				SecretId: md.Sid,
-				Region:   md.Region,
-			},
-			ClusterId:   md.ClusterID,
-			Namespace:   scf.Namespace,
-			ServiceName: k,
-			SecretKey:   md.Skey,
-		}
-
-		q.SetDebug(true)
-
-		q.DeleteService()
-	}
-
-	err = container.DeleteAllContaienrUnderSvc(scf.Name, scf.Namespace)
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-
-	err = scf.DeleteMySelf()
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
-	}
-
+	//oper := Operation{}
+	//err = oper.DeleteSvcConf(_const.DestoryMsg{
+	//	Svcname:   svc,
+	//	Namespace: namespace,
+	//})
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
 	tool.ReturnResp(w, []byte("Delete Succ!"))
 	return
-	//id := r.URL.Query().Get("id")
-	//if id == "" {
-	//	nsme := r.URL.Query().Get("namespace")
-	//	if nsme == "" {
-	//		tool.ReturnError(w, errors.New(_const.NamespaceNotFound))
-	//		return
-	//	}
-	//	err := mongo.DeleteSvcConfByNs(nsme)
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//} else {
-	//	err := mongo.DeleteSvcConfById(id)
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//}
+
 }
 func checkConf(conf *svcconf.SvcConf) error {
 	if conf.Name == "" {
@@ -485,7 +443,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		Msg:  "SvcConfig Upgrade",
 	}
 
-	fmt.Println(conf)
+	logrus.WithFields(logrus.Fields{"New Svc Conf": conf}).Info(ModuleName)
 	cf, err := mongo.GetSvcConfByName(conf.Name, conf.Namespace)
 	if cf == nil {
 		err = checkConf(&conf)
@@ -508,6 +466,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		svcconf.MergerSvc(nc, &conf)
 		err = mongo.DeleteSvcConfById(nc.Id.Hex())
 		if err != nil {
 			tool.ReturnError(w, err)
@@ -515,6 +474,7 @@ func CheckSvcConf(w http.ResponseWriter, r *http.Request) {
 		}
 
 		conf.Id = nc.Id
+		logrus.WithFields(logrus.Fields{"Replace Svc Conf": conf, "Old Svc Conf": nc}).Info(ModuleName)
 		if err = mongo.SaveSvcConfig(conf); err != nil {
 			tool.ReturnError(w, err)
 			return
@@ -720,4 +680,104 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 
 	return
 
+}
+
+func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
+	// 当只需要删除单个服务时(例如整体服务升级，不需要通过蓝绿发布时),此时服务名为 SVC-xxx格式
+	// 在数据库中肯定无法找到相对应的记录，因此数据库记录不作为必须条件
+	// 当数据库有记录时，删除其名下所有服务
+	// 当数据库没有记录时，直接删除当前服务
+	md, err := metadata.GetMetaDataByRegion("")
+	if err != nil {
+		return err
+	}
+	scf, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
+	if err != nil {
+		return err
+	}
+
+	if scf == nil {
+		q := service.Service{
+			Pub: public.Public{
+				SecretId: md.Sid,
+				Region:   md.Region,
+			},
+			ClusterId:   md.ClusterID,
+			Namespace:   msg.Namespace,
+			ServiceName: msg.Svcname,
+			SecretKey:   md.Skey,
+		}
+
+		q.SetDebug(true)
+
+		resp, err := q.DeleteService()
+		if err != nil {
+			return err
+		}
+		if resp.Code != 0 {
+			return errors.New(resp.Message)
+		}
+		return nil
+	}
+
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId:   md.ClusterID,
+		Namespace:   scf.Namespace,
+		ServiceName: scf.SvcName,
+		SecretKey:   md.Skey,
+	}
+
+	q.SetDebug(true)
+
+	resp, err := q.DeleteService()
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
+	}
+	/*删除可能存在的升级服务*/
+	for k, _ := range scf.SvcNameBak {
+		q := service.Service{
+			Pub: public.Public{
+				SecretId: md.Sid,
+				Region:   md.Region,
+			},
+			ClusterId:   md.ClusterID,
+			Namespace:   scf.Namespace,
+			ServiceName: k,
+			SecretKey:   md.Skey,
+		}
+
+		q.SetDebug(true)
+
+		resp, err := q.DeleteService()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error":   err.Error(),
+				"svcname": k,
+			}).Error("Delete Service Error")
+		}
+
+		if resp.Code != 0 {
+			logrus.WithFields(logrus.Fields{
+				"resp_code": resp.Code,
+				"svcname":   k,
+				"msg":       resp.Message,
+			}).Error("Delete Service Failed")
+		}
+	}
+
+	err = container.DeleteAllContaienrUnderSvc(scf.Name, scf.Namespace)
+	if err != nil {
+		return err
+	}
+
+	err = scf.DeleteMySelf()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -28,78 +27,78 @@ func check() error {
 	return nil
 }
 
-func init() {
-	if os.Getenv("ETCDCTL_API") == "3" {
-		if err := check(); err != nil {
-			log.Println(err.Error())
-			os.Exit(-1)
-		}
-
-		var err error
-
-		ep := strings.Split(endpoint, ";")
-		cliv3, err = clientv3.New(clientv3.Config{
-			Endpoints:   ep,
-			DialTimeout: 15 * time.Second,
-		})
-
-		if err != nil {
-			log.Printf("Etcd[%s] Init Failed [%s]! \n", ep, err.Error())
-			os.Exit(-1)
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		list, err := cliv3.MemberList(ctx)
-		defer cancel()
-		if err != nil {
-			log.Printf("Etcd[%s] Get Member List Failed [%s]! \n", ep, err.Error())
-			os.Exit(-1)
-		}
-
-		for _, m := range list.Members {
-			log.Printf("[%s][%s]\n", m.Name, m.ClientURLs)
-		}
-
-	} else {
-		isV2 = true
-		if err := check(); err != nil {
-			log.Println(err.Error())
-			os.Exit(-1)
-		}
-
-		var err error
-
-		ep := strings.Split(endpoint, ";")
-		for i, e := range ep {
-			ep[i] = "http://" + e
-		}
-
-		cliv2, err = client.New(client.Config{
-			Endpoints: ep,
-			Transport: client.DefaultTransport,
-			// set timeout per request to fail fast when the target endpoint is unavailable
-			HeaderTimeoutPerRequest: 15 * time.Second,
-		})
-
-		if err != nil {
-			log.Printf("Etcd[%s] Init Failed [%s]! \n", ep, err.Error())
-			os.Exit(-1)
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		version, err := cliv2.GetVersion(ctx)
-		defer cancel()
-		if err != nil {
-			log.Printf("Etcd[%s] Get Member List Failed [%s]! \n", ep, err.Error())
-			os.Exit(-1)
-		}
-
-		kapi = client.NewKeysAPI(cliv2)
-		log.Printf("当前ETCD Server[%s] Cluster[%s]\n", version.Server, version.Cluster)
-	}
-
-	log.Printf("当前使用的Etcd版本为[%s]\n", os.Getenv("ETCDCTL_API"))
-}
+//func init() {
+//	if os.Getenv("ETCDCTL_API") == "3" {
+//		if err := check(); err != nil {
+//			log.Println(err.Error())
+//			os.Exit(-1)
+//		}
+//
+//		var err error
+//
+//		ep := strings.Split(endpoint, ";")
+//		cliv3, err = clientv3.New(clientv3.Config{
+//			Endpoints:   ep,
+//			DialTimeout: 15 * time.Second,
+//		})
+//
+//		if err != nil {
+//			log.Printf("Etcd[%s] Init Failed [%s]! \n", ep, err.Error())
+//			os.Exit(-1)
+//		}
+//
+//		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+//		list, err := cliv3.MemberList(ctx)
+//		defer cancel()
+//		if err != nil {
+//			log.Printf("Etcd[%s] Get Member List Failed [%s]! \n", ep, err.Error())
+//			os.Exit(-1)
+//		}
+//
+//		for _, m := range list.Members {
+//			log.Printf("[%s][%s]\n", m.Name, m.ClientURLs)
+//		}
+//
+//	} else {
+//		isV2 = true
+//		if err := check(); err != nil {
+//			log.Println(err.Error())
+//			os.Exit(-1)
+//		}
+//
+//		var err error
+//
+//		ep := strings.Split(endpoint, ";")
+//		for i, e := range ep {
+//			ep[i] = "http://" + e
+//		}
+//
+//		cliv2, err = client.New(client.Config{
+//			Endpoints: ep,
+//			Transport: client.DefaultTransport,
+//			// set timeout per request to fail fast when the target endpoint is unavailable
+//			HeaderTimeoutPerRequest: 15 * time.Second,
+//		})
+//
+//		if err != nil {
+//			log.Printf("Etcd[%s] Init Failed [%s]! \n", ep, err.Error())
+//			os.Exit(-1)
+//		}
+//
+//		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+//		version, err := cliv2.GetVersion(ctx)
+//		defer cancel()
+//		if err != nil {
+//			log.Printf("Etcd[%s] Get Member List Failed [%s]! \n", ep, err.Error())
+//			os.Exit(-1)
+//		}
+//
+//		kapi = client.NewKeysAPI(cliv2)
+//		log.Printf("当前ETCD Server[%s] Cluster[%s]\n", version.Server, version.Cluster)
+//	}
+//
+//	log.Printf("当前使用的Etcd版本为[%s]\n", os.Getenv("ETCDCTL_API"))
+//}
 
 func Put(key, value string) error {
 	if debug {

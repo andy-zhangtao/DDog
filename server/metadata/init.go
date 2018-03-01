@@ -8,7 +8,6 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"errors"
 	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/DDog/model/cluster"
 )
@@ -21,25 +20,24 @@ func Startup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var md metadata.MetaData
-	err = json.Unmarshal(data, &md)
+	var tmd metadata.MetaData
+	err = json.Unmarshal(data, &tmd)
 	if err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
-	if md, err := metadata.GetMetaDataByRegion(md.Region); err != nil {
+	if md, err := metadata.GetMetaDataByRegion(tmd.Region); err != nil {
 		tool.ReturnError(w, err)
 		return
-	} else if md.Sid != "" {
+	} else if md != nil {
 		tool.ReturnError(w, errors.New(_const.MetaDataDupilcate))
 		return
-	} else if err = metadata.SaveMetaData(*md); err != nil {
+	} else if err = metadata.SaveMetaData(tmd); err != nil {
 		tool.ReturnError(w, err)
 		return
 	}
 
-	bridge.GetMetaChan() <- 1
 	return
 }
 
@@ -52,8 +50,9 @@ func GetMetaData(region string) (metadata.MetaData, error) {
 	if err != nil {
 		return *md, err
 	}
-	if md.Sid == "" {
-		return *md, errors.New(region + " Metadata 获取为空")
+
+	if md == nil || md.Sid == "" {
+		return metadata.MetaData{}, errors.New(region + " Metadata 获取为空")
 	}
 
 	return *md, nil
@@ -152,6 +151,5 @@ func UpdataMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bridge.GetMetaChan() <- 1
 	return
 }

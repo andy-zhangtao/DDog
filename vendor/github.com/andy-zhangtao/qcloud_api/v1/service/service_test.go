@@ -35,6 +35,10 @@ func TestService_CreateNewSerivce(t *testing.T) {
 					Port:         3000,
 				},
 			},
+			Cpu:          3,
+			CpuLimits:    5,
+			Memory:       100,
+			MemoryLimits: 400,
 		},
 	}
 	svc.PortMappings = []PortMappings{
@@ -48,7 +52,8 @@ func TestService_CreateNewSerivce(t *testing.T) {
 	svc.ScaleTo = 5
 
 	field, regmap := svc.createSvc()
-	assert.Equal(t, 23, len(field), "The length of field error!")
+
+	assert.Equal(t, 27, len(field), "The length of field error!")
 
 	assert.Equal(t, "clustid", regmap["clusterId"], "clusterId:clustid Error")
 	assert.Equal(t, "namespace", regmap["namespace"], "namespace:namespace Error")
@@ -73,6 +78,10 @@ func TestService_CreateNewSerivce(t *testing.T) {
 	assert.Equal(t, "3000", regmap["containers.0.healthCheck.0.port"], "containers.0.healthCheck.0.port:3000 Error")
 	assert.Equal(t, "8000", regmap["portMappings.0.lbPort"], "portMappings.0.lbPort:8000 Error")
 	assert.Equal(t, "9000", regmap["portMappings.0.containerPort"], "portMappings.0.containerPort:9000  Error")
+	assert.Equal(t, "3", regmap["containers.0.cpu"], "containers.0.cpu  Error")
+	assert.Equal(t, "5", regmap["containers.0.cpuLimits"], "containers.0.cpulimits  Error")
+	assert.Equal(t, "100", regmap["containers.0.memory"], "containers.0.memory  Error")
+	assert.Equal(t, "400", regmap["containers.0.memoryLimits"], "containers.0.memorylimits  Error")
 }
 
 func TestInstanceUnmarshalInService(t *testing.T) {

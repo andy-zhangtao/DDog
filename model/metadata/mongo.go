@@ -4,6 +4,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"errors"
 )
 
 type MetaData struct {
@@ -55,6 +56,9 @@ func DeleteMetaDataByRegion(region string) (err error) {
 		return
 	}
 
+	if md == nil {
+		return errors.New("MetaData is empty!")
+	}
 	if md.ID == "" {
 		return
 	}
