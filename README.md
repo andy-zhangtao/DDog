@@ -30,6 +30,9 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
+### v0.6.9
+* 将部署功能从主服务中剥离出来，单独成立一个DeployAgent服务
+
 ### v0.6.8
 * 每个服务都增加一个sidecar,用来侦测服务状态
 

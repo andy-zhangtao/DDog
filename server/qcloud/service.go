@@ -616,47 +616,7 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//md, err := metadata.GetMetaDataByRegion("")
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//q := service.Svc{
-	//	Pub: public.Public{
-	//		SecretId: md.Sid,
-	//		Region:   md.Region,
-	//	},
-	//	ClusterId: md.ClusterID,
-	//	Namespace: cf.Namespace,
-	//	SecretKey: md.Skey,
-	//}
-	//q.SetDebug(true)
-	//resp, err := q.QuerySampleInfo()
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-	//
-	//isUpgrade := false
-	//for _, r := range resp.Data.Services {
-	//	if _const.DEBUG {
-	//		log.Printf("[DeployService] Find Svc Dist:[%s] Current:[%s]\n", cf.Name, r.ServiceName)
-	//	}
-	//	if strings.Compare(r.ServiceName, cf.Name) == 0 {
-	//		isUpgrade = true
-	//		break
-	//	}
-	//}
-	//
 	oldPath := r.URL.RawQuery + "&namespace=" + cf.Namespace
-	//
-	//if isUpgrade {
-	//	// 进行蓝绿发布
-	//	r.URL.RawQuery = oldPath + "&upgrade=true"
-	//} else {
-	//	// 同时发布
-	//	r.URL.RawQuery = oldPath + "&upgrade=false"
-	//}
 
 	r.URL.RawQuery = oldPath + "&upgrade=true"
 	logrus.WithFields(logrus.Fields{
@@ -679,7 +639,33 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cf.Msg = ""
+	cf.Deploy = _const.DeployIng
+	err = svcconf.UpdateSvcConf(cf)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Update Error": err}).Error("DeployService")
+		tool.ReturnError(w, errors.New(_const.DealFailed))
+		return
+	}
 	bridge.SendDeployMsg(string(data))
+
+	/*为了保持原接口返回的数据一致，这里返回一个空的Json字符串*/
+	type result struct {
+		Code     int    `json:"code"`
+		Message  string `json:"message"`
+		Codedesc string `json:"codedesc"`
+		Request  string `json:"request"`
+		Data     string `json:"data"`
+	}
+
+	data, _ = json.Marshal(result{
+		Code:     0,
+		Message:  "",
+		Codedesc: "Success",
+		Request:  "",
+		Data:     "",
+	})
+	w.Write(data)
 }
 
 func RollingUpService(w http.ResponseWriter, r *http.Request) {
