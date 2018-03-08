@@ -24,6 +24,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/andy-zhangtao/DDog/bridge"
 	"os"
+	"github.com/andy-zhangtao/DDog/model/agent"
 )
 
 var globalChan chan int
@@ -258,6 +259,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q.SetDebug(true)
+
 	if len(cf.Netconf) > 0 {
 		var pm []service.PortMappings
 		for _, n := range cf.Netconf {
@@ -662,8 +664,22 @@ func DeployService(w http.ResponseWriter, r *http.Request) {
 		"oldPath": oldPath,
 	}).Info("DeployService")
 
-	RunService(w, r)
+	//RunService(w, r)
+	msg := agent.DeployMsg{
+		SvcName:   name,
+		NameSpace: nsme,
+		Upgrade:   true,
+		Replicas:  2,
+	}
 
+	data, err := json.Marshal(msg)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Marshal Error": err}).Error("DeployService")
+		tool.ReturnError(w, errors.New(_const.DealFailed))
+		return
+	}
+
+	bridge.SendDeployMsg(string(data))
 }
 
 func RollingUpService(w http.ResponseWriter, r *http.Request) {

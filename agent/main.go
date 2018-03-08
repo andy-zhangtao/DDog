@@ -41,6 +41,10 @@ func main() {
 		ret := &agents.SpiderAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), AlivaChan: make(chan int), Name: agents.SpiderAgentName, Namespace: []string{}}
 		go ret.Run()
 		<-ret.StopChan
+	case agents.DeployAgentName:
+		ret := &agents.DeployAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.DeployAgentName}
+		go ret.Run()
+		<-ret.StopChan
 	default:
 		agn := &agents.AgentNsq{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.DestoryAgent}
 
