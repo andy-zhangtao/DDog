@@ -30,6 +30,9 @@ A tool for auto generate coredns configure file
 
 # Change Log
 
+### v0.6.10
+* 优化服务状态查询服务. 当部署状态为失败时,返回500错误
+
 ### v0.6.9
 * 将部署功能从主服务中剥离出来，单独成立一个DeployAgent服务
 
