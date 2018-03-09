@@ -145,6 +145,10 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 		ss.Status = "rolling"
 	}
 
+	if ss.Status == "failed" {
+		tool.ReturnError(w, errors.New("Deploy Failed"))
+		return
+	}
 	data, err := json.Marshal(&ss)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"Marshal Error": err, "origin data": ss, "Operation": "GetSampleSVCInfo"}).Info(ModuleName)
