@@ -49,6 +49,7 @@ type Service struct {
 	Instance     []string       `json:"instance"`
 	ScaleTo      int            `json:"scale_to"`
 	SecretKey    string
+	SubnetId     string         `json:"subnetId"`
 	sign         string
 }
 
@@ -230,6 +231,8 @@ func (this Service) createSvc() ([]string, map[string]string) {
 	if this.AccessType != "" {
 		field = append(field, "accessType")
 		req["accessType"] = this.AccessType
+		field = append(field, "subnetId")
+		req["subnetId"] = this.SubnetId
 	}
 
 	for i, c := range this.Containers {

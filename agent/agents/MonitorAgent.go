@@ -203,8 +203,14 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 				}
 
 				if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
+					lip := ""
+					if resp.Data.ServiceInfo.ExternalIp == "" {
+						lip = resp.Data.ServiceInfo.ServiceIp
+					} else {
+						lip = resp.Data.ServiceInfo.ExternalIp
+					}
 					lb := svcconf.LoadBlance{
-						IP: resp.Data.ServiceInfo.ServiceIp,
+						IP: lip,
 					}
 
 					var port []int

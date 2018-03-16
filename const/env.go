@@ -16,6 +16,7 @@ const (
 	EnvK8sToken      = "DDOG_K8S_TOKEN"
 	EnvDefaultLogOpt = "DDOG_LOG_OPT"
 	EnvNsqdEndpoint  = "DDOG_NSQD_ENDPOINT"
+	EnvSubNetID      = "DDOG_SUB_NET_ID"
 )
 
 var DEBUG = false

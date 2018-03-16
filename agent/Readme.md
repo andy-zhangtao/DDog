@@ -16,6 +16,9 @@
 
 ## Change Log
 
+* v0.6.9
+ - 默认负载模式由集群内访问改为VPC内网访问
+
 * v0.6.7
  - 增加SidecarAgent
 

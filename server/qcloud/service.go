@@ -280,12 +280,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 		q.PortMappings = pm
 		switch cf.Netconf[0].AccessType {
-		case 0:
+		case 2:
 			q.AccessType = "ClusterIP"
 		case 1:
 			q.AccessType = "LoadBalancer"
-		case 2:
+		case 0:
 			q.AccessType = "SvcLBTypeInner"
+			q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
 		}
 	} else {
 		q.AccessType = "None"
