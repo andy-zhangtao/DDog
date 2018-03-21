@@ -14,7 +14,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/monitor"
 )
 
-//Write by zhangtao<ztao8607@gmail.com> . In 2018/2/27.
+// Write by zhangtao<ztao8607@gmail.com> . In 2018/2/27.
 
 /**
 SpiderAgent
@@ -33,11 +33,11 @@ type SpiderAgent struct {
 	AlivaChan   chan int
 }
 
-//type SpiderMsg struct {
-//	Name    string
-//	Svcname string
-//	Msg     string
-//}
+// type SpiderMsg struct {
+// 	Name    string
+// 	Svcname string
+// 	Msg     string
+// }
 
 // 只有当目标服务处于活动状态的时候才需要开始检测,
 // 如果目标服务被Kill掉，则可以认为K8s健康检测失败
@@ -98,8 +98,8 @@ func (this *SpiderAgent) Run() {
 					this.checkPort()
 				}
 
-				/*errNum == 60*4几乎等同为4分钟*/
-				if (!needCheck && msg != "") || (errNum == 60*4) {
+				/*errNum == 60*10几乎等同为10分钟*/
+				if (!needCheck && msg != "") || (errNum == 60*10) {
 					data, _ := json.Marshal(monitor.MonitorModule{
 						Kind:      this.Name,
 						Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
@@ -131,8 +131,8 @@ func (this *SpiderAgent) Run() {
 
 	} else {
 		logrus.WithFields(logrus.Fields{"Return": "Nothing To Do"}).Error(SpiderAgentName)
-		//不能退出,否则k8s会认为此服务处于异常状态
-		//this.StopChan <- 0
+		// 不能退出,否则k8s会认为此服务处于异常状态
+		// this.StopChan <- 0
 	}
 }
 
@@ -146,7 +146,7 @@ func (this *SpiderAgent) checkPort() {
 	}
 
 	for _, td := range tcp_data {
-		//logrus.WithFields(logrus.Fields{"tcp": td}).Info(SpiderAgentName)
+		// logrus.WithFields(logrus.Fields{"tcp": td}).Info(SpiderAgentName)
 		if strings.ToUpper(td.State) == "LISTEN" {
 			if _, ok := portMap[td.Port]; ok {
 				delete(portMap, td.Port)
@@ -191,25 +191,25 @@ func (this *SpiderAgent) checkCmd() {
 	}
 }
 
-//func (this *SpiderAgent) isAlive() bool {
-//	for {
-//		now := time.Now()
-//		next := now.Add(time.Second * 1)
-//		next = time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), next.Minute(), next.Second(), 0, next.Location())
-//		t := time.NewTimer(next.Sub(now))
-//		logrus.WithFields(logrus.Fields{"下次采集进程时间为": next.Format("200601021504")}).Info(SpiderAgentName)
+// func (this *SpiderAgent) isAlive() bool {
+// 	for {
+// 		now := time.Now()
+// 		next := now.Add(time.Second * 1)
+// 		next = time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), next.Minute(), next.Second(), 0, next.Location())
+// 		t := time.NewTimer(next.Sub(now))
+// 		logrus.WithFields(logrus.Fields{"下次采集进程时间为": next.Format("200601021504")}).Info(SpiderAgentName)
 //
-//		select {
-//		case <-t.C:
-//			porcess, err := ps.Processes()
-//			if err != nil {
-//				logrus.WithFields(logrus.Fields{"Get Process Error": err}).Error(SpiderAgentName)
-//			}
+// 		select {
+// 		case <-t.C:
+// 			porcess, err := ps.Processes()
+// 			if err != nil {
+// 				logrus.WithFields(logrus.Fields{"Get Process Error": err}).Error(SpiderAgentName)
+// 			}
 //
-//			logrus.WithFields(logrus.Fields{"Porcess": porcess}).Info(SpiderAgentName)
-//			if len(porcess) > 1 {
-//				return true
-//			}
-//		}
-//	}
-//}
+// 			logrus.WithFields(logrus.Fields{"Porcess": porcess}).Info(SpiderAgentName)
+// 			if len(porcess) > 1 {
+// 				return true
+// 			}
+// 		}
+// 	}
+// }
