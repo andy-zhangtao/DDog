@@ -15,8 +15,8 @@ import (
 	"time"
 )
 
-//Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
-//采集失败任务名称，并择机重新执行
+// Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
+// 采集失败任务名称，并择机重新执行
 
 type MonitorAgent struct {
 	Name        string
@@ -129,6 +129,10 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
 		return err
 	}
 
+	if sc == nil {
+		logrus.WithFields(logrus.Fields{"Not Found SVC": name, "namespace": msg.Namespace}).Info(MonitorAgentName)
+		return nil
+	}
 	logrus.WithFields(logrus.Fields{"Stop Svc": sc.SvcName, "namespace": msg.Namespace}).Info(MonitorAgentName)
 	q := service.Service{
 		Pub: public.Public{
