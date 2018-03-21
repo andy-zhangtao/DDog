@@ -167,7 +167,7 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 // 1. 默认启用健康检查和准备就绪检查。
 // 2. 上述两种检查使用TCP端口检查方式
 // 3. 均针对容器对外暴露的端口进行检查，如果镜像构建未对外暴露端口，则不会对此镜像启用检查
-// 4. 延时30秒后启动检查
+// 4. 延时90秒后启动检查
 // 5. 连续三次，间隔10秒，健康均失败则检查失败
 // 6. 每次检查超时时间为5秒
 // 7. 每个服务默认存在2个实例
@@ -350,7 +350,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 				shk := service.HealthCheck{
 					Type:        service.LiveCheck,
 					UnhealthNum: 5,
-					DelayTime:   30,
+					DelayTime:   60,
 					CheckMethod: service.CheckMethodTCP,
 				}
 				shk.GenerateTCPCheck(n.InPort)
@@ -366,7 +366,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			shk := service.HealthCheck{
 				Type:        service.LiveCheck,
 				UnhealthNum: 5,
-				DelayTime:   30,
+				DelayTime:   60,
 				CheckMethod: service.CheckMethodCmd,
 			}
 			cmd := fmt.Sprintf("/bin/sh -c \"ps -ef | grep %s |grep -v grep\"", cf.Name)
@@ -382,8 +382,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			Image:         cnns.Img,
 			HealthCheck:   hk,
 			Envs:          cnns.Env,
-			Cpu:           300,
-			CpuLimits:     800,
+			Cpu:           0,
+			CpuLimits:     0,
 			Memory:        300,
 			MemoryLimits:  800,
 		})
