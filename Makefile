@@ -10,6 +10,14 @@ client: agent/*.go
 runclient: client
 	bin/ddog-agent
 
+graphql: agent/graphql/*.go
+	cd agent/graphql;     go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o ddog-graph-srv
+	mv agent/graphql/ddog-graph-srv bin/ddog-graph-srv
+
+graphql-release: agent/graphql/*.go
+	cd agent/graphql;GOOS=linux GOARCH=amd64 go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d)" -a -o ddog-graph-srv
+	mv agent/graphql/ddog-graph-srv bin/ddog-graph-srv
+
 build: *.go
 	go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o $(name)
 
