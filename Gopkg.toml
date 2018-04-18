@@ -44,3 +44,7 @@
 [[constraint]]
   branch = "v2"
   name = "gopkg.in/mgo.v2"
+
+[[constraint]]
+  name = "github.com/graphql-go/graphql"
+  version = "0.7.5"

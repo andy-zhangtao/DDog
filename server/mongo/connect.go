@@ -66,3 +66,7 @@ func GetSession() *mgo.Session {
 func getCloudMongo() *mgo.Database {
 	return session.Clone().DB(_const.CloudMongoDBName)
 }
+
+func GetNameSpaceColleciton() *mgo.Collection {
+	return getCloudMongo().C(_const.CloudMongoNamespaceCol)
+}
