@@ -3,6 +3,7 @@ package caas
 import (
 	"github.com/graphql-go/graphql"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -28,6 +29,57 @@ var CaasServiceType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
+var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "service",
+	Fields: graphql.Fields{
+		"id": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					return s.Id.Hex(), nil
+				}
+				return nil, nil
+			},
+		},
+		"name": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					return s.Name, nil
+				}
+				return nil, nil
+			},
+		},
+		"svc_name": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					return s.SvcName, nil
+				}
+				return nil, nil
+			},
+		},
+		"namespace": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					return s.Namespace, nil
+				}
+				return nil, nil
+			},
+		},
+		"deploy": &graphql.Field{
+			Type: graphql.Int,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					return s.Deploy, nil
+				}
+				return nil, nil
+			},
+		},
+	},
+})
+
 var CaasNameSpaceType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "namespace",
 	Fields: graphql.Fields{
@@ -45,6 +97,24 @@ var CaasNameSpaceType = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				if n, ok := p.Source.(caasmodel.NameSpace); ok {
 					return n.Name, nil
+				}
+				return nil, nil
+			},
+		},
+		"owner": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if n, ok := p.Source.(caasmodel.NameSpace); ok {
+					return n.Owner, nil
+				}
+				return nil, nil
+			},
+		},
+		"desc": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if n, ok := p.Source.(caasmodel.NameSpace); ok {
+					return n.Desc, nil
 				}
 				return nil, nil
 			},

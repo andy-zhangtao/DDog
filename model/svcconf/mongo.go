@@ -169,6 +169,44 @@ func GetSvcConfByName(svcname, namespace string) (scf *SvcConf, err error) {
 	return nscf, nil
 }
 
+func GetSvcConfByDeployStatus(deploy int) (scf *SvcConf, err error) {
+	sv, err := mongo.GetSvcConfByDeployStatus(deploy)
+	if err != nil {
+		if !tool.IsNotFound(err) {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	nscf, err := Conver(sv)
+	if err != nil {
+		return nil, err
+	}
+
+	return nscf, nil
+}
+
+func GetSvcConfByNamespace(namespace string) (scf []SvcConf, err error) {
+	svcs, err := mongo.GetSvcConfNs(namespace)
+	if err != nil {
+		if !tool.IsNotFound(err) {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	for _, s := range svcs {
+		st, err := Conver(s)
+		if err != nil {
+			return nil, err
+		}
+
+		scf = append(scf, *st)
+	}
+
+	return
+}
+
 func GetSvcConfByID(id string) (*SvcConf, error) {
 	conf, err := mongo.GetSvcConfByID(id)
 	if err != nil {
@@ -200,7 +238,7 @@ func UpdateSvcConf(scf *SvcConf) error {
 	//if _const.DEBUG {
 	//	log.Printf("[UpdateSvcConf mongo.go] DeleteSvcConfById [%s]\n", scf.Id.Hex())
 	//}
-	logrus.WithFields(logrus.Fields{"svc_conf_id": scf.Id.Hex(),"data":scf}).Info("DeleteSvcConfById")
+	logrus.WithFields(logrus.Fields{"svc_conf_id": scf.Id.Hex(), "data": scf}).Info("DeleteSvcConfById")
 	err := mongo.DeleteSvcConfById(scf.Id.Hex())
 	if err != nil {
 		return err
@@ -329,11 +367,11 @@ func MergerSvc(oldSvc, newSvc *SvcConf) {
 		newSvc.Desc = oldSvc.Desc
 	}
 
-	if newSvc.SvcName == ""{
+	if newSvc.SvcName == "" {
 		newSvc.SvcName = oldSvc.SvcName
 	}
 
-	if len(newSvc.SvcNameBak) == 0{
+	if len(newSvc.SvcNameBak) == 0 {
 		newSvc.SvcNameBak = oldSvc.SvcNameBak
 	}
 
@@ -341,11 +379,11 @@ func MergerSvc(oldSvc, newSvc *SvcConf) {
 		newSvc.Replicas = oldSvc.Replicas
 	}
 
-	if newSvc.Namespace == ""{
+	if newSvc.Namespace == "" {
 		newSvc.Namespace = oldSvc.Namespace
 	}
 
-	if len(newSvc.Netconf) == 0{
+	if len(newSvc.Netconf) == 0 {
 		newSvc.Netconf = oldSvc.Netconf
 	}
 
@@ -353,11 +391,11 @@ func MergerSvc(oldSvc, newSvc *SvcConf) {
 		newSvc.Instance = oldSvc.Instance
 	}
 
-	if newSvc.LbConfig.IP == ""{
+	if newSvc.LbConfig.IP == "" {
 		newSvc.LbConfig = oldSvc.LbConfig
 	}
 
-	if newSvc.BackID == ""{
+	if newSvc.BackID == "" {
 		newSvc.BackID = oldSvc.BackID
 	}
 

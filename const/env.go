@@ -1,26 +1,41 @@
 package _const
 
 const (
-	EnvDomain        = "DDOG_DOMAIN"
-	EnvEtcd          = "DDOG_ETCD_ENDPOINT"
-	EnvUpStream      = "DDOG_UP_STREAM"
-	EnvConfPath      = "DDOG_CONF_PATH"
-	EnvMongo         = "DDOG_MONGO_ENDPOINT"
-	EnvMongoName     = "DDOG_MONGO_NAME"
-	EnvMongoPasswd   = "DDOG_MONGO_PASSWD"
-	EnvMongoDB       = "DDOG_MONGO_DB"
-	EnvRegion        = "DDOG_REGION"
-	EnvDefaultNS     = "DDOG_NAME_SPACE"
-	EnvGoblin        = "DDOG_GOBLIN_ENDPOINT"
-	EnvK8sEndpoint   = "DDOG_K8S_ENDPOINT"
-	EnvK8sToken      = "DDOG_K8S_TOKEN"
-	EnvDefaultLogOpt = "DDOG_LOG_OPT"
-	EnvNsqdEndpoint  = "DDOG_NSQD_ENDPOINT"
-	EnvSubNetID      = "DDOG_SUB_NET_ID"
+	EnvDomain      = "DDOG_DOMAIN"
+	EnvEtcd        = "DDOG_ETCD_ENDPOINT"
+	EnvUpStream    = "DDOG_UP_STREAM"
+	EnvConfPath    = "DDOG_CONF_PATH"
+	EnvMongo       = "DDOG_MONGO_ENDPOINT"
+	EnvMongoName   = "DDOG_MONGO_NAME"
+	EnvMongoPasswd = "DDOG_MONGO_PASSWD"
+	EnvMongoDB     = "DDOG_MONGO_DB"
+	//EnvRegion 默认机房区域
+	EnvRegion = "DDOG_REGION"
+	//EnvClusterID 默认集群名称
+	EnvClusterID = "DDOG_CLUSTER_ID"
+	EnvDefaultNS = "DDOG_NAME_SPACE"
+	//EnvDefaultDevNs默认开发环境
+	EnvDefaultDevNs = "DDOG_DEV_NAME_SPACE"
+	//EnvDefaultTestNs 默认测试环境
+	EnvDefaultTestNs = "DDOG_TEST_NAME_SPACE"
+	//EnvDefaultPreProduceNs 默认预发布环境
+	EnvDefaultPreProduceNs = "DDOG_PRE_PRODUCE_NAME_SPACE"
+	//EnvDefaultProduceNs 默认发布环境
+	EnvDefaultProduceNs = "DDOG_PRODUCE_NAME_SPACE"
+	EnvGoblin           = "DDOG_GOBLIN_ENDPOINT"
+	EnvK8sEndpoint      = "DDOG_K8S_ENDPOINT"
+	EnvK8sToken         = "DDOG_K8S_TOKEN"
+	EnvDefaultLogOpt    = "DDOG_LOG_OPT"
+	EnvNsqdEndpoint     = "DDOG_NSQD_ENDPOINT"
+	EnvSubNetID         = "DDOG_SUB_NET_ID"
 )
 
 var DEBUG = false
 var DefaultNameSpace string
+var DefaultDevNameSpace string
+var DefaultTestNameSpace string
+var DefaultPreProduceNameSpace string
+var DefaultProduceNameSpace string
 var Region string
 var K8sEndpoint string
 var K8sToken string

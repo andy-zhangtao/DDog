@@ -48,3 +48,8 @@ func DeleteSvcConfByNs(ns string) error {
 	}
 	return nil
 }
+
+func GetSvcConfByDeployStatus(deploy int) (conf interface{}, err error) {
+	err = MongoSvcConfig().Find(bson.M{"deploy": deploy}).One(&conf)
+	return
+}
