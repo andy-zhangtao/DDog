@@ -59,3 +59,11 @@ func CheckNamespace() error {
 	}
 	return nil
 }
+
+func CheckNsq() error {
+	if os.Getenv(_const.EnvNsqdEndpoint) == "" {
+		return errors.New(fmt.Sprintf("%s Empty", _const.EnvNsqdEndpoint))
+	}
+
+	return nil
+}
