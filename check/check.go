@@ -67,3 +67,13 @@ func CheckNsq() error {
 
 	return nil
 }
+
+// CheckLogOpt 检查默认日志参数
+// 用于docker plugin发送日志
+func CheckLogOpt() error {
+	if os.Getenv(_const.EnvDefaultLogOpt) == "" {
+		return errors.New(fmt.Sprintf("%s Empty", _const.EnvDefaultLogOpt))
+	}
+
+	return nil
+}

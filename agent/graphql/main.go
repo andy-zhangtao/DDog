@@ -24,6 +24,8 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"strings"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/andy-zhangtao/DDog/model/container"
+	cs "github.com/andy-zhangtao/DDog/server/container"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -42,6 +44,11 @@ func init() {
 
 	if err := check.CheckNsq(); err != nil {
 		logrus.WithFields(logrus.Fields{"Check Nsq Error": err}).Error(ModuleName)
+		os.Exit(-1)
+	}
+
+	if err := check.CheckLogOpt(); err != nil {
+		logrus.WithFields(logrus.Fields{"Check Log Opt Error": err}).Error(ModuleName)
 		os.Exit(-1)
 	}
 }
@@ -323,6 +330,113 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				return nil, cf.DeleteMySelf()
+			},
+		},
+		"addContainer": &graphql.Field{
+			Type:        caas.CaasContainerType,
+			Description: "Add A Container Configure Under Specify Service",
+			Args: graphql.FieldConfigArgument{
+				"service": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"image": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"ports": &graphql.ArgumentConfig{
+					Type: graphql.NewList(graphql.Int),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["service"].(string)
+				image, _ := p.Args["image"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+
+				var ps []int
+
+				if pt, ok := p.Args["ports"]; ok {
+					ptt, _ := pt.([]interface{})
+					for _, pi := range ptt {
+						if vp, ok := pi.(int); ok {
+							ps = append(ps, vp)
+						}
+					}
+				}
+				con := container.Container{
+					Name: name,
+					Img:  image,
+					Port: ps,
+					Svc:  name,
+					Nsme: namespace,
+				}
+
+				var nt []container.NetConfigure
+				for _, p := range con.Port {
+					nt = append(nt, container.NetConfigure{
+						AccessType: 0,
+						InPort:     p,
+						OutPort:    p,
+						Protocol:   0,
+					})
+				}
+
+				con.Net = nt
+
+				oldCon, isExist, err := cs.IsExistContainer(&con)
+				if err != nil {
+					return nil, err
+				}
+
+				if isExist {
+					if len(con.Port) > 0 {
+						oldCon.Port = con.Port
+						var nt []container.NetConfigure
+						for _, p := range oldCon.Port {
+							nt = append(nt, container.NetConfigure{
+								AccessType: 0,
+								InPort:     p,
+								OutPort:    p,
+								Protocol:   0,
+							})
+						}
+						oldCon.Net = nt
+
+						return *oldCon, container.UpgradeContaienrByName(oldCon)
+					}
+					return *oldCon, nil
+				}
+
+				return con, container.SaveContainer(&con)
+			},
+		},
+		"delContainer": &graphql.Field{
+			Type:        caas.CaasContainerType,
+			Description: "Add A Container Configure Under Specify Service",
+			Args: graphql.FieldConfigArgument{
+				"service": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"image": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["service"].(string)
+				image, _ := p.Args["image"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+				con := container.Container{
+					Name: name,
+					Img:  image,
+					Svc:  name,
+					Nsme: namespace,
+				}
+
+				return nil, container.DeleteContainerByName(con.Name, con.Svc, con.Nsme)
 			},
 		},
 	},

@@ -4,6 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/model/container"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -130,3 +131,56 @@ var CaasNameSpaceType = graphql.NewObject(graphql.ObjectConfig{
 		},
 	},
 })
+
+var CaasContainerType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "container",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if c, ok := p.Source.(container.Container); ok {
+						return c.ID.Hex(), nil
+					}
+					return nil, nil
+				},
+			},
+			"name": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if c, ok := p.Source.(container.Container); ok {
+						return c.Name, nil
+					}
+					return nil, nil
+				},
+			},
+			"image": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if c, ok := p.Source.(container.Container); ok {
+						return c.Img, nil
+					}
+					return nil, nil
+				},
+			},
+			"service": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if c, ok := p.Source.(container.Container); ok {
+						return c.Svc, nil
+					}
+					return nil, nil
+				},
+			},
+			"ports": &graphql.Field{
+				Type: graphql.NewList(graphql.Int),
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if c, ok := p.Source.(container.Container); ok {
+						return c.Port, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	},
+)

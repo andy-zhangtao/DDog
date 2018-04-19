@@ -228,6 +228,10 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func IsExistContainer(con *container.Container)(old *container.Container, isExist bool, err error){
+	return isExistContainer(con)
+}
+
 // isExistContainer 检查容器配置是否存在
 // 如果存在则返回TRUE，否则返回FALSE
 func isExistContainer(con *container.Container) (old *container.Container, isExist bool, err error) {
