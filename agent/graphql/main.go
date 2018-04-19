@@ -21,6 +21,9 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/agent"
 	"github.com/andy-zhangtao/DDog/bridge"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"strings"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -253,6 +256,73 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				bridge.SendDeployMsg(string(data))
 
 				return *cf, nil
+			},
+		},
+		"addService": &graphql.Field{
+			Type:        caas.CaasServiceConfType,
+			Description: "Add A New Service In Caas",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+
+				conf := &svcconf.SvcConf{
+					Name:      name,
+					Namespace: namespace,
+					Replicas:  2,
+				}
+
+				cf, err := svcconf.GetSvcConfByName(conf.Name, conf.Namespace)
+				if err != nil {
+					if strings.Contains(err.Error(), "not found") {
+						conf.Id = bson.NewObjectId()
+						if err = mongo.SaveSvcConfig(conf); err != nil {
+							return *conf, err
+						}
+					}
+					return nil, err
+				}
+
+				return *cf, nil
+			},
+		},
+		"delService": &graphql.Field{
+			Type:        caas.CaasServiceConfType,
+			Description: "Add A New Service In Caas",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+
+				conf := &svcconf.SvcConf{
+					Name:      name,
+					Namespace: namespace,
+					Replicas:  2,
+				}
+
+				cf, err := svcconf.GetSvcConfByName(conf.Name, conf.Namespace)
+				if err != nil {
+					if strings.Contains(err.Error(), "not found") {
+						return nil, nil
+					}
+					return nil, err
+				}
+
+				return nil, cf.DeleteMySelf()
 			},
 		},
 	},
