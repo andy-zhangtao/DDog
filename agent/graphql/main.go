@@ -296,6 +296,14 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					}
 					return nil, err
 				}
+				//这里的判断不优雅，需要改掉
+				if cf == nil {
+					conf.Id = bson.NewObjectId()
+					if err = mongo.SaveSvcConfig(conf); err != nil {
+						return nil, err
+					}
+					return *conf, nil
+				}
 
 				return *cf, nil
 			},
