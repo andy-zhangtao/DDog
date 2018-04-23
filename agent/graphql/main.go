@@ -368,7 +368,9 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					ptt, _ := pt.([]interface{})
 					for _, pi := range ptt {
 						if vp, ok := pi.(int); ok {
-							ps = append(ps, vp)
+							if vp >0 {
+								ps = append(ps, vp)
+							}
 						}
 					}
 				}

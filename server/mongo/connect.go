@@ -6,6 +6,7 @@ import (
 	"errors"
 	"gopkg.in/mgo.v2"
 	"github.com/Sirupsen/logrus"
+	"time"
 )
 
 var endpoint = os.Getenv(_const.EnvMongo)
@@ -42,6 +43,7 @@ func init() {
 			Database: dbname,
 			Username: username,
 			Password: password,
+			Timeout:  30 * time.Second,
 		}
 
 		session, err = mgo.DialWithInfo(dialInfo)

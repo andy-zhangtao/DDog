@@ -39,8 +39,16 @@ func CheckNamespace(ns caasmodel.NameSpace) (err error) {
 			}
 
 			if err = q.CreateNamespace(); err != nil {
+				if strings.Contains(err.Error(), "NamespaceAlreadyExist") {
+					return nil
+				}
 				return err
 			}
+
+			return dbservice.SaveNamespace(caasmodel.NameSpace{
+				Name:  name,
+				Owner: ns.Owner,
+			})
 		} else {
 			return err
 		}
