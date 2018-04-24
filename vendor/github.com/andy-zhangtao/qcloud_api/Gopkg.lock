@@ -4,12 +4,55 @@
 [[projects]]
   branch = "master"
   name = "github.com/andy-zhangtao/gogather"
-  packages = ["random","time","zsort"]
+  packages = [
+    "random",
+    "time",
+    "zsort"
+  ]
   revision = "335f6c2d254d46f6cd55a137c7d8aba13971f126"
+
+[[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
+  version = "v1.2.1"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "2b6c08872f4b66da917bb4ce98df4f0307330f78"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = [
+    "unix",
+    "windows"
+  ]
+  revision = "79b0c6888797020a994db17c8510466c72fe75d9"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8ce707cb88083bc1afb032105fd972bba27381eb32d40fb8c143fe7723ce45a9"
+  inputs-digest = "6dade6d28349a23bcfc1d4bc5c81b1859640351b32ad057c1bf0ad2652efb1af"
   solver-name = "gps-cdcl"
   solver-version = 1

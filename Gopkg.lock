@@ -25,7 +25,7 @@
     "time",
     "zsort"
   ]
-  revision = "3d495b99fca62c24a15e255fb41a88832867ccfd"
+  revision = "f9c02749ba8d77c5abec01840e2f9009101fe580"
 
 [[projects]]
   branch = "master"
@@ -38,7 +38,7 @@
     "v1/public",
     "v1/service"
   ]
-  revision = "d701da68f22a05acafa4246de36b2f6f1c4a46c1"
+  revision = "8cb8220881e6bb54992ec43452190ed6cc82c752"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -54,8 +54,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "c9d46ab3799b7f2174268e75f72d01e6d6aac953"
-  version = "v3.3.2"
+  revision = "e348b1aedd9167360c466ae98f7343d3e22281f8"
+  version = "v3.3.3"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -158,6 +158,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/rs/cors"
+  packages = ["."]
+  revision = "feef513b9575b32f84bafa580aad89b011259019"
+  version = "v1.3.0"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
@@ -166,20 +172,21 @@
 [[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "9831f2c3ac1068a78f50999a30db84270f647af6"
-  version = "v1.1"
+  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "b4956d363a8b14623cc81db401707679605930a3"
+  revision = "2b6c08872f4b66da917bb4ce98df4f0307330f78"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
+    "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
@@ -187,7 +194,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "e0c57d8f86c17f0724497efcb3bc617e82834821"
+  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
 
 [[projects]]
   branch = "master"
@@ -196,7 +203,7 @@
     "unix",
     "windows"
   ]
-  revision = "cc7307a45468e49eaf2997c890f14aa03a26917b"
+  revision = "79b0c6888797020a994db17c8510466c72fe75d9"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -223,7 +230,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "df60624c1e9b9d2973e889c7a1cff73155da81c4"
+  revision = "7fd901a49ba6a7f87732eb344f6e3c5b19d1b200"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -253,8 +260,8 @@
     "tap",
     "transport"
   ]
-  revision = "8e4536a86ab602859c20df5ebfd0bd4228d08655"
-  version = "v1.10.0"
+  revision = "d11072e7ca9811b1100b80ca0269ac831f06d024"
+  version = "v1.11.3"
 
 [[projects]]
   branch = "v2"
@@ -271,6 +278,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "af078440a067ba97bd73befdef5e10f871f2c88f4c9bb5667f4c15e0047de363"
+  inputs-digest = "7e91eb51f93a52bb02d214b64d18c5ba804dde8eeda12873ff4cd78a4d7c9cb0"
   solver-name = "gps-cdcl"
   solver-version = 1
