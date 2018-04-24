@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
-
-[[projects]]
   branch = "master"
   name = "github.com/andy-zhangtao/go-unit-test-suite"
   packages = [
@@ -34,11 +28,12 @@
     "const",
     "const/v1",
     "v1/cvm",
+    "v1/event",
     "v1/namespace",
     "v1/public",
     "v1/service"
   ]
-  revision = "8cb8220881e6bb54992ec43452190ed6cc82c752"
+  revision = "e9716fb1e8cc06194d4fbbd05bcef175a0184d3d"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -164,6 +159,12 @@
   version = "v1.3.0"
 
 [[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
@@ -278,6 +279,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7e91eb51f93a52bb02d214b64d18c5ba804dde8eeda12873ff4cd78a4d7c9cb0"
+  inputs-digest = "3bd460301164b617918f8d4497849d6a3781ed17d1bf17d57d29705a85169017"
   solver-name = "gps-cdcl"
   solver-version = 1

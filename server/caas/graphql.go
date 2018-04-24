@@ -5,6 +5,11 @@ import (
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/model/container"
+	"github.com/andy-zhangtao/qcloud_api/v1/event"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"errors"
+	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -75,6 +80,79 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 				if s, ok := p.Source.(svcconf.SvcConf); ok {
 					return s.Deploy, nil
 				}
+				return nil, nil
+			},
+		},
+		"events": &graphql.Field{
+			Type: graphql.NewList(CaasServiceEventType),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					md, err := metadata.GetMetaDataByRegion("")
+					if err != nil {
+						return nil, errors.New(_const.RegionNotFound)
+					}
+
+					ser := event.ServiceEventRequest{
+						Svcname:   s.SvcName,
+						Namespace: s.Namespace,
+						ClusterId: md.ClusterID,
+						SecretKey: md.Skey,
+						Pub: public.Public{
+							Region:   md.Region,
+							SecretId: md.Sid,
+						},
+						Debug: true,
+					}
+
+					return ser.GetServiceEvent()
+				}
+
+				return nil, nil
+			},
+		},
+	},
+})
+
+var CaasServiceEventType = graphql.NewObject(graphql.ObjectConfig{
+	Name: "events",
+	Fields: graphql.Fields{
+		"count": &graphql.Field{
+			Type: graphql.Int,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if e, ok := p.Source.(event.SEvent); ok {
+					return e.Count, nil
+				}
+
+				return nil, nil
+			},
+		},
+		"level": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if e, ok := p.Source.(event.SEvent); ok {
+					return e.Level, nil
+				}
+
+				return nil, nil
+			},
+		},
+		"reason": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if e, ok := p.Source.(event.SEvent); ok {
+					return e.Reason, nil
+				}
+
+				return nil, nil
+			},
+		},
+		"message": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if e, ok := p.Source.(event.SEvent); ok {
+					return e.Message, nil
+				}
+
 				return nil, nil
 			},
 		},

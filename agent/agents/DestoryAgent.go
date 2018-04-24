@@ -3,7 +3,7 @@ package agents
 import (
 	"github.com/nsqio/go-nsq"
 	"github.com/andy-zhangtao/DDog/const"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
 	"os"

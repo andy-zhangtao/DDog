@@ -5,7 +5,7 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"errors"
 	"gopkg.in/mgo.v2"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 

@@ -18,7 +18,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/andy-zhangtao/DDog/bridge"
 )
 

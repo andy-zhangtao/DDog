@@ -4,7 +4,7 @@ import (
 	"os"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/nsqio/go-nsq"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/5.

@@ -2,7 +2,7 @@ package agents
 
 import (
 	"github.com/nsqio/go-nsq"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/model/monitor"
 	"github.com/andy-zhangtao/DDog/const"

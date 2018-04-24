@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -58,7 +58,7 @@ func main() {
 	router := mux.NewRouter()
 	router.Path("/api").HandlerFunc(handleGraphQL)
 	handler := cors.AllowAll().Handler(router)
-	logrus.Fatal(http.ListenAndServe(":8000", handler))
+	logrus.Fatal(http.ListenAndServe(":18000", handler))
 }
 
 var rootQuery = graphql.NewObject(graphql.ObjectConfig{
@@ -113,10 +113,15 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 				if name != "" {
 					scf, err := svcconf.GetSvcConfByName(name, namespace)
 					if err != nil {
+						err = errors.New(fmt.Sprintf("Get SvcConf Error [%s] Filter name:[%s] namespace:[%s]", err.Error(), name, namespace))
 						return nil, err
 					}
 
-					return *scf, nil
+					if scf != nil {
+						return []svcconf.SvcConf{*scf}, nil
+					}
+
+					return nil, nil
 				}
 
 				if d, ok := p.Args["deploy"]; ok {
@@ -126,7 +131,7 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 						return nil, err
 					}
 
-					return *scf, nil
+					return []svcconf.SvcConf{*scf}, nil
 				}
 
 				if namespace != "" {
@@ -368,7 +373,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					ptt, _ := pt.([]interface{})
 					for _, pi := range ptt {
 						if vp, ok := pi.(int); ok {
-							if vp >0 {
+							if vp > 0 {
 								ps = append(ps, vp)
 							}
 						}

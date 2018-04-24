@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/andy-zhangtao/DDog/const"
 	"math"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // SvcConf 服务配置信息

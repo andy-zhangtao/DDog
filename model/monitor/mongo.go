@@ -6,7 +6,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (

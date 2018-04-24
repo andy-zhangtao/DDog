@@ -7,7 +7,7 @@ import (
 	"log"
 	"github.com/andy-zhangtao/DDog/const"
 	"fmt"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type Container struct {

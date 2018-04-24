@@ -56,7 +56,7 @@ func (this *ServiceEventRequest) GetServiceEvent() (events []SEvent, err error) 
 	}
 
 	pubMap := public.PublicParam(EventAction, this.Pub.Region, this.Pub.SecretId)
-	this.sign = public.GenerateSignatureString(append(public.PubilcField, []string{"clusterId", "namespace", "serviceName"}...), map[string]string{
+	this.sign = public.GenerateSignatureString([]string{"clusterId", "namespace", "serviceName"}, map[string]string{
 		"clusterId":   this.ClusterId,
 		"namespace":   this.Namespace,
 		"serviceName": this.Svcname,
@@ -66,7 +66,7 @@ func (this *ServiceEventRequest) GetServiceEvent() (events []SEvent, err error) 
 	sign := public.GenerateSignature(this.SecretKey, signStr)
 	reqURL := this.sign + "&Signature=" + url.QueryEscape(sign)
 
-	logrus.WithFields(logrus.Fields{"Request URL": reqURL}).Debug(EventAction)
+	logrus.WithFields(logrus.Fields{"Request URL": reqURL, "Sign str": signStr}).Debug(EventAction)
 
 	resp, err := http.Get(public.API_URL + reqURL)
 	if err != nil {

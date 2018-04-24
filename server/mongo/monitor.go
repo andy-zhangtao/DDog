@@ -4,7 +4,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"github.com/andy-zhangtao/DDog/const"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.

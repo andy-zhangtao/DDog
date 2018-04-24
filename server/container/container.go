@@ -13,7 +13,7 @@ import (
 	"strings"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"os"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (

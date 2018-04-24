@@ -21,7 +21,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"time"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/andy-zhangtao/DDog/bridge"
 	"os"
 	"github.com/andy-zhangtao/DDog/model/agent"
