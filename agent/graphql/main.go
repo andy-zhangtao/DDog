@@ -58,7 +58,7 @@ func main() {
 	router := mux.NewRouter()
 	router.Path("/api").HandlerFunc(handleGraphQL)
 	handler := cors.AllowAll().Handler(router)
-	logrus.Fatal(http.ListenAndServe(":18000", handler))
+	logrus.Fatal(http.ListenAndServe(":8000", handler))
 }
 
 var rootQuery = graphql.NewObject(graphql.ObjectConfig{
