@@ -326,6 +326,10 @@ func CheckContainer(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func CreateContainerForGraphQL(con *container.Container)(err error){
+	return createContainer(con)
+}
+
 // createContainer 创建容器配置信息
 // 在创建的同时会调用Goblin来解析网络配置数据
 func createContainer(con *container.Container) (err error) {

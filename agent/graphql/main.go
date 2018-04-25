@@ -405,25 +405,11 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				if isExist {
-					if len(con.Port) > 0 {
-						oldCon.Port = con.Port
-						var nt []container.NetConfigure
-						for _, p := range oldCon.Port {
-							nt = append(nt, container.NetConfigure{
-								AccessType: 0,
-								InPort:     p,
-								OutPort:    p,
-								Protocol:   0,
-							})
-						}
-						oldCon.Net = nt
-
-						return *oldCon, container.UpgradeContaienrByName(oldCon)
-					}
-					return *oldCon, nil
+					container.DeleteContainerByName(oldCon.Name, oldCon.Svc, oldCon.Nsme)
+					return *oldCon, cs.CreateContainerForGraphQL(&con)
 				}
 
-				return con, container.SaveContainer(&con)
+				return con, cs.CreateContainerForGraphQL(&con)
 			},
 		},
 		"delContainer": &graphql.Field{
