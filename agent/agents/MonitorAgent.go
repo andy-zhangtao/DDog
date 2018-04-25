@@ -13,6 +13,7 @@ import (
 	"strings"
 	"strconv"
 	"time"
+	"os"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -24,6 +25,8 @@ type MonitorAgent struct {
 	StopChan    chan int
 }
 
+var producer *nsq.Producer
+
 func (h *MonitorAgent) HandleMessage(m *nsq.Message) error {
 	m.DisableAutoResponse()
 	workerHome[MonitorAgentName] <- m
@@ -34,7 +37,7 @@ func (this *MonitorAgent) Run() {
 	workerChan := make(chan *nsq.Message)
 
 	workerHome[this.Name] = workerChan
-
+	producer, _ = nsq.NewProducer(os.Getenv(_const.EnvNsqdEndpoint), nsq.NewConfig())
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = 1000
 	r, err := nsq.NewConsumer(_const.SvcMonitorMsg, MonitorAgentName, cfg)
@@ -153,6 +156,7 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
 	sc.Deploy = _const.DeployFailed
 	sc.Msg = msg.Msg
 	sc.SvcName = ""
+	this.NotifyDevEx(sc)
 	return svcconf.UpdateSvcConf(sc)
 }
 
@@ -225,12 +229,12 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 					sc.LbConfig = lb
 					sc.Deploy = _const.DeploySuc
 					sc.Msg = msg.Msg
+
+					this.NotifyDevEx(sc)
 					return svcconf.UpdateSvcConf(sc)
 				}
-
 				time.Sleep(3 * time.Second)
 			}
-
 		}
 	} else {
 		/*clear msg*/
@@ -239,4 +243,31 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 	}
 
 	return nil
+}
+
+// NotifyDevEx 通知Devex更新状态
+func (this *MonitorAgent) NotifyDevEx(scf *svcconf.SvcConf) {
+	req := struct {
+		ProjectID string `json:"project_id"`
+		Stage     int    `json:"stage"`
+		DeployEnv string `json:"deploy_env"`
+	}{
+		scf.Name,
+		scf.Deploy,
+		scf.Namespace,
+	}
+
+	data, err := json.Marshal(&req)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Marshal DevEx Request Error": err}).Error(this.Name)
+		return
+	}
+
+	err = producer.Publish("DevEx-Request-Status", data)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Notify DevEx Error": err}).Error(this.Name)
+		return
+	}
+
+	return
 }
