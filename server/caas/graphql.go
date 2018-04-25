@@ -10,6 +10,7 @@ import (
 	"errors"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"fmt"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -79,6 +80,19 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				if s, ok := p.Source.(svcconf.SvcConf); ok {
 					return s.Deploy, nil
+				}
+				return nil, nil
+			},
+		},
+		"loadbalance": &graphql.Field{
+			Type: graphql.NewList(graphql.String),
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					var lb []string
+					for _, port := range s.LbConfig.Port {
+						lb = append(lb, fmt.Sprintf("%s:%d", s.LbConfig.IP, port))
+					}
+					return lb, nil
 				}
 				return nil, nil
 			},
