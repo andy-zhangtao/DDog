@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"time"
 	"os"
+	"fmt"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -247,14 +248,20 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 
 // NotifyDevEx 通知Devex更新状态
 func (this *MonitorAgent) NotifyDevEx(scf *svcconf.SvcConf) {
+	var lb []string
+	for _, port := range scf.LbConfig.Port {
+		lb = append(lb, fmt.Sprintf("%s:%d", scf.LbConfig.IP, port))
+	}
 	req := struct {
-		ProjectID string `json:"project_id"`
-		Stage     int    `json:"stage"`
-		DeployEnv string `json:"deploy_env"`
+		ProjectID   string   `json:"project_id"`
+		Stage       int      `json:"stage"`
+		DeployEnv   string   `json:"deploy_env"`
+		LoadBalance []string `json:"load_balance"`
 	}{
 		scf.Name,
 		scf.Deploy,
 		scf.Namespace,
+		lb,
 	}
 
 	data, err := json.Marshal(&req)
