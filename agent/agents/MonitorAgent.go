@@ -156,7 +156,7 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
 
 	sc.Deploy = _const.DeployFailed
 	sc.Msg = msg.Msg
-	sc.SvcName = ""
+	//sc.SvcName = ""
 	this.NotifyDevEx(sc)
 	return svcconf.UpdateSvcConf(sc)
 }

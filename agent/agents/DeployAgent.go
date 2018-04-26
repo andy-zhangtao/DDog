@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"github.com/andy-zhangtao/DDog/server/qcloud"
 	"errors"
+	"os"
+	"github.com/andy-zhangtao/DDog/model/monitor"
 )
 
 /*DeployAgent 部署Agent.
@@ -94,8 +96,20 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 	qcloud.RunService(&writer, r)
 
 	logrus.WithFields(logrus.Fields{"Status": writer.status, "Header": writer.header}).Info(this.Name)
-	if writer.status != http.StatusOK || writer.status != 0 {
+	if writer.status != http.StatusOK && writer.status != 0 {
 		logrus.WithFields(logrus.Fields{"Deploy Service Error": writer.data}).Error(this.Name)
+		m := monitor.MonitorModule{
+			Kind:      RetriAgentName,
+			Svcname:   msg.SvcName,
+			Namespace: msg.NameSpace,
+		}
+
+		data, err := json.Marshal(&m)
+		if err != nil {
+			return err
+		}
+		producer, _ := nsq.NewProducer(os.Getenv(_const.EnvNsqdEndpoint), nsq.NewConfig())
+		producer.Publish(_const.SvcMonitorMsg, data)
 		return errors.New(writer.data)
 	}
 	return nil
