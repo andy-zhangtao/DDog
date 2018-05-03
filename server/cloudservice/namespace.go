@@ -38,6 +38,7 @@ func CheckNamespace(ns caasmodel.NameSpace) (err error) {
 				Desc:      url.QueryEscape(ns.Desc),
 			}
 
+			q.SetDebug(true)
 			if err = q.CreateNamespace(); err != nil {
 				if strings.Contains(err.Error(), "NamespaceAlreadyExist") {
 					return nil

@@ -324,6 +324,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		"DDOG_AGENT_SPIDER_NS":  cf.Namespace,
 		"svcname":               cf.Name + "_sidecar",
 		"log_opt":               os.Getenv(_const.EnvDefaultLogOpt),
+		"LOGCHAIN_DRIVER":       os.Getenv(_const.EnvDefaultLogDriver),
 	}
 
 	var sidePort []string

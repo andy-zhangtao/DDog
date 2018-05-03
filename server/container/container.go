@@ -169,10 +169,12 @@ func checkContainer(con *container.Container) error {
 
 	if con.Env == nil {
 		con.Env = map[string]string{
-			"svcname": con.Svc,
-			"log_opt": os.Getenv(_const.EnvDefaultLogOpt),
+			"LOGCHAIN_DRIVER": os.Getenv(_const.EnvDefaultLogDriver),
+			"svcname":         con.Svc,
+			"log_opt":         os.Getenv(_const.EnvDefaultLogOpt),
 		}
 	} else {
+		con.Env["LOGCHAIN_DRIVER"] = os.Getenv(_const.EnvDefaultLogDriver)
 		con.Env["svcname"] = con.Svc
 		con.Env["log_opt"] = os.Getenv(_const.EnvDefaultLogOpt)
 	}
@@ -228,7 +230,7 @@ func UpgradeContainer(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func IsExistContainer(con *container.Container)(old *container.Container, isExist bool, err error){
+func IsExistContainer(con *container.Container) (old *container.Container, isExist bool, err error) {
 	return isExistContainer(con)
 }
 
@@ -326,7 +328,7 @@ func CheckContainer(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func CreateContainerForGraphQL(con *container.Container)(err error){
+func CreateContainerForGraphQL(con *container.Container) (err error) {
 	return createContainer(con)
 }
 
