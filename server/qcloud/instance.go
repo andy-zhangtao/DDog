@@ -6,12 +6,19 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"errors"
 	"fmt"
+	"github.com/andy-zhangtao/DDog/server/svcconf"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/4.
 
 // GetInstanceInfo 获取指定服务的实例信息
 func GetInstanceInfo(name, namespace string) (instance []service.Instance, err error) {
+
+	svc, err := svcconf.GetSvcConfByName(name, namespace)
+	if err != nil {
+		return
+	}
+
 	md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		return
@@ -23,7 +30,7 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 			Region:   md.Region,
 		},
 		ClusterId:   md.ClusterID,
-		ServiceName: name,
+		ServiceName: svc.SvcName,
 		Namespace:   namespace,
 		SecretKey:   md.Skey,
 	}
