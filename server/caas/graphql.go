@@ -11,6 +11,7 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"fmt"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -269,6 +270,23 @@ var CaasContainerType = graphql.NewObject(
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if c, ok := p.Source.(container.Container); ok {
 						return c.Port, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	},
+)
+
+var InstanceType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "instance",
+		Fields: graphql.Fields{
+			"name": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if i, ok := p.Source.(service.Instance); ok {
+						return i.Name, nil
 					}
 					return nil, nil
 				},

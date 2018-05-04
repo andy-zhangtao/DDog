@@ -26,6 +26,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/model/container"
 	cs "github.com/andy-zhangtao/DDog/server/container"
+	"github.com/andy-zhangtao/DDog/server/qcloud"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -144,6 +145,25 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				return nil, nil
+			},
+		},
+		//	返回服务实例信息
+		"instance": &graphql.Field{
+			Type:        graphql.NewList(caas.InstanceType),
+			Description: "All instances info of service",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+
+				return qcloud.GetInstanceInfo(name, namespace)
 			},
 		},
 	},
