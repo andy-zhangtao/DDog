@@ -715,6 +715,10 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 			return err
 		}
 		if resp.Code != 0 {
+			if strings.Contains(resp.CodeDesc, "KubeResourceNotFound") {
+				logrus.WithFields(logrus.Fields{"DeleteService Error": resp}).Error(ModuleName)
+				return nil
+			}
 			return errors.New(resp.Message)
 		}
 		return nil
@@ -735,6 +739,10 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 
 	resp, err := q.DeleteService()
 	if resp.Code != 0 {
+		if strings.Contains(resp.CodeDesc, "KubeResourceNotFound") {
+			logrus.WithFields(logrus.Fields{"DeleteService Error": resp}).Error(ModuleName)
+			return nil
+		}
 		return errors.New(resp.Message)
 	}
 	/*删除可能存在的升级服务*/
