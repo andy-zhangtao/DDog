@@ -354,6 +354,7 @@ func (sc *SvcConf) DeleteMySelf() (err error) {
 		mongo.DeleteSvcConfById(sc.BackID)
 	}
 
+	logrus.WithFields(logrus.Fields{"Delete SvcConf ID": sc.Id.Hex()}).Info("DeleteMySelf")
 	err = mongo.DeleteSvcConfById(sc.Id.Hex())
 	return
 }

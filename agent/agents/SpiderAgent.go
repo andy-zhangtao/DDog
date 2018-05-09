@@ -63,7 +63,7 @@ func (this *SpiderAgent) Run() {
 				if err != nil {
 					logrus.WithFields(logrus.Fields{"Get Process Error": err}).Error(SpiderAgentName)
 				}
-				logrus.WithFields(logrus.Fields{"Porcess": porcess}).Info(SpiderAgentName)
+				//logrus.WithFields(logrus.Fields{"Porcess": porcess}).Info(SpiderAgentName)
 				this.AlivaChan <- len(porcess)
 			}
 		}
@@ -138,15 +138,14 @@ func (this *SpiderAgent) Run() {
 
 func (this *SpiderAgent) checkPort() {
 
-	tcp_data := GOnetstat.Tcp()
 	portMap := make(map[int64]int)
 
 	for _, p := range this.Port {
 		portMap[p] = 1
 	}
 
-	for _, td := range tcp_data {
-		// logrus.WithFields(logrus.Fields{"tcp": td}).Info(SpiderAgentName)
+	for _, td := range GOnetstat.Tcp() {
+		logrus.WithFields(logrus.Fields{"tcp Port": td.Port, "state": td.State}).Info(SpiderAgentName)
 		if strings.ToUpper(td.State) == "LISTEN" {
 			if _, ok := portMap[td.Port]; ok {
 				delete(portMap, td.Port)
@@ -154,7 +153,16 @@ func (this *SpiderAgent) checkPort() {
 		} else {
 			this.Ip = td.Ip
 		}
+	}
 
+	//在过滤一遍TCP6
+	for _, td := range GOnetstat.Tcp6() {
+		logrus.WithFields(logrus.Fields{"tcp Port": td.Port, "state": td.State}).Info(SpiderAgentName)
+		if strings.ToUpper(td.State) == "LISTEN" {
+			if _, ok := portMap[td.Port]; ok {
+				delete(portMap, td.Port)
+			}
+		}
 	}
 
 	if len(portMap) != 0 {
