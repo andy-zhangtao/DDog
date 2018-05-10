@@ -741,7 +741,7 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	if resp.Code != 0 {
 		if strings.Contains(resp.CodeDesc, "KubeResourceNotFound") {
 			logrus.WithFields(logrus.Fields{"DeleteService Error": resp}).Error(ModuleName)
-			return nil
+			return scf.DeleteMySelf()
 		}
 		return errors.New(resp.Message)
 	}
