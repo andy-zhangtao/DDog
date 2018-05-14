@@ -10,12 +10,19 @@ import (
 	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
 	"encoding/json"
 	"errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	GetAllDeployMent  = iota
 	GetSpecDeployMent
+	GetAllService
+	GetSpecService
 	GetAllPods
+)
+
+const (
+	ModuleName = "K8s-API-Agent"
 )
 
 func (k *K8sMetaData) invokeK8sAPI(kind int) ([]byte, error) {
@@ -28,14 +35,16 @@ func (k *K8sMetaData) invokeK8sAPI(kind int) ([]byte, error) {
 			path = fmt.Sprintf("%s/apis/apps/v1beta1/namespaces/%s/deployments", k.Endpoint, k.Namespace)
 		case GetSpecDeployMent:
 			path = fmt.Sprintf("%s/apis/apps/v1beta1/namespaces/%s/deployments/%s", k.Endpoint, k.Namespace, k.Svcname)
+		case GetAllService:
+			path = fmt.Sprintf("%s/api/v1/namespaces/%s/services", k.Endpoint, k.Namespace)
+		case GetSpecService:
+			path = fmt.Sprintf("%s/api/v1/namespaces/%s/services/%s", k.Endpoint, k.Namespace, k.Svcname)
 		case GetAllPods:
 			path = fmt.Sprintf("%s/api/v1/namespaces/%s/pods", k.Endpoint, k.Namespace)
 		}
 	}
 
-	if _const.DEBUG {
-		log.Printf("[GetDeployMent] path:[%s]\n", path)
-	}
+	logrus.WithFields(logrus.Fields{"Path":path}).Debug(ModuleName)
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

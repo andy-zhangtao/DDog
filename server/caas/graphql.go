@@ -12,6 +12,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"fmt"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/andy-zhangtao/DDog/model/k8sconfig"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -287,6 +288,68 @@ var InstanceType = graphql.NewObject(
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if i, ok := p.Source.(service.Instance); ok {
 						return i.Name, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	},
+)
+
+var K8sClusterTYpe = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "k8s",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
+						return k.ID.Hex(), nil
+					}
+					return nil, nil
+				},
+			},
+			"name": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
+						return k.Name, nil
+					}
+					return nil, nil
+				},
+			},
+			"region": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
+						return k.Region, nil
+					}
+					return nil, nil
+				},
+			},
+			"endpoint": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
+						return k.Endpoint, nil
+					}
+					return nil, nil
+				},
+			},
+			"token": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
+						return k.Token, nil
+					}
+					return nil, nil
+				},
+			},
+			"update": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
+						return k.UpdateTime, nil
 					}
 					return nil, nil
 				},

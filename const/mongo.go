@@ -3,6 +3,7 @@ package _const
 const (
 	CloudMongoDBName       = "cloud"
 	CloudMongoMeataDataCol = "metadata"
+	CloudK8sClusterCol     = "k8s_config"
 	CloudMongoClusterCol   = "cluster"
 	CloudMongoNamespaceCol = "namespace"
 	CloudMongoSVCCol       = "service"

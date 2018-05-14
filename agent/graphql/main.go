@@ -27,6 +27,8 @@ import (
 	"github.com/andy-zhangtao/DDog/model/container"
 	cs "github.com/andy-zhangtao/DDog/server/container"
 	"github.com/andy-zhangtao/DDog/server/qcloud"
+	"github.com/andy-zhangtao/DDog/server/k8service"
+	"github.com/andy-zhangtao/DDog/model/k8sconfig"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -164,6 +166,24 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 				namespace, _ := p.Args["namespace"].(string)
 
 				return qcloud.GetInstanceInfo(name, namespace)
+			},
+		},
+		"k8scluster": &graphql.Field{
+			Type:        graphql.NewList(caas.K8sClusterTYpe),
+			Description: "Kubentes Cluster Data",
+			Args: graphql.FieldConfigArgument{
+				"region": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				region, _ := p.Args["region"].(string)
+
+				if region == "" {
+					return k8service.GetALlK8sCluster()
+				}
+
+				return k8service.GetK8sCluster(region)
 			},
 		},
 	},
@@ -458,6 +478,59 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				return nil, container.DeleteContainerByName(con.Name, con.Svc, con.Nsme)
+			},
+		},
+		"k8scluster": &graphql.Field{
+			Type:        caas.K8sClusterTYpe,
+			Description: "Add A K8s Cluster Data",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"endpoint": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"token": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"region": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				endpoint, _ := p.Args["endpoint"].(string)
+				token, _ := p.Args["token"].(string)
+				region, _ := p.Args["region"].(string)
+
+				if err := k8service.UpdateK8sCluster(k8sconfig.K8sCluster{
+					Name:     name,
+					Region:   region,
+					Endpoint: endpoint,
+					Token:    token,
+				}); err != nil {
+					return nil, err
+				}
+
+				return nil, nil
+			},
+		},
+		"delK8sCluster": &graphql.Field{
+			Type:        caas.K8sClusterTYpe,
+			Description: "Delete A K8s Cluster Data",
+			Args: graphql.FieldConfigArgument{
+				"id": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				id, _ := p.Args["id"].(string)
+				if err := k8service.DeleteK8sClusterByID(id); err != nil {
+					return nil, err
+				}
+
+				return nil, nil
 			},
 		},
 	},
