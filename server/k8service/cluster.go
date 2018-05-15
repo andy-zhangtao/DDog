@@ -8,10 +8,15 @@ import (
 	"os"
 	"github.com/andy-zhangtao/DDog/const"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/sirupsen/logrus"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/14.
 //获取K8s DeployMent数据
+
+const (
+	ModuleName = "K8s-maintainer-agent"
+)
 
 func AddNewK8sClusterConfigeDate(kc k8sconfig.K8sCluster) (err error) {
 	if kc.Region == "" || kc.Endpoint == "" || kc.Token == "" {
@@ -93,5 +98,18 @@ func DeleteK8sClusterByID(id string) (err error) {
 		return errors.New(fmt.Sprintf("Delete K8s Cluster Data Error [%s] ID [%s]", err.Error(), id))
 	}
 
+	return
+}
+
+//BackupK8sCluster 备份指定的K8s控制数据
+//region K8s所在机房
+//name K8s控制命名空间名称
+func BackupK8sCluster(region, name string) (err error) {
+	deployments, err := GetK8sDeployMent(region, name)
+	logrus.WithFields(logrus.Fields{"Deployments": deployments}).Info(ModuleName)
+
+
+	services, err := GetK8sService(region, name)
+	logrus.WithFields(logrus.Fields{"Services": services}).Info(ModuleName)
 	return
 }

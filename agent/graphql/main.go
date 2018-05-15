@@ -533,6 +533,17 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				return nil, nil
 			},
 		},
+		"k8sbackup": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Kubernetes Backup",
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				deployments, err := k8service.GetK8sDeployMent("sh", "scheduler")
+				logrus.WithFields(logrus.Fields{"Deployments": deployments}).Info(ModuleName)
+				services, err := k8service.GetK8sService("sh", "scheduler")
+				logrus.WithFields(logrus.Fields{"Services": services}).Info(ModuleName)
+				return nil, err
+			},
+		},
 	},
 })
 var schema, _ = graphql.NewSchema(graphql.SchemaConfig{
