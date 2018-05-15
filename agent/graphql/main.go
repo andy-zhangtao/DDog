@@ -60,6 +60,7 @@ func init() {
 func main() {
 	router := mux.NewRouter()
 	router.Path("/api").HandlerFunc(handleGraphQL)
+	router.Handle("/download/{filename}", http.StripPrefix("/download/", http.FileServer(http.Dir("/tmp"))))
 	handler := cors.AllowAll().Handler(router)
 	logrus.Fatal(http.ListenAndServe(":8000", handler))
 }

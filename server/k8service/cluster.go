@@ -182,8 +182,8 @@ func BackupK8sCluster(region, name string) (fileName string, err error) {
 		}
 	}
 
-	fileName = fmt.Sprintf("/tmp/k8s-%s-%s-backup-%s.zip", region, name, time.Now().Format("2006-01-02T15:04"))
-	fzip, _ := os.Create(fileName)
+	fileName = fmt.Sprintf("k8s-%s-%s-backup-%s.zip", region, name, time.Now().Format("2006-01-02T15:04"))
+	fzip, _ := os.Create("/tmp/" + fileName)
 	w := zip.NewWriter(fzip)
 
 	for name, content := range fileContent {
