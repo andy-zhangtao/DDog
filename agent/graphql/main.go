@@ -29,6 +29,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/qcloud"
 	"github.com/andy-zhangtao/DDog/server/k8service"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
+	"github.com/andy-zhangtao/DDog/server/repository"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -190,6 +191,26 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				return k8service.GetK8sCluster(region)
+			},
+		},
+		"repository": &graphql.Field{
+			Type:        graphql.NewList(caas.RepositoryType),
+			Description: "Kubentes Repository Data",
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				return repository.QueryMyRepository()
+			},
+		},
+		"tag": &graphql.Field{
+			Type:        graphql.NewList(caas.TagType),
+			Description: "Kubentes Tag Data",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				return repository.QueryMyTag(name)
 			},
 		},
 	},

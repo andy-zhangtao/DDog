@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
+	"github.com/andy-zhangtao/qcloud_api/v1/repository"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -359,6 +360,103 @@ var K8sClusterTYpe = graphql.NewObject(
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
 						return k.Namespace, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	},
+)
+
+var RepositoryType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "Repository",
+		Fields: graphql.Fields{
+			"name": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCRepository_data_repoInfo); ok {
+						return r.Reponame, nil
+					}
+					return nil, nil
+				},
+			},
+			"tag": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCRepository_data_repoInfo); ok {
+						return r.TagCount, nil
+					}
+					return nil, nil
+				},
+			},
+			"pull": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCRepository_data_repoInfo); ok {
+						return r.PullCount, nil
+					}
+					return nil, nil
+				},
+			},
+			"update": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCRepository_data_repoInfo); ok {
+						return r.UpdateTime, nil
+					}
+					return nil, nil
+				},
+			},
+		},
+	},
+)
+
+var TagType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "Tag",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.Int,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCTag_data_tagInfo); ok {
+						return r.Id, nil
+					}
+					return nil, nil
+				},
+			},
+			"reponame": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCTag_data_tagInfo); ok {
+						return r.RepoName, nil
+					}
+					return nil, nil
+				},
+			},
+			"tagname": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCTag_data_tagInfo); ok {
+						return r.TagName, nil
+					}
+					return nil, nil
+				},
+			},
+			"update": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCTag_data_tagInfo); ok {
+						return r.UpdateTime, nil
+					}
+					return nil, nil
+				},
+			},
+			"push": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if r, ok := p.Source.(repository.QCTag_data_tagInfo); ok {
+						return r.PushTime, nil
 					}
 					return nil, nil
 				},
