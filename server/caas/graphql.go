@@ -354,6 +354,15 @@ var K8sClusterTYpe = graphql.NewObject(
 					return nil, nil
 				},
 			},
+			"namespace": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if k, ok := p.Source.(k8sconfig.K8sCluster); ok {
+						return k.Namespace, nil
+					}
+					return nil, nil
+				},
+			},
 		},
 	},
 )

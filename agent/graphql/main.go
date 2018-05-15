@@ -60,6 +60,11 @@ func init() {
 func main() {
 	router := mux.NewRouter()
 	router.Path("/api").HandlerFunc(handleGraphQL)
+	router.Path("/backup/{filename}").HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		filename := mux.Vars(request)["filename"]
+
+		http.Redirect(writer, request, "/download/"+filename, http.StatusMovedPermanently)
+	})
 	router.Handle("/download/{filename}", http.StripPrefix("/download/", http.FileServer(http.Dir("/tmp"))))
 	handler := cors.AllowAll().Handler(router)
 	logrus.Fatal(http.ListenAndServe(":8000", handler))
@@ -497,18 +502,23 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"region": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(graphql.String),
 				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["name"].(string)
 				endpoint, _ := p.Args["endpoint"].(string)
 				token, _ := p.Args["token"].(string)
 				region, _ := p.Args["region"].(string)
+				namespace, _ := p.Args["namespace"].(string)
 
 				if err := k8service.UpdateK8sCluster(k8sconfig.K8sCluster{
-					Name:     name,
-					Region:   region,
-					Endpoint: endpoint,
-					Token:    token,
+					Name:      name,
+					Region:    region,
+					Endpoint:  endpoint,
+					Token:     token,
+					Namespace: namespace,
 				}); err != nil {
 					return nil, err
 				}

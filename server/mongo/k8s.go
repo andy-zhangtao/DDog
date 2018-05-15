@@ -34,7 +34,7 @@ func SaveK8sClusterData(kc k8sconfig.K8sCluster) (err error) {
 		kc.ID = bson.NewObjectId()
 	}
 
-	kc.UpdateTime = time.Now().String()
+	kc.UpdateTime = time.Now().Format("2006-01-02T15:04")
 	return MongoK8sConfigCol().Insert(&kc)
 }
 
@@ -56,7 +56,8 @@ func UpdateK8sClusterData(kc k8sconfig.K8sCluster) (err error) {
 		okc.Endpoint = kc.Endpoint
 		okc.Token = kc.Token
 		okc.Name = kc.Name
-		okc.UpdateTime = time.Now().String()
+		okc.Namespace = kc.Namespace
+		okc.UpdateTime = time.Now().Format("2006-01-02T15:04")
 		return MongoK8sConfigCol().Update(bson.M{"_id": okc.ID}, okc)
 	}
 }

@@ -11,5 +11,6 @@ type K8sCluster struct {
 	Region     string        `json:"region" bson:"region"`
 	Token      string        `json:"token" bson:"token"`
 	Endpoint   string        `json:"endpoint" bson:"endpoint"`
+	Namespace  string        `json:"namespace" bson:"namespace"`
 	UpdateTime string        `json:"update_time" bson:"update"`
 }
