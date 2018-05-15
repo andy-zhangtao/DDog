@@ -24,10 +24,10 @@ func GetK8sDeployMent(region, name string) (deploy k8smodel.K8sDeploymentInfo, e
 	}
 
 	k8m := k8s.K8sMetaData{
-		Endpoint: k8sMeta.Endpoint,
-		Token:    k8sMeta.Token,
-		Version:  "1.7",
-		Svcname:  name,
+		Endpoint:  k8sMeta.Endpoint,
+		Token:     k8sMeta.Token,
+		Version:   "1.7",
+		Namespace: name,
 	}
 
 	return k8m.GetDeployMentV1Beta()

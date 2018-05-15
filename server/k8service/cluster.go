@@ -9,6 +9,12 @@ import (
 	"github.com/andy-zhangtao/DDog/const"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/sirupsen/logrus"
+	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
+	"gopkg.in/yaml.v2"
+	"strings"
+	"archive/zip"
+	"log"
+	"time"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/14.
@@ -104,12 +110,117 @@ func DeleteK8sClusterByID(id string) (err error) {
 //BackupK8sCluster 备份指定的K8s控制数据
 //region K8s所在机房
 //name K8s控制命名空间名称
-func BackupK8sCluster(region, name string) (err error) {
+func BackupK8sCluster(region, name string) (fileName string, err error) {
+
+	fileContent := make(map[string][]byte)
+	serviceMap := make(map[string]k8smodel.K8sServiceBackup)
+	services, err := GetK8sSpecService(region, name, "")
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Query [%s] Service Error [%s]", name, err.Error()))
+		return
+	}
+
+	for _, s := range services.Items {
+		serviceMap[s.Metadata.Name] = k8smodel.K8sServiceBackup{
+			Apiversion: services.ApiVersion,
+			Kind:       "Service",
+			Metadata: k8smodel.K8sServiceBackup_Metadata{
+				Annotations:       s.Metadata.Annotations,
+				CreationTimestamp: s.Metadata.CreationTimestamp,
+				Labels:            s.Metadata.Labels,
+				Namespace:         s.Metadata.Namespace,
+				Name:              s.Metadata.Name,
+				ResourceVersion:   s.Metadata.ResourceVersion,
+				SelfLink:          s.Metadata.SelfLink,
+				Uid:               s.Metadata.Uid,
+			},
+			Spec:   s.Spec,
+			Status: s.Status,
+		}
+	}
+
+	logrus.WithFields(logrus.Fields{"Cache Services": len(serviceMap)}).Info(ModuleName)
+
 	deployments, err := GetK8sDeployMent(region, name)
 	logrus.WithFields(logrus.Fields{"Deployments": deployments}).Info(ModuleName)
 
+	//var fileName []string
 
-	services, err := GetK8sService(region, name)
-	logrus.WithFields(logrus.Fields{"Services": services}).Info(ModuleName)
+	for _, d := range deployments.Items {
+		depBack := k8smodel.K8sDeployBackup{
+			Apiversion: "extensions/v1beta1",
+			Kind:       "Deployment",
+		}
+
+		depBack.Metadata = k8smodel.K8sDeployBackup_Metadata{
+			Annotations:       d.Metadata.Annotations,
+			CreationTimestamp: d.Metadata.CreationTimestamp,
+			Generation:        d.Metadata.Generation,
+			Labels:            d.Metadata.Labels,
+			Name:              d.Metadata.Name,
+			Namespace:         d.Metadata.Namespace,
+			ResourceVersion:   d.Metadata.ResourceVersion,
+			SelfLink:          strings.Replace(d.Metadata.SelfLink, "apps", "extensions", 1),
+			Uid:               d.Metadata.Uid,
+		}
+
+		depBack.Spec = k8smodel.K8sDeployBackup_spec{
+			MinReadySeconds:      d.Spec.MinReadySeconds,
+			Replicas:             d.Spec.Replicas,
+			RevisionHistoryLimit: d.Spec.RevisionHistoryLimit,
+			Selector:             d.Spec.Selector,
+			Strategy:             d.Spec.Strategy,
+			Template:             d.Spec.Template,
+		}
+
+		depBack.Status = d.Status
+		if name, content, err := outputYamlFile(depBack, serviceMap[d.Metadata.Name]); err != nil {
+			err = errors.New(fmt.Sprintf("Generate Yaml File Error [%s]", err.Error()))
+			return "", err
+		} else {
+			fileContent[name] = content
+		}
+	}
+
+	fileName = fmt.Sprintf("/tmp/k8s-%s-%s-backup-%s.zip", region, name, time.Now().Format("2006-01-02T15:04"))
+	fzip, _ := os.Create(fileName)
+	w := zip.NewWriter(fzip)
+
+	for name, content := range fileContent {
+		f, err := w.Create(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = f.Write(content)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// Make sure to check the error on Close.
+	err = w.Close()
+	return
+}
+
+func outputYamlFile(d k8smodel.K8sDeployBackup, s k8smodel.K8sServiceBackup) (filename string, content []byte, err error) {
+	filename = fmt.Sprintf("/tmp/deploy_%s_back.yaml", d.Metadata.Name)
+	//sn := fmt.Sprintf("/tmp/deploy_%s_back.yaml", d.Metadata.Name)
+
+	content, err = yaml.Marshal(&d)
+	if err != nil {
+		return
+	}
+
+	if s.Apiversion != "" {
+		sd, err := yaml.Marshal(&s)
+		if err != nil {
+			return filename, content, err
+		}
+
+		content = append(content, []byte("\n---\n")...)
+		content = append(content, sd...)
+	}
+
+	//err = ioutil.WriteFile(filename, content, os.ModePerm)
 	return
 }
