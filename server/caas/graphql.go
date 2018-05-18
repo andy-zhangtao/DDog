@@ -100,6 +100,21 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 				return nil, nil
 			},
 		},
+		"image": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					if con, err := container.GetAllContainersBySvc(s.Name, s.Namespace); err != nil {
+						err = errors.New(fmt.Sprintf("Get Image Error [%s] svc[%s] namespace [%s]", err.Error(), s.SvcName, s.Namespace))
+						return nil, err
+					} else {
+						return con[0].Img, nil
+					}
+					//return lb, nil
+				}
+				return nil, nil
+			},
+		},
 		"events": &graphql.Field{
 			Type: graphql.NewList(CaasServiceEventType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
