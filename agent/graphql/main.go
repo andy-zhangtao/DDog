@@ -582,6 +582,27 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				return k8service.BackupK8sCluster(region, namespace)
 			},
 		},
+		"renametag": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Rename Image Tag",
+			Args: graphql.FieldConfigArgument{
+				"src": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"dest": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				src, _ := p.Args["src"].(string)
+				dest, _ := p.Args["dest"].(string)
+
+				if err := repository.RenameMyTag(src, dest); err != nil {
+					return err.Error(), nil
+				}
+				return nil, nil
+			},
+		},
 	},
 })
 var schema, _ = graphql.NewSchema(graphql.SchemaConfig{

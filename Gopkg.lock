@@ -31,9 +31,10 @@
     "v1/event",
     "v1/namespace",
     "v1/public",
+    "v1/repository",
     "v1/service"
   ]
-  revision = "4838fab68c6ba29bd7978d3a7d24b867fbc3cac2"
+  revision = "be34294c5f931c49bfd262b61749cd297637d7c1"
 
 [[projects]]
   name = "github.com/coreos/etcd"
@@ -96,7 +97,7 @@
   branch = "master"
   name = "github.com/golang/snappy"
   packages = ["."]
-  revision = "553a641470496b2327abcac10b36396bd98e45c9"
+  revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -194,7 +195,7 @@
     "internal/timeseries",
     "trace"
   ]
-  revision = "2491c5de3490fced2f6cff376127c667efeed857"
+  revision = "57065200b4b034a1c8ad54ff77069408c2218ae6"
 
 [[projects]]
   branch = "master"
@@ -230,7 +231,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "7bb2a897381c9c5ab2aeb8614f758d7766af68ff"
+  revision = "11a468237815f3a3ddf9f7c6e8b6b3b382a24d15"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -285,6 +286,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "985095d1eeb398029f7157faca0c1e7a65051f5fbaacbbdd2bdf3f706d98bbab"
+  inputs-digest = "86285af04efa0792798fa9f0406ad86febe242a433905c4f26acdd970be2620e"
   solver-name = "gps-cdcl"
   solver-version = 1

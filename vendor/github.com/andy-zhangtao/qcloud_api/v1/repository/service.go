@@ -13,6 +13,7 @@ type Repository struct {
 	sign      string
 	offset    string
 	reponame  string
+	Params    map[string]interface{}
 }
 
 const (
@@ -41,6 +42,10 @@ func (this *Repository) generatePubParam(kind int) (string, string) {
 		reqmap["reponame"] = this.reponame
 	case RenameRepository:
 		optKind = "DuplicateImage"
+		field = append(field, []string{"src.image", "dest.image"}...)
+		reqmap["src.image"] = this.Params["src_image"].(string)
+		reqmap["dest.image"] = this.Params["dest_image"].(string)
+
 	}
 
 	pubMap := public.PublicParam(optKind, this.Pub.Region, this.Pub.SecretId)
