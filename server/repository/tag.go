@@ -55,7 +55,7 @@ func RenameMyTag(srcname, destname string) (err error) {
 	}
 
 	if resp.Code != 0 {
-		err = errors.New(fmt.Sprintf("Rename Image Tag Error RespCode [%d] Message[%s] SrcImage [%s] DestImage [%s]", resp.Code, resp.Message, srcname, destname))
+		err = errors.New(fmt.Sprintf("Rename Image Tag Error RespCode [%d] Message[%s] SrcImage [%s] DestImage [%s]", resp.Code, resp.Message+resp.CodeDesc, srcname, destname))
 		return
 	}
 
