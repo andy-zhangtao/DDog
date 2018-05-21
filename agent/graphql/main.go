@@ -428,6 +428,9 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"ports": &graphql.ArgumentConfig{
 					Type: graphql.NewList(graphql.Int),
 				},
+				"env": &graphql.ArgumentConfig{
+					Type: graphql.NewList(graphql.String),
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["service"].(string)
@@ -435,6 +438,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				namespace, _ := p.Args["namespace"].(string)
 
 				var ps []int
+				envs := make(map[string]string)
 
 				if pt, ok := p.Args["ports"]; ok {
 					ptt, _ := pt.([]interface{})
@@ -446,12 +450,24 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 						}
 					}
 				}
+
+				if e, ok := p.Args["env"]; ok {
+					et, _ := e.([]interface{})
+					for _, ett := range et {
+						if str, ok := ett.(string); ok {
+							tm := strings.Split(str, "=")
+							envs[strings.TrimSpace(tm[0])] = strings.TrimSpace(tm[1])
+						}
+					}
+				}
+
 				con := container.Container{
 					Name: name,
 					Img:  image,
 					Port: ps,
 					Svc:  name,
 					Nsme: namespace,
+					Env:  envs,
 				}
 
 				var nt []container.NetConfigure
