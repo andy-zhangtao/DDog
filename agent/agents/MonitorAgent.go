@@ -237,6 +237,14 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 				time.Sleep(3 * time.Second)
 			}
 		}
+	} else if strings.ToLower(msg.Msg) == "deploy" {
+		//	开始部署服务
+		sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
+		if err != nil {
+			return err
+		}
+		sc.Deploy = _const.DeployIng
+		this.NotifyDevEx(sc)
 	} else {
 		/*clear msg*/
 		msg.Destory()

@@ -48,6 +48,17 @@ var errNum = 0
 
 func (this *SpiderAgent) Run() {
 	logrus.WithFields(logrus.Fields{SpiderAgentName: "Start"}).Info(SpiderAgentName)
+	logrus.WithFields(logrus.Fields{"Send Start Signal": os.Getenv("DDOG_AGENT_SPIDER_SVC")}).Info(SpiderAgentName)
+	data, _ := json.Marshal(monitor.MonitorModule{
+		Kind:      this.Name,
+		Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
+		Namespace: os.Getenv("DDOG_AGENT_SPIDER_NS"),
+		Msg:       "deploy",
+		//Ip:        []string{this.Ip},
+	})
+
+	bridge.SendMonitorMsg(string(data))
+
 	needCheck = false
 	go func() {
 		for {
