@@ -347,15 +347,23 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"namespace": &graphql.ArgumentConfig{
 					Type: graphql.NewNonNull(graphql.String),
 				},
+				"replicas": &graphql.ArgumentConfig{
+					Type: graphql.Int,
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["name"].(string)
 				namespace, _ := p.Args["namespace"].(string)
+				replicas, _ := p.Args["replicas"].(int)
+
+				if replicas == 0 {
+					replicas = 1
+				}
 
 				conf := &svcconf.SvcConf{
 					Name:      name,
 					Namespace: namespace,
-					Replicas:  2,
+					Replicas:  replicas,
 				}
 
 				cf, err := svcconf.GetSvcConfByName(conf.Name, conf.Namespace)
