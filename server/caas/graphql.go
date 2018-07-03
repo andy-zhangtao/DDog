@@ -108,7 +108,10 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 						err = errors.New(fmt.Sprintf("Get Image Error [%s] svc[%s] namespace [%s]", err.Error(), s.SvcName, s.Namespace))
 						return nil, err
 					} else {
-						return con[0].Img, nil
+						if len(con) > 0 {
+							return con[0].Img, nil
+						}
+						return nil, nil
 					}
 					//return lb, nil
 				}

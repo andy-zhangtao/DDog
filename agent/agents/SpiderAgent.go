@@ -166,7 +166,7 @@ func (this *SpiderAgent) checkPort() {
 		}
 	}
 
-	//在过滤一遍TCP6
+	//再过滤一遍TCP6
 	for _, td := range GOnetstat.Tcp6() {
 		logrus.WithFields(logrus.Fields{"tcp Port": td.Port, "state": td.State}).Info(SpiderAgentName)
 		if strings.ToUpper(td.State) == "LISTEN" {

@@ -464,7 +464,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					for _, ett := range et {
 						if str, ok := ett.(string); ok {
 							tm := strings.Split(str, "=")
-							envs[strings.TrimSpace(tm[0])] = strings.TrimSpace(tm[1])
+							envs[strings.TrimSpace(tm[0])] = strings.TrimSpace(strings.Join(tm[1:], "="))
 						}
 					}
 				}
