@@ -98,10 +98,7 @@ func SaveContainer(con *Container) (err error) {
 		con.ID = bson.NewObjectId()
 	}
 
-	if err = mongo.SaveContainer(con); err != nil {
-		return
-	}
-	return
+	return mongo.SaveContainer(con)
 }
 
 func unmarshal(icon interface{}) (con *Container, err error) {

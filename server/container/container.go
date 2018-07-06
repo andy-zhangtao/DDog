@@ -339,8 +339,8 @@ func createContainer(con *container.Container) (err error) {
 	if err != nil {
 		return
 	}
-	err = container.SaveContainer(con)
-	return
+
+	return container.SaveContainer(con)
 }
 
 // upgreadeSvcConf 异步更新服务配置信息

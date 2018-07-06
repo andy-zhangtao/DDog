@@ -20,7 +20,6 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/sirupsen/logrus"
 	"github.com/andy-zhangtao/DDog/bridge"
-	"fmt"
 )
 
 type Operation struct{}
@@ -706,7 +705,7 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 		return err
 	}
 
-	fmt.Println(scf)
+	logrus.WithFields(logrus.Fields{"Query SvcConf": scf}).Info(ModuleName)
 	if scf == nil {
 		q := service.Service{
 			Pub: public.Public{
@@ -755,7 +754,10 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	if resp.Code != 0 {
 		if strings.Contains(resp.CodeDesc, "KubeResourceNotFound") {
 			logrus.WithFields(logrus.Fields{"DeleteService Error": resp}).Error(ModuleName)
-			return scf.DeleteMySelf()
+			logrus.WithFields(logrus.Fields{"Need Delete Service And Container": needDeleteService}).Info(ModuleName)
+			if needDeleteService {
+				return scf.DeleteMySelf()
+			}
 		}
 		return errors.New(resp.Message)
 	}
@@ -791,12 +793,12 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 		}
 	}
 
-	err = container.DeleteAllContaienrUnderSvc(scf.Name, scf.Namespace)
-	if err != nil {
-		return err
-	}
-
+	logrus.WithFields(logrus.Fields{"Need Delete Service And Container": needDeleteService}).Info(ModuleName)
 	if needDeleteService {
+		err = container.DeleteAllContaienrUnderSvc(scf.Name, scf.Namespace)
+		if err != nil {
+			return err
+		}
 		return scf.DeleteMySelf()
 	}
 

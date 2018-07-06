@@ -280,7 +280,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				if name == "proenv" {
 					ns.Owner = "admin"
 				}
-				
+
 				err := cloudservice.DeleteNamespace(ns)
 				if err != nil {
 					return nil, err
@@ -503,6 +503,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					return nil, err
 				}
 
+				logrus.WithFields(logrus.Fields{"find old container": isExist}).Info(ModuleName)
 				if isExist {
 					container.DeleteContainerByName(oldCon.Name, oldCon.Svc, oldCon.Nsme)
 					return *oldCon, cs.CreateContainerForGraphQL(&con)

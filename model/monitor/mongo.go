@@ -60,7 +60,7 @@ func (mm *MonitorModule) Save() error {
 		om.Msg = mm.Msg
 		om.Num ++
 
-		if len(om.Ip) > 0 {
+		if len(om.Ip) > 0 && len(mm.Ip) > 0 {
 			isCheck := false
 			for _, p := range om.Ip {
 				if p == mm.Ip[0] {
