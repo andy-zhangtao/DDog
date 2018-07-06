@@ -20,6 +20,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/sirupsen/logrus"
 	"github.com/andy-zhangtao/DDog/bridge"
+	"fmt"
 )
 
 type Operation struct{}
@@ -687,7 +688,16 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	// 在数据库中肯定无法找到相对应的记录，因此数据库记录不作为必须条件
 	// 当数据库有记录时，删除其名下所有服务
 	// 当数据库没有记录时，直接删除当前服务
-	md, err := metadata.GetMetaDataByRegion("")
+	var md *metadata.MetaData
+	var err error
+	needDeleteService := true //在预发布环境中不需要删除服务
+	if msg.Namespace == "proenv" {
+		needDeleteService = false
+		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
+	} else {
+		md, err = metadata.GetMetaDataByRegion("")
+	}
+
 	if err != nil {
 		return err
 	}
@@ -696,6 +706,7 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 		return err
 	}
 
+	fmt.Println(scf)
 	if scf == nil {
 		q := service.Service{
 			Pub: public.Public{
@@ -738,6 +749,9 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	q.SetDebug(true)
 
 	resp, err := q.DeleteService()
+	if err != nil {
+		return err
+	}
 	if resp.Code != 0 {
 		if strings.Contains(resp.CodeDesc, "KubeResourceNotFound") {
 			logrus.WithFields(logrus.Fields{"DeleteService Error": resp}).Error(ModuleName)
@@ -782,9 +796,8 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 		return err
 	}
 
-	err = scf.DeleteMySelf()
-	if err != nil {
-		return err
+	if needDeleteService {
+		return scf.DeleteMySelf()
 	}
 
 	return nil

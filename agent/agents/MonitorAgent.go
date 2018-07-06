@@ -15,6 +15,7 @@ import (
 	"time"
 	"os"
 	"fmt"
+	"errors"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -173,6 +174,10 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 			return err
 		}
 
+		if sc == nil {
+			return errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
+		}
+
 		mm, err := monitor.GetMonitroModule(msg.Kind, msg.Svcname, msg.Namespace)
 		if err != nil {
 			return err
@@ -182,9 +187,15 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 			/*clear msg*/
 			mm.Destory()
 			/*获取负载信息*/
-			md, err := metadata.GetMetaDataByRegion("")
+			var md *metadata.MetaData
+			if msg.Namespace == "proenv" {
+				md, err = metadata.GetMetaDataByRegion("", "proenv")
+			} else {
+				md, err = metadata.GetMetaDataByRegion("")
+			}
+
 			if err != nil {
-				sc.Deploy = _const.DeploySuc
+				sc.Deploy = _const.DeployFailed
 				sc.Msg = msg.Msg
 				return svcconf.UpdateSvcConf(sc)
 			}
@@ -206,8 +217,8 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 				resp, err := q.QuerySvcInfo()
 
 				if err != nil || resp.Code != 0 {
-					sc.Deploy = _const.DeploySuc
-					sc.Msg = msg.Msg
+					sc.Deploy = _const.DeployFailed
+					sc.Msg = err.Error()
 					return svcconf.UpdateSvcConf(sc)
 				}
 
@@ -242,6 +253,11 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 		sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
 		if err != nil {
 			return err
+		}
+		if sc == nil {
+			logrus.WithFields(logrus.Fields{"SvcConf": "nil"}).Error(ModuleName)
+			msg.Destory()
+			return errors.New("SvcConf nil")
 		}
 		sc.Deploy = _const.DeployIng
 		this.NotifyDevEx(sc)

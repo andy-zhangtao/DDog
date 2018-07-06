@@ -9,8 +9,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"net/url"
-	"os"
-	"github.com/andy-zhangtao/DDog/server/dbservice"
+		"github.com/andy-zhangtao/DDog/server/dbservice"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/19.
@@ -22,9 +21,18 @@ func CheckNamespace(ns caasmodel.NameSpace) (err error) {
 	_, err = dbservice.GetNamespaceByOwnerAndName(name, ns.Owner)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
-			md, err := metadata.GetMetaDataByRegion("")
-			if err != nil {
-				return errors.New(_const.RegionNotFound)
+			var md *metadata.MetaData
+			if name == "proenv" {
+				//	预发布环境
+				md, err = metadata.GetMetaDataByRegion("", "proenv")
+				if err != nil {
+					return errors.New(_const.RegionNotFound)
+				}
+			} else {
+				md, err = metadata.GetMetaDataByRegion("")
+				if err != nil {
+					return errors.New(_const.RegionNotFound)
+				}
 			}
 
 			q := namespace.NSpace{
@@ -33,7 +41,7 @@ func CheckNamespace(ns caasmodel.NameSpace) (err error) {
 					SecretId: md.Sid,
 				},
 				SecretKey: md.Skey,
-				ClusterId: os.Getenv(_const.EnvClusterID),
+				ClusterId: md.ClusterID,
 				Name:      url.QueryEscape(name),
 				Desc:      url.QueryEscape(ns.Desc),
 			}
@@ -69,9 +77,18 @@ func DeleteNamespace(ns caasmodel.NameSpace) (err error) {
 		return err
 	}
 
-	md, err := metadata.GetMetaDataByRegion("")
-	if err != nil {
-		return errors.New(_const.RegionNotFound)
+	var md *metadata.MetaData
+	if name == "proenv" {
+		//	预发布环境
+		md, err = metadata.GetMetaDataByRegion("", "proenv")
+		if err != nil {
+			return errors.New(_const.RegionNotFound)
+		}
+	} else {
+		md, err = metadata.GetMetaDataByRegion("")
+		if err != nil {
+			return errors.New(_const.RegionNotFound)
+		}
 	}
 
 	q := namespace.NSpace{
@@ -80,7 +97,7 @@ func DeleteNamespace(ns caasmodel.NameSpace) (err error) {
 			SecretId: md.Sid,
 		},
 		SecretKey: md.Skey,
-		ClusterId: os.Getenv(_const.EnvClusterID),
+		ClusterId: md.ClusterID,
 		Name:      url.QueryEscape(name),
 		Desc:      url.QueryEscape(ns.Desc),
 		Rmname: []string{

@@ -8,7 +8,6 @@ import (
 	"log"
 	"errors"
 	"fmt"
-	"github.com/andy-zhangtao/DDog/const"
 	"math"
 	"github.com/sirupsen/logrus"
 )
@@ -228,9 +227,7 @@ func GetSvcConfByID(id string) (*SvcConf, error) {
 }
 
 func SaveSvcConf(scf *SvcConf) error {
-	if _const.DEBUG {
-		log.Printf("[SaveSvcConf mongo.go] Save SvcConf [%v]\n", scf)
-	}
+	log.Printf("[SaveSvcConf mongo.go] Save SvcConf [%v]\n", scf)
 	return mongo.SaveSvcConfig(scf)
 }
 

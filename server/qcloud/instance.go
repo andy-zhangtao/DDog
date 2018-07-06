@@ -19,7 +19,13 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 		return
 	}
 
-	md, err := metadata.GetMetaDataByRegion("")
+	var md *metadata.MetaData
+	if namespace == "proenv" {
+		md, err = metadata.GetMetaDataByRegion("", namespace)
+	} else {
+		md, err = metadata.GetMetaDataByRegion("")
+	}
+
 	if err != nil {
 		return
 	}

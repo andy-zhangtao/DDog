@@ -245,6 +245,10 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					Desc:  desc,
 				}
 
+				if name == "proenv" {
+					ns.Owner = "admin"
+				}
+
 				err := cloudservice.CheckNamespace(ns)
 				if err != nil {
 					return nil, err
@@ -273,6 +277,10 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					Owner: owner,
 				}
 
+				if name == "proenv" {
+					ns.Owner = "admin"
+				}
+				
 				err := cloudservice.DeleteNamespace(ns)
 				if err != nil {
 					return nil, err

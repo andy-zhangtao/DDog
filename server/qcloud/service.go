@@ -198,6 +198,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logrus.WithFields(logrus.Fields{"origin Service Conf": cf}).Info(ModuleName)
 	replicas := 0
 	if r.URL.Query().Get("replicas") == "" {
 		replicas = cf.Replicas
@@ -210,11 +211,26 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	logrus.WithFields(logrus.Fields{"svc_conf": cf,}).Info("RunService")
 
-	md, err := metadata.GetMetaDataByRegion("")
-	if err != nil {
-		tool.ReturnError(w, err)
-		return
+	var md *metadata.MetaData
+	if nsme == "proenv" {
+		//	预发布环境
+		md, err = metadata.GetMetaDataByRegion("", "proenv")
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+	} else {
+		md, err = metadata.GetMetaDataByRegion("")
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	}
+	//md, err := metadata.GetMetaDataByRegion("")
+	//if err != nil {
+	//	tool.ReturnError(w, err)
+	//	return
+	//}
 
 	sn := cf.Name + "-" + gt.GetTimeStamp(10)
 	isUpgrade, err = strconv.ParseBool(r.URL.Query().Get("upgrade"))
@@ -264,20 +280,25 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	q.SetDebug(true)
 
+	portList := make(map[int]int)
 	if len(cf.Netconf) > 0 {
 		var pm []service.PortMappings
 		for _, n := range cf.Netconf {
-			p := service.PortMappings{}
-			switch n.Protocol {
-			case 0:
-				p.Protocol = "TCP"
-			case 1:
-				p.Protocol = "UDP"
+			if _, exists := portList[n.InPort]; !exists {
+				portList[n.InPort] = n.InPort
+				p := service.PortMappings{}
+				switch n.Protocol {
+				case 0:
+					p.Protocol = "TCP"
+				case 1:
+					p.Protocol = "UDP"
+				}
+				p.ContainerPort = n.InPort
+				p.LbPort = n.OutPort
+				pm = append(pm, p)
 			}
-			p.ContainerPort = n.InPort
-			p.LbPort = n.OutPort
-			pm = append(pm, p)
 		}
+		logrus.WithFields(logrus.Fields{"port map ": pm}).Info("DeployAgent")
 		q.PortMappings = pm
 		switch cf.Netconf[0].AccessType {
 		case 2:
@@ -286,7 +307,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			q.AccessType = "LoadBalancer"
 		case 0:
 			q.AccessType = "SvcLBTypeInner"
-			q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
+			q.SubnetId = md.NetID
+			//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
 		}
 	} else {
 		q.AccessType = "None"
@@ -451,9 +473,16 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	//}, plugin)
 
 	cf.Deploy = _const.DeployIng
-	svcconf.UpdateSvcConf(cf)
+
+	logrus.WithFields(logrus.Fields{"Copy Service Conf": cf}).Info(ModuleName)
+	err = svcconf.UpdateSvcConf(cf)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"UpdateSvcConf Error": err}).Error(ModuleName)
+		w.Header().Set("EQXC-Run-Svc", "500")
+	} else {
+		w.Header().Set("EQXC-Run-Svc", "200")
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("EQXC-Run-Svc", "200")
 	w.Write(data)
 }
 

@@ -9,25 +9,46 @@ import (
 
 type MetaData struct {
 	ID        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Sid       string        `json:"secret_id"`
-	Skey      string        `json:"secret_key"`
-	Region    string        `json:"region"`
-	ClusterID string        `json:"cluster_id"`
+	Sid       string        `json:"secret_id" bson:"sid"`
+	Skey      string        `json:"secret_key" bson:"skey"`
+	Region    string        `json:"region" bson:"region"`
+	ClusterID string        `json:"cluster_id" bson:"clusterid" bw:"clusterid"`
+	Env       string        `json:"env" bson:"env"`
+	NetID     string        `json:"net_id" bson:"netid"`
 }
 
 // GetMetaDataByRegion 查询指定区域的元数据
 // 如果region为空， 则默认输出第一条MetaData数据
-func GetMetaDataByRegion(region string) (md *MetaData, err error) {
+// env 取对应环境的集群数据
+func GetMetaDataByRegion(region string, env ...string) (md *MetaData, err error) {
+
+	if len(env) > 1 {
+		err = errors.New("Not Support Multiple Env")
+		return
+	}
 
 	if region == "" {
 		imds, err := mongo.FindAllMetaData()
 		if err != nil {
 			return nil, err
 		}
-		md, err = unmarshal(imds[0])
-		if err != nil {
-			return nil, err
+
+		for _, m := range imds {
+			md, err = unmarshal(m)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(env) == 0 {
+				return md, nil
+			} else {
+				if md.Env == env[0] {
+					return md, nil
+				}
+			}
+
 		}
+
 		return md, nil
 	}
 

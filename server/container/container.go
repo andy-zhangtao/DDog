@@ -353,7 +353,16 @@ func upgreadeSvcConf(con container.Container, updateNet bool) (err error) {
 	}
 	sv.Status = 0
 	if updateNet {
-		sv.Netconf = append(sv.Netconf, con.Net...)
+		portMap := make(map[int]int)
+		for _, n := range sv.Netconf {
+			portMap[n.InPort] = n.InPort
+		}
+
+		for _, c := range con.Net {
+			if _, exists := portMap[c.InPort]; !exists {
+				sv.Netconf = append(sv.Netconf, c)
+			}
+		}
 	}
 	err = svcconf.UpdateSvcConf(sv)
 	return
