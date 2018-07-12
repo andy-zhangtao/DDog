@@ -14,6 +14,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"os"
 	"github.com/sirupsen/logrus"
+	"fmt"
 )
 
 const (
@@ -167,16 +168,61 @@ func checkContainer(con *container.Container) error {
 		con.Idx = 1
 	}
 
+	//获取不同环境的日志参数
+	//日志参数规则如下：
+	//"--log-opt gelf-address=default:udp://192.168.0.8:12201|+|proenv:udp://xxxxxxxxxxx|+|; --log-opt buf=1; --log-opt env=svcname;"
+	var logOpt string
+	var logOpts []string
+
+	lops := strings.Split(os.Getenv(_const.EnvDefaultLogOpt), ";")
+	if len(lops) > 0 {
+		logOpts = lops[1 : len(lops)-1]
+
+		for _, l := range lops {
+			if strings.HasPrefix(strings.TrimSpace(l), "\"--log-opt") {
+				ops := strings.Split(l, "=")
+				if len(ops) > 1 {
+					logOpt = ops[1]
+				} else {
+					logOpt = os.Getenv(_const.EnvDefaultLogOpt)
+					logrus.WithFields(logrus.Fields{"GelfAddress Value Error": l}).Error(ModuleName)
+				}
+				break
+			}
+		}
+	} else {
+		logOpt = os.Getenv(_const.EnvDefaultLogOpt)
+		logrus.WithFields(logrus.Fields{"LogOpt Value Error": os.Getenv(_const.EnvDefaultLogOpt)}).Error(ModuleName)
+	}
+
+	switch con.Nsme {
+	case "proenv":
+		_logOpt := strings.Split(logOpt, "|+|")
+		for _, l := range _logOpt {
+			if strings.HasPrefix(l, "proenv:") {
+				logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "proenv:")[1], strings.Join(logOpts, ";"))
+			}
+		}
+	default:
+		_logOpt := strings.Split(logOpt, "|+|")
+		for _, l := range _logOpt {
+			if strings.HasPrefix(l, "default:") {
+				logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "default:")[1], strings.Join(logOpts, ";"))
+			}
+		}
+	}
+
+	logrus.WithFields(logrus.Fields{"namespace": con.Nsme, "log-opt": logOpt}).Info(ModuleName)
 	if con.Env == nil {
 		con.Env = map[string]string{
 			"LOGCHAIN_DRIVER": os.Getenv(_const.EnvDefaultLogDriver),
 			"svcname":         con.Svc,
-			"log_opt":         os.Getenv(_const.EnvDefaultLogOpt),
+			"log_opt":         logOpt,
 		}
 	} else {
 		con.Env["LOGCHAIN_DRIVER"] = os.Getenv(_const.EnvDefaultLogDriver)
 		con.Env["svcname"] = con.Svc
-		con.Env["log_opt"] = os.Getenv(_const.EnvDefaultLogOpt)
+		con.Env["log_opt"] = logOpt
 	}
 
 	return nil
