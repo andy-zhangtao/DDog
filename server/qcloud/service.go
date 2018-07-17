@@ -212,20 +212,43 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	logrus.WithFields(logrus.Fields{"svc_conf": cf,}).Info("RunService")
 
 	var md *metadata.MetaData
-	if nsme == "proenv" {
+	switch nsme {
+	case "proenv":
 		//	预发布环境
 		md, err = metadata.GetMetaDataByRegion("", "proenv")
 		if err != nil {
 			tool.ReturnError(w, err)
 			return
 		}
-	} else {
+	case "release":
+		//	预发布环境
+		md, err = metadata.GetMetaDataByRegion("", "release")
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
+	default:
 		md, err = metadata.GetMetaDataByRegion("")
 		if err != nil {
 			tool.ReturnError(w, err)
 			return
 		}
 	}
+
+	//if nsme == "proenv" {
+	//	//	预发布环境
+	//	md, err = metadata.GetMetaDataByRegion("", "proenv")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//} else {
+	//	md, err = metadata.GetMetaDataByRegion("")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//}
 	//md, err := metadata.GetMetaDataByRegion("")
 	//if err != nil {
 	//	tool.ReturnError(w, err)

@@ -249,6 +249,9 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					ns.Owner = "admin"
 				}
 
+				if name == "release" {
+					ns.Owner = "admin"
+				}
 				err := cloudservice.CheckNamespace(ns)
 				if err != nil {
 					return nil, err

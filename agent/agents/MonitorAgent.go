@@ -112,7 +112,17 @@ func (this *MonitorAgent) handlerMsg(msg *monitor.MonitorModule) error {
 
 // stopSVC 停掉服务并且将其置位失败
 func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
-	md, err := metadata.GetMetaDataByRegion("")
+	var md *metadata.MetaData
+	var err error
+	switch msg.Namespace {
+	case "proenv":
+		fallthrough
+	case "release":
+		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
+	default:
+		md, err = metadata.GetMetaDataByRegion("")
+	}
+	//md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		logrus.WithFields(logrus.Fields{MonitorAgentName: "Get MetaData Error!", "error": err}).Error(MonitorAgentName)
 		this.StopChan <- 1
@@ -188,11 +198,20 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 			mm.Destory()
 			/*获取负载信息*/
 			var md *metadata.MetaData
-			if msg.Namespace == "proenv" {
-				md, err = metadata.GetMetaDataByRegion("", "proenv")
-			} else {
-				md, err = metadata.GetMetaDataByRegion("")
+			switch msg.Namespace {
+			case "proenv":
+				fallthrough
+			case "release":
+				md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
+			default:
+				md, err = metadata.GetMetaDataByRegion("", )
 			}
+
+			//if msg.Namespace == "proenv" {
+			//	md, err = metadata.GetMetaDataByRegion("", "proenv")
+			//} else {
+			//	md, err = metadata.GetMetaDataByRegion("")
+			//}
 
 			if err != nil {
 				sc.Deploy = _const.DeployFailed

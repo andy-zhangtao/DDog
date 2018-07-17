@@ -122,7 +122,17 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 			Type: graphql.NewList(CaasServiceEventType),
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				if s, ok := p.Source.(svcconf.SvcConf); ok {
-					md, err := metadata.GetMetaDataByRegion("")
+					var md *metadata.MetaData
+					var err error
+					switch s.Namespace {
+					case "proenv":
+						fallthrough
+					case "release":
+						md, err = metadata.GetMetaDataByRegion("", s.Namespace)
+					default:
+						md, err = metadata.GetMetaDataByRegion("")
+					}
+
 					if err != nil {
 						return nil, errors.New(_const.RegionNotFound)
 					}

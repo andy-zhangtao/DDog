@@ -46,7 +46,17 @@ func (this *RetriAgent) Run() {
 		this.StopChan <- 1
 	}
 
-	md, err := metadata.GetMetaDataByRegion("")
+	var md *metadata.MetaData
+	var err error
+	switch this.Namespace[0] {
+	case "proenv":
+		fallthrough
+	case "release":
+		md, err = metadata.GetMetaDataByRegion("")
+	default:
+		md, err = metadata.GetMetaDataByRegion("")
+	}
+	//md, err := metadata.GetMetaDataByRegion("")
 	if err != nil {
 		logrus.WithFields(logrus.Fields{RetriAgentName: "Get MetaData Error!", "error": err}).Error(RetriAgentName)
 		this.StopChan <- 1

@@ -9,7 +9,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"net/url"
-		"github.com/andy-zhangtao/DDog/server/dbservice"
+	"github.com/andy-zhangtao/DDog/server/dbservice"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/19.
@@ -22,13 +22,20 @@ func CheckNamespace(ns caasmodel.NameSpace) (err error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			var md *metadata.MetaData
-			if name == "proenv" {
+			switch name {
+			case "proenv":
 				//	预发布环境
 				md, err = metadata.GetMetaDataByRegion("", "proenv")
 				if err != nil {
 					return errors.New(_const.RegionNotFound)
 				}
-			} else {
+			case "release":
+				//	预发布环境
+				md, err = metadata.GetMetaDataByRegion("", "release")
+				if err != nil {
+					return errors.New(_const.RegionNotFound)
+				}
+			default:
 				md, err = metadata.GetMetaDataByRegion("")
 				if err != nil {
 					return errors.New(_const.RegionNotFound)
@@ -78,18 +85,38 @@ func DeleteNamespace(ns caasmodel.NameSpace) (err error) {
 	}
 
 	var md *metadata.MetaData
-	if name == "proenv" {
+	switch name {
+	case "proenv":
 		//	预发布环境
 		md, err = metadata.GetMetaDataByRegion("", "proenv")
 		if err != nil {
 			return errors.New(_const.RegionNotFound)
 		}
-	} else {
+	case "release":
+		//	预发布环境
+		md, err = metadata.GetMetaDataByRegion("", "release")
+		if err != nil {
+			return errors.New(_const.RegionNotFound)
+		}
+	default:
 		md, err = metadata.GetMetaDataByRegion("")
 		if err != nil {
 			return errors.New(_const.RegionNotFound)
 		}
 	}
+
+	//if name == "proenv" {
+	//	//	预发布环境
+	//	md, err = metadata.GetMetaDataByRegion("", "proenv")
+	//	if err != nil {
+	//		return errors.New(_const.RegionNotFound)
+	//	}
+	//} else {
+	//	md, err = metadata.GetMetaDataByRegion("")
+	//	if err != nil {
+	//		return errors.New(_const.RegionNotFound)
+	//	}
+	//}
 
 	q := namespace.NSpace{
 		Pub: public.Public{

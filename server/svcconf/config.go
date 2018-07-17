@@ -690,12 +690,22 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	var md *metadata.MetaData
 	var err error
 	needDeleteService := true //在预发布环境中不需要删除服务
-	if msg.Namespace == "proenv" {
+
+	switch msg.Namespace {
+	case "proenv":
+		fallthrough
+	case "release":
 		needDeleteService = false
 		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
-	} else {
+	default:
 		md, err = metadata.GetMetaDataByRegion("")
 	}
+	//if msg.Namespace == "proenv" {
+	//	needDeleteService = false
+	//	md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
+	//} else {
+	//	md, err = metadata.GetMetaDataByRegion("")
+	//}
 
 	if err != nil {
 		return err
