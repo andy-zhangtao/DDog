@@ -203,6 +203,13 @@ func checkContainer(con *container.Container) error {
 				logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "proenv:")[1], strings.Join(logOpts, ";"))
 			}
 		}
+	case "release":
+		_logOpt := strings.Split(logOpt, "|+|")
+		for _, l := range _logOpt {
+			if strings.HasPrefix(l, "release:") {
+				logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "release:")[1], strings.Join(logOpts, ";"))
+			}
+		}
 	default:
 		_logOpt := strings.Split(logOpt, "|+|")
 		for _, l := range _logOpt {
