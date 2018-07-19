@@ -20,6 +20,7 @@ const (
 	RetriAgentName   = "RetriAgent"
 	SpiderAgentName  = "SpiderAgent"
 	DeployAgentName  = "DeployAgent"
+	ReplicaAgentName = "ReplicaAgent"
 )
 
 type AgentNsq struct {

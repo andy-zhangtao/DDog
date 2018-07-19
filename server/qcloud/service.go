@@ -1285,7 +1285,15 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 
 // queryInstance 查询指定服务的实例状态
 func queryInstance(svc, namespace string) (instances []service.Instance, err error) {
-	md, err := metadata.GetMetaDataByRegion("")
+	var md *metadata.MetaData
+	switch namespace {
+	case "proenv":
+		fallthrough
+	case "release":
+		md, err = metadata.GetMetaDataByRegion("", namespace)
+	default:
+		md, err = metadata.GetMetaDataByRegion("")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -1479,4 +1487,8 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 	logrus.WithFields(logrus.Fields{"After Update ServiceConf": scf.ToString()}).Info(ModuleName)
 
 	svcconf.UpdateSvcConf(scf)
+}
+
+func AsyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcconf.SvcConf, para interface{}, plugin func(conf *svcconf.SvcConf, param interface{})) {
+	asyncQueryServiceStatus(svc, namespace, q, scf, para, plugin)
 }

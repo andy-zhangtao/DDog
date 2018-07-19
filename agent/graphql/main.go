@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"github.com/gorilla/mux"
@@ -30,12 +31,17 @@ import (
 	"github.com/andy-zhangtao/DDog/server/k8service"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
 	"github.com/andy-zhangtao/DDog/server/repository"
+	"github.com/nsqio/go-nsq"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
+const ModuleVersion = "v0.1.0"
+const ModuleResume = "Caas Graphql接口平台"
+
+var producer *nsq.Producer
 
 func init() {
-
+	_hulk_client.Run()
 	if err := check.CheckMongo(); err != nil {
 		logrus.WithFields(logrus.Fields{"Check Mongo Error": err}).Error(ModuleName)
 		os.Exit(-1)
@@ -55,10 +61,13 @@ func init() {
 		logrus.WithFields(logrus.Fields{"Check Log Opt Error": err}).Error(ModuleName)
 		os.Exit(-1)
 	}
+
+	producer, _ = nsq.NewProducer(os.Getenv(_const.EnvNsqdEndpoint), nsq.NewConfig())
 }
 
 //使用GraphQL接口的DDog Server
 func main() {
+
 	router := mux.NewRouter()
 	router.Path("/api").HandlerFunc(handleGraphQL)
 	router.Path("/backup/{filename}").HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -637,6 +646,38 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					return err.Error(), nil
 				}
 				return nil, nil
+			},
+		},
+		"replica": &graphql.Field{
+			Type:        graphql.Int,
+			Description: "Modify the service instance number",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"replica": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.Int),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+				replica, _ := p.Args["replica"].(int)
+
+				if err := qcloud.ModifyInstancesReplica(name, namespace, replica); err != nil {
+					return nil, err
+				}
+
+				data, _ := json.Marshal(agent.DeployMsg{
+					SvcName:   name,
+					NameSpace: namespace,
+					Replicas:  replica,
+				})
+
+				return replica, producer.Publish(_const.SvcReplicaMsg, data)
 			},
 		},
 	},

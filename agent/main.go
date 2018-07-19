@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/sirupsen/logrus"
 	"os"
 	"github.com/andy-zhangtao/DDog/const"
@@ -15,7 +16,7 @@ const (
 )
 
 func init() {
-
+	_hulk_client.Run()
 	if os.Getenv(_const.EnvNsqdEndpoint) == "" {
 		logrus.WithFields(logrus.Fields{"Env Empty": _const.EnvNsqdEndpoint,}).Panic(_const.EnvNsqdEndpoint)
 	}
@@ -24,9 +25,9 @@ func init() {
 
 func main() {
 
-	logrus.WithFields(logrus.Fields{"Version": "v0.6.9"}).Info(ModuleName)
+	logrus.WithFields(logrus.Fields{"Version": "v0.6.9", "Agent": os.Getenv("DDOG_AGENT_NAME")}).Info(ModuleName)
 
-	switch(os.Getenv("DDOG_AGENT_NAME")) {
+	switch (os.Getenv("DDOG_AGENT_NAME")) {
 	case agents.MonitorAgentName:
 		mm := &agents.MonitorAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.MonitorAgentName}
 		go mm.Run()
@@ -43,6 +44,10 @@ func main() {
 		<-ret.StopChan
 	case agents.DeployAgentName:
 		ret := &agents.DeployAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.DeployAgentName}
+		go ret.Run()
+		<-ret.StopChan
+	case agents.ReplicaAgentName:
+		ret := &agents.ReplicaAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.ReplicaAgentName}
 		go ret.Run()
 		<-ret.StopChan
 	default:

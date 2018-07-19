@@ -188,6 +188,11 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 			return errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
 		}
 
+		if sc.Status == _const.ModifyReplica {
+			logrus.WithFields(logrus.Fields{"ID": sc.SvcName, "Status": "Modify Replica"}).Info(ModuleName)
+			return nil
+		}
+
 		mm, err := monitor.GetMonitroModule(msg.Kind, msg.Svcname, msg.Namespace)
 		if err != nil {
 			return err

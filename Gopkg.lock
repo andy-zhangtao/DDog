@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/andy-zhangtao/_hulk_client"
+  packages = ["."]
+  revision = "12bdfb576c2feb72e42b36a16381c1c6118499ce"
+  version = "v0.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/andy-zhangtao/go-unit-test-suite"
   packages = [
@@ -160,6 +166,22 @@
   version = "v1.3.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/go"
+  packages = ["ctxhttp"]
+  revision = "9e1955d9fb6e1ee2345ba1f5e71669263e719e27"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/shurcooL/graphql"
+  packages = [
+    ".",
+    "ident",
+    "internal/jsonutil"
+  ]
+  revision = "62c9ce094e75302d560f7adcdf16c06d05aaa958"
+
+[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
@@ -286,6 +308,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "86285af04efa0792798fa9f0406ad86febe242a433905c4f26acdd970be2620e"
+  inputs-digest = "3e08d188b4d47ec3dce969a1cd030040d6c0e985035fefe6964bddbff9a7542a"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
+	sc "github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/const"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/4.
@@ -20,7 +22,7 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 	}
 
 	var md *metadata.MetaData
-	switch namespace{
+	switch namespace {
 	case "proenv":
 		fallthrough
 	case "release":
@@ -62,4 +64,49 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 	}
 
 	return smData.Data.Instance, nil
+}
+
+//ModifyInstancesReplica  修改实例副本集数量
+func ModifyInstancesReplica(name, namespace string, replica int) (err error) {
+	scf, err := svcconf.GetSvcConfByName(name, namespace)
+	if err != nil {
+		return err
+	}
+
+	scf.Replicas = replica
+	var md *metadata.MetaData
+
+	switch namespace {
+	case "proenv":
+		fallthrough
+	case "release":
+		md, err = metadata.GetMetaDataByRegion("", namespace)
+	default:
+		md, err = metadata.GetMetaDataByRegion("")
+	}
+	if err != nil {
+		return err
+	}
+
+	q := service.Service{
+		Pub: public.Public{
+			SecretId: md.Sid,
+			Region:   md.Region,
+		},
+		ClusterId:   md.ClusterID,
+		ServiceName: scf.SvcName,
+		Namespace:   scf.Namespace,
+		ScaleTo:     scf.Replicas,
+		SecretKey:   md.Skey,
+	}
+
+	q.SetDebug(true)
+
+	_, err = q.ModeifyInstance()
+	if err != nil {
+		return
+	}
+
+	scf.Deploy = _const.ModifyReplica
+	return sc.UpdateSvcConf(&scf)
 }

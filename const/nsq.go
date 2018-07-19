@@ -6,6 +6,7 @@ const (
 	SvcDestroyMsg = "DestroySvc"
 	SvcMonitorMsg = "MonitorSvc"
 	SvcDeployMsg  = "DeploySvc"
+	SvcReplicaMsg = "ReplicaSvc"
 )
 
 type DestoryMsg struct {
