@@ -189,3 +189,35 @@ func GetZipKinSpan(servername, funcname, traceid, id, parentid string) (span zip
 	}
 	return
 }
+
+// GetZipKinSpan 获取链路跟踪Span.
+// 使用完毕之后, 必须执行reporter.Close()
+// 如果是调用链头部API创建Span, isChild则置为false, sctx为空
+// 如果非调用链头部API创建Span, 则isChild置为true, sctx从Request中的Span获取
+func GetChildZipKinSpan(serviceName, ip string, isChild bool, sctx zmodel.SpanContext) (span zipkin.Span, reporter reporter.Reporter, err error) {
+	zipKinUrl := os.Getenv(_const.ENV_AGENT_ZIPKIN_ENDPOINT)
+	if zipKinUrl == "" {
+		return span, reporter, errors.New(fmt.Sprintf("[%s] Empty!", _const.ENV_AGENT_ZIPKIN_ENDPOINT))
+	}
+
+	reporter = httpreporter.NewReporter(fmt.Sprintf("%s/api/v2/spans", zipKinUrl))
+
+	// set-up the local endpoint for our service
+	endpoint, err := zipkin.NewEndpoint(serviceName, ip)
+	if err != nil {
+		return span, reporter, errors.New(fmt.Sprintf("unable to create local endpoint: %+v\n", err))
+	}
+
+	tracer, err := zipkin.NewTracer(reporter, zipkin.WithLocalEndpoint(endpoint))
+	if err != nil {
+		return span, reporter, errors.New(fmt.Sprintf("unable to create tracer: %+v\n", err))
+	}
+
+	if !isChild {
+		span = tracer.StartSpan(serviceName)
+	} else {
+		span = tracer.StartSpan(serviceName, zipkin.Parent(sctx))
+	}
+
+	return span, reporter, nil
+}

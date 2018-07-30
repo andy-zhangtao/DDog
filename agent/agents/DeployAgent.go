@@ -12,6 +12,8 @@ import (
 	"errors"
 	"os"
 	"github.com/andy-zhangtao/DDog/model/monitor"
+	"github.com/andy-zhangtao/DDog/server/tool"
+	"time"
 )
 
 /*DeployAgent 部署Agent.
@@ -53,20 +55,33 @@ func (this *DeployAgent) Run() {
 			}
 
 			logrus.WithFields(logrus.Fields{"SvcName": msg.SvcName, "NameSpace": msg.NameSpace, "Upgrade": msg.Upgrade, "Replicas": msg.Replicas}).Info(this.Name)
-			//err = this.distMsg(&msg)
-			//if err != nil {
-			//	logrus.WithFields(logrus.Fields{"Save Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
-			//	continue
-			//}
+
+			span, reporter, err := tool.GetChildZipKinSpan(DeployAgentName, tool.GetLocalIP(), true, msg.Span)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(DeployAgentName)
+			} else {
+				logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(DeployAgentName)
+				span.Annotate(time.Now(), "Deploy Agent Server Receive Message")
+			}
 
 			go func() {
+				var errmessage = ""
+				defer func() {
+					if errmessage != "" {
+						span.Annotate(time.Now(), fmt.Sprintf("%s-Deploy Error [%s]", DeployAgentName, errmessage))
+					}
+					span.Finish()
+					reporter.Close()
+				}()
 				err = this.handlerMsg(&msg)
 				if err != nil {
+					errmessage = err.Error()
 					logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(this.Name)
 				}
 			}()
 
 			m.Finish()
+
 		}
 	}()
 

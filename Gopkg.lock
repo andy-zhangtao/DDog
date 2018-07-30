@@ -23,9 +23,10 @@
     "random",
     "strings",
     "time",
+    "znet",
     "zsort"
   ]
-  revision = "f9c02749ba8d77c5abec01840e2f9009101fe580"
+  revision = "fe5260c1e10659a0e68d7268936dbf1937618718"
 
 [[projects]]
   branch = "master"
@@ -152,6 +153,19 @@
   packages = ["."]
   revision = "eee57a3ac4174c55924125bb15eeeda8cffb6e6f"
   version = "v1.0.7"
+
+[[projects]]
+  name = "github.com/openzipkin/zipkin-go"
+  packages = [
+    ".",
+    "idgenerator",
+    "model",
+    "propagation",
+    "reporter",
+    "reporter/http"
+  ]
+  revision = "d455a5674050831c1e187644faa4046d653433c2"
+  version = "v0.1.1"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -308,6 +322,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3e08d188b4d47ec3dce969a1cd030040d6c0e985035fefe6964bddbff9a7542a"
+  inputs-digest = "5135b0bc0273d0a0f3beef09663004c616331a1e2691c176d36d113bf1840e05"
   solver-name = "gps-cdcl"
   solver-version = 1

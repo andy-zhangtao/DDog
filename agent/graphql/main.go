@@ -33,6 +33,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/repository"
 	"github.com/nsqio/go-nsq"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/openzipkin/zipkin-go"
 	"time"
 )
 
@@ -404,9 +405,11 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				parentid, _ := p.Args["parentid"].(string)
 
 				var errmessage = ""
+				var span zipkin.Span
 				if traceid != "" && id != "" {
-					span, reporter, iscreate := tool.GetZipKinSpan(ModuleName, "StartDeploy", traceid, id, parentid)
+					s, reporter, iscreate := tool.GetZipKinSpan(ModuleName, "StartDeploy", traceid, id, parentid)
 					if iscreate {
+						span = s
 						defer func() {
 							if errmessage != "" {
 								span.Annotate(time.Now(), fmt.Sprintf("%s-StartDeploy Error [%s]", ModuleName, errmessage))
@@ -434,6 +437,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				msg := agent.DeployMsg{
+					Span:      span.Context(),
 					SvcName:   name,
 					NameSpace: namespace,
 					Upgrade:   true,
@@ -521,7 +525,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					if strings.Contains(err.Error(), "not found") {
 						conf.Id = bson.NewObjectId()
 						if err = mongo.SaveSvcConfig(conf); err != nil {
-							errmessage=err.Error()
+							errmessage = err.Error()
 							return *conf, err
 						}
 					}
@@ -531,7 +535,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				if cf == nil {
 					conf.Id = bson.NewObjectId()
 					if err = mongo.SaveSvcConfig(conf); err != nil {
-						errmessage=err.Error()
+						errmessage = err.Error()
 						return nil, err
 					}
 					return *conf, nil
@@ -673,7 +677,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 
 				oldCon, isExist, err := cs.IsExistContainer(&con)
 				if err != nil {
-					errmessage=err.Error()
+					errmessage = err.Error()
 					return nil, err
 				}
 
