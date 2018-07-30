@@ -252,6 +252,18 @@ var CaasNameSpaceType = graphql.NewObject(graphql.ObjectConfig{
 				return nil, nil
 			},
 		},
+		//"traceid": &graphql.Field{
+		//	Type: graphql.String,
+		//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+		//		return "This API Will Not Return TraceId", nil
+		//	},
+		//},
+		//"parentid": &graphql.Field{
+		//	Type: graphql.String,
+		//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+		//		return "This API Will Not Return ParentId", nil
+		//	},
+		//},
 	},
 })
 

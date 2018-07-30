@@ -11,6 +11,12 @@ import (
 	"io/ioutil"
 	"net/url"
 	"github.com/sirupsen/logrus"
+	"github.com/andy-zhangtao/gogather/znet"
+	"time"
+	httpreporter "github.com/openzipkin/zipkin-go/reporter/http"
+	zmodel "github.com/openzipkin/zipkin-go/model"
+	"github.com/openzipkin/zipkin-go"
+	"github.com/openzipkin/zipkin-go/reporter"
 )
 
 const (
@@ -127,4 +133,59 @@ func InspectImgInfo(conname, svcname, namespace, imgname string, callback func(e
 	logrus.WithFields(logrus.Fields{"Ready to invoke callback": svcname}).Info(ModuleName)
 	callback(err)
 	return nil
+}
+
+// GetLocalIP  获取本地IP地址. 如果获取失败，则使用默认的127.0.0.1
+func GetLocalIP() (string) {
+	ip, err := znet.LocallIP()
+	if err != nil {
+		ip = "127.0.0.1"
+	}
+
+	return ip
+}
+
+//GetZipKinSpan 获取ZipKin跟踪Span
+//servername和funcname是服务名称和函数名称,用来显示定位信息
+//traceid, id, parentid 对应于上游span SpanContext中的traceid, id, parentid
+//此函数只能用在跟踪链的中游,即跟踪链路(Span)已经建立，此函数所处的服务是跟踪链接中间的一环
+//如果需要构建一个新的span,需要将span = tracer.StartSpan(servername, zipkin.Parent(ctx))修改为span = tracer.StartSpan(servername)
+func GetZipKinSpan(servername, funcname, traceid, id, parentid string) (span zipkin.Span, reporter reporter.Reporter, isCreate bool) {
+	isCreate = false
+	zipKinUrl := os.Getenv(_const.ENV_AGENT_ZIPKIN_ENDPOINT)
+	if zipKinUrl != "" {
+		reporter = httpreporter.NewReporter(fmt.Sprintf("%s/api/v2/spans", zipKinUrl))
+		endpoint, err := zipkin.NewEndpoint(servername, GetLocalIP())
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"Create ZipKin Endpoint Error": fmt.Sprintf("unable to create local endpoint: %+v\n", err)}).Error(ModuleName)
+		} else {
+			tracer, err := zipkin.NewTracer(reporter, zipkin.WithLocalEndpoint(endpoint))
+			if err != nil {
+				logrus.WithFields(logrus.Fields{"Create ZipKin Tracer Error": fmt.Sprintf("unable to create tracer: %+v\n", err)}).Error(ModuleName)
+			} else {
+				//为了还原成正确的traceid,需要在traceid前后各添加一个0
+				//具体原因，参考traceid UnmarshalJSON源码
+				traceid = fmt.Sprintf("0%s0", traceid)
+				id = fmt.Sprintf("0%s0", id)
+				ctx := zmodel.SpanContext{}
+				_tracid := new(zmodel.TraceID)
+				_tracid.UnmarshalJSON([]byte(traceid))
+				ctx.TraceID = *_tracid
+
+				_id := new(zmodel.ID)
+				_id.UnmarshalJSON([]byte(id))
+				ctx.ID = *_id
+
+				_parentid := new(zmodel.ID)
+				_parentid.UnmarshalJSON([]byte(parentid))
+				ctx.ParentID = _parentid
+
+				span = tracer.StartSpan(servername, zipkin.Parent(ctx))
+				logrus.WithFields(logrus.Fields{"span": span}).Info(servername)
+				span.Annotate(time.Now(), fmt.Sprintf("%s-%s Receive Request", servername, funcname))
+				isCreate = true
+			}
+		}
+	}
+	return
 }

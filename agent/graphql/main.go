@@ -32,6 +32,8 @@ import (
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
 	"github.com/andy-zhangtao/DDog/server/repository"
 	"github.com/nsqio/go-nsq"
+	"github.com/andy-zhangtao/DDog/server/tool"
+	"time"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -242,11 +244,76 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"desc": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
+				"traceid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"id": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"parentid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				owner, _ := p.Args["owner"].(string)
 				name, _ := p.Args["name"].(string)
 				desc, _ := p.Args["desc"].(string)
+
+				//zipkin parameters
+				traceid, _ := p.Args["traceid"].(string)
+				id, _ := p.Args["id"].(string)
+				parentid, _ := p.Args["parentid"].(string)
+
+				var errmessage = ""
+				if traceid != "" && id != "" {
+
+					span, reporter, iscreate := tool.GetZipKinSpan(ModuleName, "AddNameSpace", traceid, id, parentid)
+					if iscreate {
+						defer func() {
+							if errmessage != "" {
+								span.Annotate(time.Now(), fmt.Sprintf("%s-AddNamespace Receive Check Namespace Error [%s]", ModuleName, errmessage))
+							}
+
+							span.Finish()
+							reporter.Close()
+						}()
+					}
+					//zipKinUrl := os.Getenv(_const.ENV_AGENT_ZIPKIN_ENDPOINT)
+					//if zipKinUrl != "" {
+					//	reporter := httpreporter.NewReporter(fmt.Sprintf("%s/api/v2/spans", zipKinUrl))
+					//	endpoint, err := zipkin.NewEndpoint(ModuleName, tool.GetLocalIP())
+					//	if err != nil {
+					//		logrus.WithFields(logrus.Fields{"Create ZipKin Endpoint Error": fmt.Sprintf("unable to create local endpoint: %+v\n", err)}).Error(ModuleName)
+					//	} else {
+					//		tracer, err := zipkin.NewTracer(reporter, zipkin.WithLocalEndpoint(endpoint))
+					//		if err != nil {
+					//			logrus.WithFields(logrus.Fields{"Create ZipKin Tracer Error": fmt.Sprintf("unable to create tracer: %+v\n", err)}).Error(ModuleName)
+					//		} else {
+					//			//为了还原成正确的traceid,需要在traceid前后各添加一个0
+					//			//具体原因，参考traceid UnmarshalJSON源码
+					//			traceid = fmt.Sprintf("0%s0", traceid)
+					//			id = fmt.Sprintf("0%s0", id)
+					//			ctx := zmodel.SpanContext{}
+					//			_tracid := new(zmodel.TraceID)
+					//			_tracid.UnmarshalJSON([]byte(traceid))
+					//			ctx.TraceID = *_tracid
+					//
+					//			_id := new(zmodel.ID)
+					//			_id.UnmarshalJSON([]byte(id))
+					//			ctx.ID = *_id
+					//
+					//			_parentid := new(zmodel.ID)
+					//			_parentid.UnmarshalJSON([]byte(parentid))
+					//			ctx.ParentID = _parentid
+					//
+					//			span := tracer.StartSpan(ModuleName, zipkin.Parent(ctx))
+					//			logrus.WithFields(logrus.Fields{"span": span}).Info(ModuleName)
+					//			span.Annotate(time.Now(), fmt.Sprintf("%s-AddNamespace Receive Check Namespace Request", ModuleName))
+					//
+					//		}
+					//	}
+					//}
+				}
 
 				ns := caasmodel.NameSpace{
 					Name:  name,
@@ -263,6 +330,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 				err := cloudservice.CheckNamespace(ns)
 				if err != nil {
+					errmessage = err.Error()
 					return nil, err
 				}
 
@@ -314,6 +382,15 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"instance": &graphql.ArgumentConfig{
 					Type: graphql.Int,
 				},
+				"traceid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"id": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"parentid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 			},
 
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -321,16 +398,38 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				namespace, _ := p.Args["namespace"].(string)
 				instance := 2
 
+				//zipkin parameters
+				traceid, _ := p.Args["traceid"].(string)
+				id, _ := p.Args["id"].(string)
+				parentid, _ := p.Args["parentid"].(string)
+
+				var errmessage = ""
+				if traceid != "" && id != "" {
+					span, reporter, iscreate := tool.GetZipKinSpan(ModuleName, "StartDeploy", traceid, id, parentid)
+					if iscreate {
+						defer func() {
+							if errmessage != "" {
+								span.Annotate(time.Now(), fmt.Sprintf("%s-StartDeploy Error [%s]", ModuleName, errmessage))
+							}
+
+							span.Finish()
+							reporter.Close()
+						}()
+					}
+				}
+
 				if i, ok := p.Args["instance"]; ok {
 					instance, _ = i.(int)
 				}
 
 				cf, err := svcconf.GetSvcConfByName(name, namespace)
 				if err != nil {
+					errmessage = err.Error()
 					return nil, err
 				}
 
 				if cf == nil {
+					errmessage = err.Error()
 					return nil, errors.New(_const.SVCNoExist)
 				}
 
@@ -344,11 +443,13 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				cf.Deploy = _const.DeployIng
 				err = svcconf.UpdateSvcConf(cf)
 				if err != nil {
+					errmessage = err.Error()
 					return nil, err
 				}
 
 				data, err := json.Marshal(msg)
 				if err != nil {
+					errmessage = err.Error()
 					return nil, err
 				}
 
@@ -370,11 +471,40 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"replicas": &graphql.ArgumentConfig{
 					Type: graphql.Int,
 				},
+				"traceid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"id": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"parentid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["name"].(string)
 				namespace, _ := p.Args["namespace"].(string)
 				replicas, _ := p.Args["replicas"].(int)
+
+				//zipkin parameters
+				traceid, _ := p.Args["traceid"].(string)
+				id, _ := p.Args["id"].(string)
+				parentid, _ := p.Args["parentid"].(string)
+
+				var errmessage = ""
+				if traceid != "" && id != "" {
+					span, reporter, iscreate := tool.GetZipKinSpan(ModuleName, "AddService", traceid, id, parentid)
+					if iscreate {
+						defer func() {
+							if errmessage != "" {
+								span.Annotate(time.Now(), fmt.Sprintf("%s-AddService Error [%s]", ModuleName, errmessage))
+							}
+
+							span.Finish()
+							reporter.Close()
+						}()
+					}
+				}
 
 				if replicas == 0 {
 					replicas = 1
@@ -391,6 +521,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					if strings.Contains(err.Error(), "not found") {
 						conf.Id = bson.NewObjectId()
 						if err = mongo.SaveSvcConfig(conf); err != nil {
+							errmessage=err.Error()
 							return *conf, err
 						}
 					}
@@ -400,6 +531,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				if cf == nil {
 					conf.Id = bson.NewObjectId()
 					if err = mongo.SaveSvcConfig(conf); err != nil {
+						errmessage=err.Error()
 						return nil, err
 					}
 					return *conf, nil
@@ -459,11 +591,40 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"env": &graphql.ArgumentConfig{
 					Type: graphql.NewList(graphql.String),
 				},
+				"traceid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"id": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"parentid": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["service"].(string)
 				image, _ := p.Args["image"].(string)
 				namespace, _ := p.Args["namespace"].(string)
+
+				//zipkin parameters
+				traceid, _ := p.Args["traceid"].(string)
+				id, _ := p.Args["id"].(string)
+				parentid, _ := p.Args["parentid"].(string)
+
+				var errmessage = ""
+				if traceid != "" && id != "" {
+					span, reporter, iscreate := tool.GetZipKinSpan(ModuleName, "AddContainer", traceid, id, parentid)
+					if iscreate {
+						defer func() {
+							if errmessage != "" {
+								span.Annotate(time.Now(), fmt.Sprintf("%s-AddContainer Error [%s]", ModuleName, errmessage))
+							}
+
+							span.Finish()
+							reporter.Close()
+						}()
+					}
+				}
 
 				var ps []int
 				envs := make(map[string]string)
@@ -512,6 +673,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 
 				oldCon, isExist, err := cs.IsExistContainer(&con)
 				if err != nil {
+					errmessage=err.Error()
 					return nil, err
 				}
 
