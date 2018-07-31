@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"errors"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/openzipkin/zipkin-go"
+	zmodel "github.com/openzipkin/zipkin-go/model"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -87,7 +89,7 @@ func (this *MonitorAgent) Run() {
 					span.Finish()
 					reporter.Close()
 				}()
-				err = this.handlerMsg(&msg)
+				err = this.handlerMsg(&msg, span)
 				if err != nil {
 					errmessage = err.Error()
 					logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(ModuleName)
@@ -119,19 +121,19 @@ func (this *MonitorAgent) distMsg(msg *monitor.MonitorModule) error {
 }
 
 // handlerMsg 处理消息
-func (this *MonitorAgent) handlerMsg(msg *monitor.MonitorModule) error {
+func (this *MonitorAgent) handlerMsg(msg *monitor.MonitorModule, span zipkin.Span) error {
 	switch msg.Kind {
 	case RetriAgentName:
-		return this.stopSVC(msg)
+		return this.stopSVC(msg, span)
 	case SpiderAgentName:
-		return this.confirmSVC(msg)
+		return this.confirmSVC(msg, span)
 	}
 
 	return nil
 }
 
 // stopSVC 停掉服务并且将其置位失败
-func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
+func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule, span zipkin.Span) error {
 	var md *metadata.MetaData
 	var err error
 	switch msg.Namespace {
@@ -187,6 +189,7 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
 
 	sc.Deploy = _const.DeployFailed
 	sc.Msg = msg.Msg
+	sc.Span = span.Context()
 	//sc.SvcName = ""
 	this.NotifyDevEx(sc)
 	return svcconf.UpdateSvcConf(sc)
@@ -195,7 +198,7 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule) error {
 // confirmSVC 确定服务状态
 // 如果健康检测失败，则将服务置为失败。同时销毁服务
 // 如果健康检测成功，则将服务置为成功
-func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
+func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Span) error {
 	logrus.WithFields(logrus.Fields{"Confirm Svc": msg.Svcname, "namespace": msg.Namespace, "msg": msg.Msg, "ip": msg.Ip}).Info(this.Name)
 
 	if strings.ToLower(msg.Msg) == "ok" {
@@ -285,7 +288,7 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 					sc.LbConfig = lb
 					sc.Deploy = _const.DeploySuc
 					sc.Msg = msg.Msg
-
+					sc.Span = span.Context()
 					this.NotifyDevEx(sc)
 					return svcconf.UpdateSvcConf(sc)
 				}
@@ -304,11 +307,12 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule) error {
 			return errors.New("SvcConf nil")
 		}
 		sc.Deploy = _const.DeployIng
+		sc.Span = span.Context()
 		this.NotifyDevEx(sc)
 	} else {
 		/*clear msg*/
 		msg.Destory()
-		return this.stopSVC(msg)
+		return this.stopSVC(msg, span)
 	}
 
 	return nil
@@ -321,15 +325,17 @@ func (this *MonitorAgent) NotifyDevEx(scf *svcconf.SvcConf) {
 		lb = append(lb, fmt.Sprintf("%s:%d", scf.LbConfig.IP, port))
 	}
 	req := struct {
-		ProjectID   string   `json:"project_id"`
-		Stage       int      `json:"stage"`
-		DeployEnv   string   `json:"deploy_env"`
-		LoadBalance []string `json:"load_balance"`
+		ProjectID   string             `json:"project_id"`
+		Stage       int                `json:"stage"`
+		DeployEnv   string             `json:"deploy_env"`
+		LoadBalance []string           `json:"load_balance"`
+		Span        zmodel.SpanContext `json:"span"`
 	}{
 		scf.Name,
 		scf.Deploy,
 		scf.Namespace,
 		lb,
+		scf.Span,
 	}
 
 	data, err := json.Marshal(&req)

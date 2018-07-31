@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math"
 	"github.com/sirupsen/logrus"
+	zmodel "github.com/openzipkin/zipkin-go/model"
 )
 
 // SvcConf 服务配置信息
@@ -30,6 +31,8 @@ type SvcConf struct {
 	LbConfig      LoadBlance               `json:"lb_config"`
 	BackID        string                   `json:"back_id"`
 	BackContainer []container.Container    `json:"back_container,omitempty"`
+	//	Span 链路跟踪跨度数据
+	Span zmodel.SpanContext `json:"span" bson:"-"`
 }
 
 // SvcInstance 服务实例信息
