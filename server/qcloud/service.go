@@ -239,26 +239,6 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//if nsme == "proenv" {
-	//	//	预发布环境
-	//	md, err = metadata.GetMetaDataByRegion("", "proenv")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//} else {
-	//	md, err = metadata.GetMetaDataByRegion("")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//}
-	//md, err := metadata.GetMetaDataByRegion("")
-	//if err != nil {
-	//	tool.ReturnError(w, err)
-	//	return
-	//}
-
 	sn := cf.Name + "-" + gt.GetTimeStamp(10)
 	isUpgrade, err = strconv.ParseBool(r.URL.Query().Get("upgrade"))
 	if err != nil {
@@ -377,9 +357,19 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		"ZIPKIN_TRACID":         traceid,
 		"ZIPKIN_ID":             id,
 		"ZIPKIN_PARENTID":       parentid,
-		"HULK_ENDPOINT":         os.Getenv("HULK_ENDPOINT"),
 		"HULK_PROJECT_NAME":     "Scheduler-Spider-Agent",
 		"HULK_PROJECT_VERSION":  "v0.1.0-beta",
+	}
+
+	switch nsme {
+	case "proenv":
+		//	预发布环境
+		fallthrough
+	case "release":
+		//	预发布环境
+		sideCarEnv["HULK_ENDPOINT"] = os.Getenv(_const.ENV_AGENT_HULK_ENDPOINT)
+	default:
+		sideCarEnv["HULK_ENDPOINT"] = os.Getenv("HULK_ENDPOINT")
 	}
 
 	var sidePort []string

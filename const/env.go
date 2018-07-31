@@ -30,6 +30,7 @@ const (
 	EnvNsqdEndpoint           = "DDOG_NSQD_ENDPOINT"
 	EnvSubNetID               = "DDOG_SUB_NET_ID"
 	ENV_AGENT_ZIPKIN_ENDPOINT = "Agent_ZipKin_Endpoint"
+	ENV_AGENT_HULK_ENDPOINT   = "Agent_Hulk_Endpoint"
 )
 
 var DEBUG = false
