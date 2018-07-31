@@ -7,6 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/sirupsen/logrus"
+	zmodel "github.com/openzipkin/zipkin-go/model"
 )
 
 const (
@@ -15,14 +16,16 @@ const (
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
 type MonitorModule struct {
-	Id        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Kind      string        `json:"kind"`
-	Svcname   string        `json:"svcname"`
-	Namespace string        `json:"namespace"`
-	Status    string        `json:"status"`
-	Msg       string        `json:"msg"`
-	Ip        []string      `json:"ip"`
-	Num       int           `json:"num"`
+	//	Span 链路跟踪跨度数据
+	Span      zmodel.SpanContext `json:"span" bson:"-"`
+	Id        bson.ObjectId      `json:"id,omitempty" bson:"_id,omitempty"`
+	Kind      string             `json:"kind"`
+	Svcname   string             `json:"svcname"`
+	Namespace string             `json:"namespace"`
+	Status    string             `json:"status"`
+	Msg       string             `json:"msg"`
+	Ip        []string           `json:"ip"`
+	Num       int                `json:"num"`
 }
 
 // Save 保存监控信息

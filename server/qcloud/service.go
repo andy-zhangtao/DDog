@@ -190,6 +190,10 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	traceid := r.URL.Query().Get("traceid")
+	id := r.URL.Query().Get("id")
+	parentid := r.URL.Query().Get("parentid")
+
 	isUpgrade := true
 
 	cf, err := svcconf.GetSvcConfByName(name, nsme)
@@ -370,6 +374,12 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		"svcname":               cf.Name + "_sidecar",
 		"log_opt":               os.Getenv(_const.EnvDefaultLogOpt),
 		"LOGCHAIN_DRIVER":       os.Getenv(_const.EnvDefaultLogDriver),
+		"ZIPKIN_TRACID":         traceid,
+		"ZIPKIN_ID":             id,
+		"ZIPKIN_PARENTID":       parentid,
+		"HULK_ENDPOINT":         os.Getenv("HULK_ENDPOINT"),
+		"HULK_PROJECT_NAME":     "Scheduler-Spider-Agent",
+		"HULK_PROJECT_VERSION":  "v0.1.0-beta",
 	}
 
 	var sidePort []string

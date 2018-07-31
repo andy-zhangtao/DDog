@@ -98,8 +98,21 @@ func (this *DeployAgent) Run() {
 
 // handlerMsg 调用部署API开始部署服务
 func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
-	logrus.WithFields(logrus.Fields{"url": fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v", msg.SvcName, msg.NameSpace, msg.Upgrade)}).Info(this.Name)
-	r, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v", msg.SvcName, msg.NameSpace, msg.Upgrade), nil)
+	var traceid = ""
+	var parentid = ""
+	var id = ""
+	if msg.Span.TraceID.String() != "" {
+		traceid = fmt.Sprintf("&traceid=%s", msg.Span.TraceID.String())
+	}
+	if msg.Span.ID.String() != "" {
+		id = fmt.Sprintf("&id=%s", msg.Span.ID.String())
+	}
+	if msg.Span.ParentID.String() != "" {
+		parentid = fmt.Sprintf("&parentid=%s", msg.Span.ParentID.String())
+	}
+
+	logrus.WithFields(logrus.Fields{"url": fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid)}).Info(this.Name)
+	r, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid), nil)
 	if err != nil {
 		return err
 	}

@@ -16,6 +16,7 @@ import (
 	"os"
 	"fmt"
 	"errors"
+	"github.com/andy-zhangtao/DDog/server/tool"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -59,17 +60,36 @@ func (this *MonitorAgent) Run() {
 				continue
 			}
 
+			var errmessage = ""
+			span, reporter, err := tool.GetChildZipKinSpan(MonitorAgentName, tool.GetLocalIP(), true, msg.Span)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(MonitorAgentName)
+			} else {
+				logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(MonitorAgentName)
+				span.Annotate(time.Now(), fmt.Sprintf("%s Receive Message", MonitorAgentName))
+			}
+
 			logrus.WithFields(logrus.Fields{"Kind": msg.Kind, "Origin Svc": msg.Svcname, "Origin Namespace": msg.Namespace}).Info(ModuleName)
 			err = this.distMsg(&msg)
 			if err != nil {
+				errmessage = fmt.Sprintf("Save Msg Error [%s] Origin Byte [%s]", err.Error(), string(m.Body))
 				logrus.WithFields(logrus.Fields{"Save Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
 				continue
 			}
 
 			logrus.WithFields(logrus.Fields{"HandlerMsg svc": msg.Svcname, "namespace": msg.Namespace, "msg": msg.Msg, "ip": msg.Ip}).Info(this.Name)
 			go func() {
+				defer func() {
+					if errmessage != "" {
+						span.Annotate(time.Now(), fmt.Sprintf("%s Error [%s]", MonitorAgentName))
+					}
+
+					span.Finish()
+					reporter.Close()
+				}()
 				err = this.handlerMsg(&msg)
 				if err != nil {
+					errmessage = err.Error()
 					logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(ModuleName)
 				}
 			}()

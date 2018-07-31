@@ -12,6 +12,7 @@ import (
 	"github.com/andy-zhangtao/DDog/bridge"
 	"encoding/json"
 	"github.com/andy-zhangtao/DDog/model/monitor"
+	zmodel "github.com/openzipkin/zipkin-go/model"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/27.
@@ -186,7 +187,34 @@ func (this *SpiderAgent) checkPort() {
 	} else {
 		/* Task End */
 		logrus.WithFields(logrus.Fields{"check end": true}).Info(SpiderAgentName)
+		ctx := zmodel.SpanContext{}
+		var traceid = ""
+		var id = ""
+		var parentid = ""
+		if os.Getenv("ZIPKIN_TRACID") != ""{
+			traceid = fmt.Sprintf("0%s0", os.Getenv("ZIPKIN_TRACID"))
+		}
+		if os.Getenv("ZIPKIN_ID") != ""{
+			id = fmt.Sprintf("0%s0", os.Getenv("ZIPKIN_ID"))
+		}
+		if os.Getenv("ZIPKIN_PARENTID") != ""{
+			id = fmt.Sprintf("0%s0", os.Getenv("ZIPKIN_PARENTID"))
+		}
+
+		_tracid := new(zmodel.TraceID)
+		_tracid.UnmarshalJSON([]byte(traceid))
+		ctx.TraceID = *_tracid
+
+		_id := new(zmodel.ID)
+		_id.UnmarshalJSON([]byte(id))
+		ctx.ID = *_id
+
+		_parentid := new(zmodel.ID)
+		_parentid.UnmarshalJSON([]byte(parentid))
+		ctx.ParentID = _parentid
+
 		data, _ := json.Marshal(monitor.MonitorModule{
+			Span:      ctx,
 			Kind:      this.Name,
 			Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
 			Namespace: os.Getenv("DDOG_AGENT_SPIDER_NS"),
