@@ -35,6 +35,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/openzipkin/zipkin-go"
 	"time"
+	"strconv"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -503,7 +504,9 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 							if errmessage != "" {
 								span.Annotate(time.Now(), fmt.Sprintf("%s-AddService Error [%s]", ModuleName, errmessage))
 							}
-
+							span.Tag("service", name)
+							span.Tag("namespace", namespace)
+							span.Tag("replices", fmt.Sprintf("%v", replicas))
 							span.Finish()
 							reporter.Close()
 						}()
@@ -539,6 +542,17 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 						return nil, err
 					}
 					return *conf, nil
+				} else {
+					cf.Replicas = conf.Replicas
+					if err = mongo.DeleteSvcConfById(cf.Id.Hex()); err != nil {
+						errmessage = err.Error()
+						return nil, err
+					} else {
+						if err = mongo.SaveSvcConfig(cf); err != nil {
+							errmessage = err.Error()
+							return nil, err
+						}
+					}
 				}
 
 				return *cf, nil
@@ -844,6 +858,41 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				})
 
 				return replica, producer.Publish(_const.SvcReplicaMsg, data)
+			},
+		},
+		"rollingup": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Rolling Up The Specify Service",
+			Args: graphql.FieldConfigArgument{
+				"service": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"percent": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				service, _ := p.Args["service"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+				percent, _ := p.Args["percent"].(string)
+
+				scp := 0.5
+				if percent != "" {
+					_percent, err := strconv.Atoi(percent)
+					if err == nil {
+						scp = float64(_percent) / float64(100)
+					}
+				}
+
+				err := cloudservice.RollingUpService(service, namespace, scp)
+				if err != nil {
+					return nil, err
+				}
+
+				return "OK", nil
 			},
 		},
 	},

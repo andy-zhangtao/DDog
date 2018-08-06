@@ -61,6 +61,10 @@ func (this *DeployAgent) Run() {
 				logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(DeployAgentName)
 			} else {
 				logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(DeployAgentName)
+				span.Tag("service", msg.SvcName)
+				span.Tag("namespace", msg.NameSpace)
+				span.Tag("upgrade", fmt.Sprintf("%v", msg.Upgrade))
+				span.Tag("replicas", fmt.Sprintf("%v", msg.Replicas))
 				span.Annotate(time.Now(), "Deploy Agent Server Receive Message")
 			}
 

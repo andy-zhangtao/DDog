@@ -32,6 +32,7 @@ type MonitorModule struct {
 // 监控信息中Kind不得为空
 // 初始监控状态为NotDeal。如果svcname或者namespace为空，则直接将此消息置为无效
 func (mm *MonitorModule) Save() error {
+	logrus.WithFields(logrus.Fields{"kind": mm.Kind, "status": mm.Status, "name": mm.Svcname, "namespace": mm.Namespace, "ip": mm.Ip, "traceid": mm.Span.TraceID.String()}).Info(ModuleName)
 	if mm.Kind == "" {
 		return errors.New("Kind Empty!")
 	}
@@ -64,6 +65,7 @@ func (mm *MonitorModule) Save() error {
 		om.Num ++
 
 		if len(om.Ip) > 0 && len(mm.Ip) > 0 {
+			//spider上报的启动成功的ip地址列表
 			isCheck := false
 			for _, p := range om.Ip {
 				if p == mm.Ip[0] {
@@ -75,7 +77,11 @@ func (mm *MonitorModule) Save() error {
 			if !isCheck {
 				om.Ip = append(om.Ip, mm.Ip...)
 			}
+		} else if len(om.Ip) > 0 && len(mm.Ip) == 0 {
+			//spider上报的启动信息, 此时没有IP信息,因此不需要处理.
+			om.Ip = om.Ip
 		} else {
+			//这是第一次收到spider上报的数据,因此直接用于monitor IP初始化
 			om.Ip = mm.Ip
 		}
 		/*Merge MonitorMsg*/

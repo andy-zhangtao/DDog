@@ -53,49 +53,69 @@ func (this *MonitorAgent) Run() {
 
 	go func() {
 		for m := range workerChan {
+			var errmessage = ""
 			logrus.WithFields(logrus.Fields{_const.SvcMonitorMsg: string(m.Body)}).Info(ModuleName)
 			msg := monitor.MonitorModule{}
 
 			err = json.Unmarshal(m.Body, &msg)
 			if err != nil {
+				errmessage = fmt.Sprintf("Unmarshal Msg [%s] Origin Byte [%s]", err.Error(), string(m.Body))
 				logrus.WithFields(logrus.Fields{"Unmarshal Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
+				m.Finish()
 				continue
 			}
 
-			var errmessage = ""
 			span, reporter, err := tool.GetChildZipKinSpan(MonitorAgentName, tool.GetLocalIP(), true, msg.Span)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(MonitorAgentName)
 			} else {
 				logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(MonitorAgentName)
 				span.Annotate(time.Now(), fmt.Sprintf("%s Receive Message", MonitorAgentName))
+				span.Tag("service", msg.Svcname)
+				span.Tag("namesapce", msg.Namespace)
+				span.Tag("msg", msg.Msg)
+				span.Tag("kind", msg.Kind)
+				span.Tag("ip", fmt.Sprintf("%v", msg.Ip))
 			}
 
-			logrus.WithFields(logrus.Fields{"Kind": msg.Kind, "Origin Svc": msg.Svcname, "Origin Namespace": msg.Namespace}).Info(ModuleName)
+			logrus.WithFields(logrus.Fields{"Kind": msg.Kind, "Origin Svc": msg.Svcname, "Origin Namespace": msg.Namespace, "ip": msg.Ip, "msg": msg.Msg}).Info(ModuleName)
 			err = this.distMsg(&msg)
 			if err != nil {
 				errmessage = fmt.Sprintf("Save Msg Error [%s] Origin Byte [%s]", err.Error(), string(m.Body))
 				logrus.WithFields(logrus.Fields{"Save Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
+				m.Finish()
 				continue
 			}
 
 			logrus.WithFields(logrus.Fields{"HandlerMsg svc": msg.Svcname, "namespace": msg.Namespace, "msg": msg.Msg, "ip": msg.Ip}).Info(this.Name)
-			go func() {
-				defer func() {
-					if errmessage != "" {
-						span.Annotate(time.Now(), fmt.Sprintf("%s Error [%s]", MonitorAgentName))
-					}
+			//go func() {
+			//	defer func() {
+			//		if errmessage != "" {
+			//			span.Annotate(time.Now(), fmt.Sprintf("%s Error [%s]", MonitorAgentName, errmessage))
+			//		}
+			//
+			//		span.Finish()
+			//		reporter.Close()
+			//	}()
+			//	err = this.handlerMsg(&msg, span)
+			//	if err != nil {
+			//		errmessage = err.Error()
+			//		logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(ModuleName)
+			//	}
+			//}()
 
-					span.Finish()
-					reporter.Close()
-				}()
-				err = this.handlerMsg(&msg, span)
-				if err != nil {
-					errmessage = err.Error()
-					logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(ModuleName)
-				}
-			}()
+			err = this.handlerMsg(&msg, span)
+			if err != nil {
+				errmessage = err.Error()
+				logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(ModuleName)
+			}
 
+			if errmessage != "" {
+				span.Annotate(time.Now(), fmt.Sprintf("%s Error [%s]", MonitorAgentName, errmessage))
+			}
+
+			span.Finish()
+			reporter.Close()
 			m.Finish()
 		}
 	}()
@@ -247,53 +267,88 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 				return svcconf.UpdateSvcConf(sc)
 			}
 
-			q := service.Service{
-				Pub: public.Public{
-					SecretId: md.Sid,
-					Region:   md.Region,
-				},
-				ClusterId:   md.ClusterID,
-				Namespace:   msg.Namespace,
-				SecretKey:   md.Skey,
-				ServiceName: sc.SvcName,
-			}
-			q.SetDebug(true)
-
-			for {
-
-				resp, err := q.QuerySvcInfo()
-
-				if err != nil || resp.Code != 0 {
-					sc.Deploy = _const.DeployFailed
-					sc.Msg = err.Error()
-					return svcconf.UpdateSvcConf(sc)
+			go func(span zipkin.Span) {
+				q := service.Service{
+					Pub: public.Public{
+						SecretId: md.Sid,
+						Region:   md.Region,
+					},
+					ClusterId:   md.ClusterID,
+					Namespace:   msg.Namespace,
+					SecretKey:   md.Skey,
+					ServiceName: sc.SvcName,
 				}
+				q.SetDebug(true)
 
-				if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
-					lip := ""
-					if resp.Data.ServiceInfo.ExternalIp == "" {
-						lip = resp.Data.ServiceInfo.ServiceIp
+				for {
+					var errmessage = ""
+					span, reporter, err := tool.GetChildZipKinSpan(MonitorAgentName+"-Qcloud-Query-Service", tool.GetLocalIP(), true, span.Context())
+					if err != nil {
+						logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(MonitorAgentName)
 					} else {
-						lip = resp.Data.ServiceInfo.ExternalIp
-					}
-					lb := svcconf.LoadBlance{
-						IP: lip,
+						//logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(MonitorAgentName)
+						span.Annotate(time.Now(), fmt.Sprintf("%s Query Service Status", MonitorAgentName))
+						span.Tag("service", sc.SvcName)
+						span.Tag("namesapce", msg.Namespace)
+						span.Tag("key", md.Skey)
+						span.Tag("slusterID", md.ClusterID)
+						span.Tag("secretid", md.Sid)
 					}
 
-					var port []int
-					for _, c := range resp.Data.ServiceInfo.PortMappings {
-						port = append(port, c.LbPort)
+					resp, err := q.QuerySvcInfo()
+
+					if err != nil || resp.Code != 0 {
+						errmessage = err.Error()
+						sc.Deploy = _const.DeployFailed
+						sc.Msg = err.Error()
+						if err := svcconf.UpdateSvcConf(sc); err != nil {
+							errmessage = err.Error()
+						}
+						span.Finish()
+						reporter.Close()
+						break
 					}
-					lb.Port = port
-					sc.LbConfig = lb
-					sc.Deploy = _const.DeploySuc
-					sc.Msg = msg.Msg
-					sc.Span = span.Context()
-					this.NotifyDevEx(sc)
-					return svcconf.UpdateSvcConf(sc)
+					span.Annotate(time.Now(), strings.ToLower(resp.Data.ServiceInfo.Status))
+					if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
+						lip := ""
+						if resp.Data.ServiceInfo.ExternalIp == "" {
+							lip = resp.Data.ServiceInfo.ServiceIp
+						} else {
+							lip = resp.Data.ServiceInfo.ExternalIp
+						}
+						lb := svcconf.LoadBlance{
+							IP: lip,
+						}
+
+						var port []int
+						for _, c := range resp.Data.ServiceInfo.PortMappings {
+							port = append(port, c.LbPort)
+						}
+						lb.Port = port
+						sc.LbConfig = lb
+						sc.Deploy = _const.DeploySuc
+						sc.Msg = msg.Msg
+						sc.Span = span.Context()
+						this.NotifyDevEx(sc)
+						if err := svcconf.UpdateSvcConf(sc); err != nil {
+							errmessage = err.Error()
+						}
+						span.Finish()
+						reporter.Close()
+						break
+					}
+					if errmessage != "" {
+						span.Annotate(time.Now(), errmessage)
+					}
+
+					span.Finish()
+					reporter.Close()
+					time.Sleep(5 * time.Second)
 				}
-				time.Sleep(3 * time.Second)
-			}
+			}(span)
+
+		} else {
+			return errors.New(fmt.Sprintf("sc.Replicas=[%v] len(mm.Ip)=[%v]", sc.Replicas, len(mm.Ip)))
 		}
 	} else if strings.ToLower(msg.Msg) == "deploy" {
 		//	开始部署服务
