@@ -115,6 +115,12 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 		parentid = fmt.Sprintf("&parentid=%s", msg.Span.ParentID.String())
 	}
 
+	//删除可能会存在的Monitor Message, 如果不删除, 则在根据IP数量判断服务状态时会永远失败
+	mm, err := monitor.GetMonitroModule(SpiderAgentName, msg.SvcName, msg.NameSpace)
+	if err == nil && mm.Id != "" {
+		mm.Destory()
+	}
+
 	logrus.WithFields(logrus.Fields{"url": fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid)}).Info(this.Name)
 	r, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid), nil)
 	if err != nil {
