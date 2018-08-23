@@ -2,6 +2,7 @@ package caas
 
 import (
 	"github.com/graphql-go/graphql"
+	sg "github.com/shurcooL/graphql"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/model/container"
@@ -14,6 +15,9 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
 	"github.com/andy-zhangtao/qcloud_api/v1/repository"
+	"os"
+	"context"
+	"strings"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -42,6 +46,71 @@ var CaasServiceType = graphql.NewObject(graphql.ObjectConfig{
 var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "service",
 	Fields: graphql.Fields{
+		"owner": &graphql.Field{
+			Type: graphql.String,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+
+					var devex struct {
+						Request struct {
+							Owner sg.String
+						} `graphql:"request(projectid: $projectid)"`
+					}
+
+					variables := map[string]interface{}{
+						"projectid": sg.String(strings.ToLower(s.Name)),
+					}
+
+					client := sg.NewClient(os.Getenv(_const.ENV_DEVEX_GRAPHQL_ENDPOINT), nil)
+					err := client.Query(context.Background(), &devex, variables)
+					if err != nil && !strings.Contains(err.Error(), "not found") {
+						return "not found", nil
+					}
+
+					return devex.Request.Owner, nil
+				}
+				return nil, nil
+			},
+		},
+		//"group": &graphql.Field{
+		//	Type: graphql.String,
+		//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+		//		if s, ok := p.Source.(svcconf.SvcConf); ok {
+		//
+		//			var name string
+		//			if con, err := container.GetAllContainersBySvc(s.Name, s.Namespace); err != nil {
+		//				err = errors.New(fmt.Sprintf("Get Image Error [%s] svc[%s] namespace [%s]", err.Error(), s.SvcName, s.Namespace))
+		//				return nil, err
+		//			} else {
+		//				if len(con) > 0 {
+		//					name = con[0].Img
+		//				}
+		//			}
+		//
+		//			if name != "" && strings.Contains(name, "ccr.ccs.tencentyun.com/eqxiu/") {
+		//				name = strings.Split(strings.Split(name, "ccr.ccs.tencentyun.com/eqxiu/")[1], ":")[0]
+		//				var devex struct {
+		//					Deployservice struct {
+		//						Groupname sg.String
+		//					} `graphql:"deployservice(name: $name)"`
+		//				}
+		//
+		//				variables := map[string]interface{}{
+		//					"name": sg.String(name),
+		//				}
+		//
+		//				client := sg.NewClient(os.Getenv(_const.ENV_DEVEX_GRAPHQL_ENDPOINT), nil)
+		//				err := client.Query(context.Background(), &devex, variables)
+		//				if err != nil {
+		//					return nil, nil
+		//				}
+		//
+		//				return devex.Deployservice.Groupname, nil
+		//			}
+		//		}
+		//		return nil, nil
+		//	},
+		//},
 		"id": &graphql.Field{
 			Type: graphql.String,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {

@@ -21,16 +21,17 @@ const (
 	//EnvDefaultPreProduceNs 默认预发布环境
 	EnvDefaultPreProduceNs = "DDOG_PRE_PRODUCE_NAME_SPACE"
 	//EnvDefaultProduceNs 默认发布环境
-	EnvDefaultProduceNs       = "DDOG_PRODUCE_NAME_SPACE"
-	EnvGoblin                 = "DDOG_GOBLIN_ENDPOINT"
-	EnvK8sEndpoint            = "DDOG_K8S_ENDPOINT"
-	EnvK8sToken               = "DDOG_K8S_TOKEN"
-	EnvDefaultLogOpt          = "DDOG_LOG_OPT"
-	EnvDefaultLogDriver       = "LOGCHAIN_DRIVER"
-	EnvNsqdEndpoint           = "DDOG_NSQD_ENDPOINT"
-	EnvSubNetID               = "DDOG_SUB_NET_ID"
-	ENV_AGENT_ZIPKIN_ENDPOINT = "Agent_ZipKin_Endpoint"
-	ENV_AGENT_HULK_ENDPOINT   = "Agent_Hulk_Endpoint"
+	EnvDefaultProduceNs        = "DDOG_PRODUCE_NAME_SPACE"
+	EnvGoblin                  = "DDOG_GOBLIN_ENDPOINT"
+	EnvK8sEndpoint             = "DDOG_K8S_ENDPOINT"
+	EnvK8sToken                = "DDOG_K8S_TOKEN"
+	EnvDefaultLogOpt           = "DDOG_LOG_OPT"
+	EnvDefaultLogDriver        = "LOGCHAIN_DRIVER"
+	EnvNsqdEndpoint            = "DDOG_NSQD_ENDPOINT"
+	EnvSubNetID                = "DDOG_SUB_NET_ID"
+	ENV_AGENT_ZIPKIN_ENDPOINT  = "Agent_ZipKin_Endpoint"
+	ENV_AGENT_HULK_ENDPOINT    = "Agent_Hulk_Endpoint"
+	ENV_DEVEX_GRAPHQL_ENDPOINT = "Devex_Graph_Endpoint"
 )
 
 var DEBUG = false
