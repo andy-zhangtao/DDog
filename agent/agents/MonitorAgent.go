@@ -309,13 +309,14 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 						break
 					}
 					span.Annotate(time.Now(), strings.ToLower(resp.Data.ServiceInfo.Status))
-					if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
-						lip := ""
-						if resp.Data.ServiceInfo.ExternalIp == "" {
-							lip = resp.Data.ServiceInfo.ServiceIp
-						} else {
-							lip = resp.Data.ServiceInfo.ExternalIp
-						}
+					if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" && resp.Data.ServiceInfo.ExternalIp != "" {
+						lip := resp.Data.ServiceInfo.ExternalIp
+						//if resp.Data.ServiceInfo.ExternalIp == "" {
+						//	lip = resp.Data.ServiceInfo.ServiceIp
+						//} else {
+						//
+						//}
+
 						lb := svcconf.LoadBlance{
 							IP: lip,
 						}
