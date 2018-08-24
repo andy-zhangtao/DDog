@@ -72,45 +72,15 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 				return nil, nil
 			},
 		},
-		//"group": &graphql.Field{
-		//	Type: graphql.String,
-		//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-		//		if s, ok := p.Source.(svcconf.SvcConf); ok {
-		//
-		//			var name string
-		//			if con, err := container.GetAllContainersBySvc(s.Name, s.Namespace); err != nil {
-		//				err = errors.New(fmt.Sprintf("Get Image Error [%s] svc[%s] namespace [%s]", err.Error(), s.SvcName, s.Namespace))
-		//				return nil, err
-		//			} else {
-		//				if len(con) > 0 {
-		//					name = con[0].Img
-		//				}
-		//			}
-		//
-		//			if name != "" && strings.Contains(name, "ccr.ccs.tencentyun.com/eqxiu/") {
-		//				name = strings.Split(strings.Split(name, "ccr.ccs.tencentyun.com/eqxiu/")[1], ":")[0]
-		//				var devex struct {
-		//					Deployservice struct {
-		//						Groupname sg.String
-		//					} `graphql:"deployservice(name: $name)"`
-		//				}
-		//
-		//				variables := map[string]interface{}{
-		//					"name": sg.String(name),
-		//				}
-		//
-		//				client := sg.NewClient(os.Getenv(_const.ENV_DEVEX_GRAPHQL_ENDPOINT), nil)
-		//				err := client.Query(context.Background(), &devex, variables)
-		//				if err != nil {
-		//					return nil, nil
-		//				}
-		//
-		//				return devex.Deployservice.Groupname, nil
-		//			}
-		//		}
-		//		return nil, nil
-		//	},
-		//},
+		"replicas": &graphql.Field{
+			Type: graphql.Int,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					return s.Replicas, nil
+				}
+				return nil, nil
+			},
+		},
 		"id": &graphql.Field{
 			Type: graphql.String,
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {

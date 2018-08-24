@@ -430,8 +430,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			Envs:          cnns.Env,
 			Cpu:           0,
 			CpuLimits:     0,
-			Memory:        300,
-			MemoryLimits:  800,
+			Memory:        800,
+			MemoryLimits:  1536,
 		})
 	}
 
