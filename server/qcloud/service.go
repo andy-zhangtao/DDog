@@ -395,8 +395,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			for _, n := range cn.Net {
 				shk := service.HealthCheck{
 					Type:        service.LiveCheck,
-					UnhealthNum: 5,
-					DelayTime:   60,
+					UnhealthNum: 10,
+					DelayTime:   5,
 					CheckMethod: service.CheckMethodTCP,
 				}
 				shk.GenerateTCPCheck(n.InPort)
@@ -411,8 +411,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			/*当前默认使用ps -ef |grep svcname来作为无端口的健康检测*/
 			shk := service.HealthCheck{
 				Type:        service.LiveCheck,
-				UnhealthNum: 5,
-				DelayTime:   60,
+				UnhealthNum: 10,
+				DelayTime:   5,
 				CheckMethod: service.CheckMethodCmd,
 			}
 			cmd := fmt.Sprintf("/bin/sh -c \"ps -ef | grep %s |grep -v grep\"", cf.Name)
