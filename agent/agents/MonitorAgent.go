@@ -1,24 +1,24 @@
 package agents
 
 import (
-	"github.com/nsqio/go-nsq"
-	"github.com/sirupsen/logrus"
 	"encoding/json"
-	"github.com/andy-zhangtao/DDog/model/monitor"
+	"errors"
+	"fmt"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/DDog/model/monitor"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
-	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"strings"
-	"strconv"
-	"time"
-	"os"
-	"fmt"
-	"errors"
-	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/nsqio/go-nsq"
 	"github.com/openzipkin/zipkin-go"
 	zmodel "github.com/openzipkin/zipkin-go/model"
+	"github.com/sirupsen/logrus"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -308,8 +308,30 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 						reporter.Close()
 						break
 					}
+
 					span.Annotate(time.Now(), strings.ToLower(resp.Data.ServiceInfo.Status))
+					span.Annotate(time.Now(), resp.Data.ServiceInfo.ExternalIp)
 					if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" && resp.Data.ServiceInfo.ExternalIp != "" {
+						switch msg.Namespace {
+						case "proenv":
+							fallthrough
+						case "release":
+							//	预发布和正式环境，IP必须属于10.0.0.0/16网段
+							if !strings.HasPrefix(resp.Data.ServiceInfo.ExternalIp, "10.0.") {
+								time.Sleep(3 * time.Second)
+								continue
+							}
+						case "devenv":
+							fallthrough
+						case "testenv":
+							//	预发布和正式环境，IP必须属于192.168.0.0/16网段
+							if !strings.HasPrefix(resp.Data.ServiceInfo.ExternalIp, "192.168.") {
+								time.Sleep(3 * time.Second)
+								continue
+							}
+						default:
+							md, err = metadata.GetMetaDataByRegion("", )
+						}
 						lip := resp.Data.ServiceInfo.ExternalIp
 						//if resp.Data.ServiceInfo.ExternalIp == "" {
 						//	lip = resp.Data.ServiceInfo.ServiceIp

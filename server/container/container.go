@@ -1,20 +1,20 @@
 package container
 
 import (
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
 	"errors"
-	"github.com/andy-zhangtao/DDog/const"
-	"github.com/andy-zhangtao/DDog/server/mongo"
-	"strconv"
-	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/andy-zhangtao/DDog/model/container"
-	"strings"
-	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"os"
-	"github.com/sirupsen/logrus"
 	"fmt"
+	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/model/container"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -406,16 +406,17 @@ func upgreadeSvcConf(con container.Container, updateNet bool) (err error) {
 	}
 	sv.Status = 0
 	if updateNet {
-		portMap := make(map[int]int)
-		for _, n := range sv.Netconf {
-			portMap[n.InPort] = n.InPort
-		}
-
-		for _, c := range con.Net {
-			if _, exists := portMap[c.InPort]; !exists {
-				sv.Netconf = append(sv.Netconf, c)
-			}
-		}
+		//portMap := make(map[int]int)
+		//for _, n := range sv.Netconf {
+		//	portMap[n.InPort] = n.InPort
+		//}
+		//
+		//for _, c := range con.Net {
+		//	if _, exists := portMap[c.InPort]; !exists {
+		//		sv.Netconf = append(sv.Netconf, c)
+		//	}
+		//}
+		sv.Netconf = con.Net
 	}
 	err = svcconf.UpdateSvcConf(sv)
 	return
