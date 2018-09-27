@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/DDog/check"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/server/caas"
 	"github.com/andy-zhangtao/DDog/server/dbservice"
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/gorilla/mux"
 	"github.com/graphql-go/graphql"
 	"github.com/rs/cors"
@@ -889,6 +889,29 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				err := cloudservice.RollingUpService(service, namespace, scp)
+				if err != nil {
+					return nil, err
+				}
+
+				return "OK", nil
+			},
+		},
+		"restartService": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Restart The Specify Service",
+			Args: graphql.FieldConfigArgument{
+				"service": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				service, _ := p.Args["service"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+
+				err := cloudservice.Restart(service, namespace)
 				if err != nil {
 					return nil, err
 				}
