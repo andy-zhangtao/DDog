@@ -1,22 +1,23 @@
 package caas
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/model/caasmodel"
+	"github.com/andy-zhangtao/DDog/model/container"
+	"github.com/andy-zhangtao/DDog/model/k8sconfig"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/qcloud_api/v1/event"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"github.com/andy-zhangtao/qcloud_api/v1/repository"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/graphql-go/graphql"
 	sg "github.com/shurcooL/graphql"
-	"github.com/andy-zhangtao/DDog/model/caasmodel"
-	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"github.com/andy-zhangtao/DDog/model/container"
-	"github.com/andy-zhangtao/qcloud_api/v1/event"
-	"github.com/andy-zhangtao/DDog/model/metadata"
-	"errors"
-	"github.com/andy-zhangtao/DDog/const"
-	"github.com/andy-zhangtao/qcloud_api/v1/public"
-	"fmt"
-	"github.com/andy-zhangtao/qcloud_api/v1/service"
-	"github.com/andy-zhangtao/DDog/model/k8sconfig"
-	"github.com/andy-zhangtao/qcloud_api/v1/repository"
 	"os"
-	"context"
+	"strconv"
 	"strings"
 )
 
@@ -77,6 +78,19 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				if s, ok := p.Source.(svcconf.SvcConf); ok {
 					return s.Replicas, nil
+				}
+				return 0, nil
+			},
+		},
+		"miniReplicas": &graphql.Field{
+			Type: graphql.Int,
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				if s, ok := p.Source.(svcconf.SvcConf); ok {
+					if s.Desc == "" && !strings.Contains(s.Desc, "MINI_INSTANCES=") {
+						return 0, nil
+					}
+					r, _ := strconv.Atoi(strings.Split(s.Desc, "=")[1])
+					return r, nil
 				}
 				return nil, nil
 			},

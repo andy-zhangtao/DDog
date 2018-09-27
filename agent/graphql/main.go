@@ -1,41 +1,41 @@
 package main
 
 import (
-	"github.com/andy-zhangtao/_hulk_client"
-	"github.com/sirupsen/logrus"
-	"net/http"
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
 	"encoding/json"
-	"io/ioutil"
-	"github.com/graphql-go/graphql"
 	"fmt"
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/DDog/check"
-	"os"
+	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/server/caas"
 	"github.com/andy-zhangtao/DDog/server/dbservice"
-	"github.com/andy-zhangtao/DDog/model/caasmodel"
+	"github.com/gorilla/mux"
+	"github.com/graphql-go/graphql"
+	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
+	"os"
 
-	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"github.com/andy-zhangtao/DDog/server/cloudservice"
 	"errors"
+	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/agent"
-	"github.com/andy-zhangtao/DDog/bridge"
-	"github.com/andy-zhangtao/DDog/server/mongo"
-	"strings"
-	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/model/container"
-	cs "github.com/andy-zhangtao/DDog/server/container"
-	"github.com/andy-zhangtao/DDog/server/qcloud"
-	"github.com/andy-zhangtao/DDog/server/k8service"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/cloudservice"
+	cs "github.com/andy-zhangtao/DDog/server/container"
+	"github.com/andy-zhangtao/DDog/server/k8service"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/andy-zhangtao/DDog/server/qcloud"
 	"github.com/andy-zhangtao/DDog/server/repository"
-	"github.com/nsqio/go-nsq"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/nsqio/go-nsq"
 	"github.com/openzipkin/zipkin-go"
-	"time"
+	"gopkg.in/mgo.v2/bson"
 	"strconv"
+	"strings"
+	"time"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -544,6 +544,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					return *conf, nil
 				} else {
 					cf.Replicas = conf.Replicas
+					cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", cf.Replicas)
 					if err = mongo.DeleteSvcConfById(cf.Id.Hex()); err != nil {
 						errmessage = err.Error()
 						return nil, err

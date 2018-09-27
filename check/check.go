@@ -1,10 +1,10 @@
 package check
 
 import (
-	"os"
-	"github.com/andy-zhangtao/DDog/const"
 	"errors"
 	"fmt"
+	"github.com/andy-zhangtao/DDog/const"
+	"os"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
