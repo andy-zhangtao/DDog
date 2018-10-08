@@ -53,6 +53,8 @@ func (this *MonitorAgent) Run() {
 
 	go func() {
 		for m := range workerChan {
+			defer m.Finish()
+
 			var errmessage = ""
 			logrus.WithFields(logrus.Fields{_const.SvcMonitorMsg: string(m.Body)}).Info(ModuleName)
 			msg := monitor.MonitorModule{}
@@ -61,7 +63,7 @@ func (this *MonitorAgent) Run() {
 			if err != nil {
 				errmessage = fmt.Sprintf("Unmarshal Msg [%s] Origin Byte [%s]", err.Error(), string(m.Body))
 				logrus.WithFields(logrus.Fields{"Unmarshal Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
-				m.Finish()
+				//m.Finish()
 				continue
 			}
 
@@ -78,12 +80,17 @@ func (this *MonitorAgent) Run() {
 				span.Tag("ip", fmt.Sprintf("%v", msg.Ip))
 			}
 
+			defer func() {
+				span.Finish()
+				reporter.Close()
+			}()
+
 			logrus.WithFields(logrus.Fields{"Kind": msg.Kind, "Origin Svc": msg.Svcname, "Origin Namespace": msg.Namespace, "ip": msg.Ip, "msg": msg.Msg}).Info(ModuleName)
 			err = this.distMsg(&msg)
 			if err != nil {
 				errmessage = fmt.Sprintf("Save Msg Error [%s] Origin Byte [%s]", err.Error(), string(m.Body))
 				logrus.WithFields(logrus.Fields{"Save Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
-				m.Finish()
+				//m.Finish()
 				continue
 			}
 
@@ -114,9 +121,9 @@ func (this *MonitorAgent) Run() {
 				span.Annotate(time.Now(), fmt.Sprintf("%s Error [%s]", MonitorAgentName, errmessage))
 			}
 
-			span.Finish()
-			reporter.Close()
-			m.Finish()
+			//span.Finish()
+			//reporter.Close()
+			//m.Finish()
 		}
 	}()
 
@@ -220,6 +227,7 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule, span zipkin.Span) 
 // 如果健康检测成功，则将服务置为成功
 func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Span) error {
 	logrus.WithFields(logrus.Fields{"Confirm Svc": msg.Svcname, "namespace": msg.Namespace, "msg": msg.Msg, "ip": msg.Ip}).Info(this.Name)
+	defer msg.Destory()
 
 	if strings.ToLower(msg.Msg) == "ok" {
 		sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
@@ -295,6 +303,12 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 						span.Tag("secretid", md.Sid)
 					}
 
+					logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(ModuleName)
+					defer func() {
+						span.Finish()
+						reporter.Close()
+					}()
+
 					resp, err := q.QuerySvcInfo()
 
 					if err != nil || resp.Code != 0 {
@@ -304,8 +318,8 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 						if err := svcconf.UpdateSvcConf(sc); err != nil {
 							errmessage = err.Error()
 						}
-						span.Finish()
-						reporter.Close()
+						//span.Finish()
+						//reporter.Close()
 						break
 					}
 
@@ -356,16 +370,16 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 						if err := svcconf.UpdateSvcConf(sc); err != nil {
 							errmessage = err.Error()
 						}
-						span.Finish()
-						reporter.Close()
+						//span.Finish()
+						//reporter.Close()
 						break
 					}
 					if errmessage != "" {
 						span.Annotate(time.Now(), errmessage)
 					}
 
-					span.Finish()
-					reporter.Close()
+					//span.Finish()
+					//reporter.Close()
 					time.Sleep(5 * time.Second)
 				}
 			}(span)
@@ -381,15 +395,39 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 		}
 		if sc == nil {
 			logrus.WithFields(logrus.Fields{"SvcConf": "nil"}).Error(ModuleName)
-			msg.Destory()
+			//msg.Destory()
 			return errors.New("SvcConf nil")
 		}
+		ns, reporter, err := tool.GetChildZipKinSpan(MonitorAgentName+"-Status-Service", tool.GetLocalIP(), true, span.Context())
+		if err != nil {
+			return errors.New(fmt.Sprintf("Generate Span Error [%v]", err))
+		}
+
+		logrus.WithFields(logrus.Fields{"Span ID": ns.Context().ID.String(), "Traceid": ns.Context().TraceID.String(), "Parentid": ns.Context().ParentID.String(), "P-Span ID": span.Context().ID, "P-Traceid": span.Context().TraceID, "P-Parentid": span.Context().ParentID}).Info(ModuleName)
+		ns.Annotate(time.Now(), fmt.Sprintf("%s Query Service Status", MonitorAgentName))
+		ns.Tag("service", sc.SvcName)
+		ns.Tag("namesapce", msg.Namespace)
+		ns.Tag("status", "Deploying")
+		ns.Finish()
+		reporter.Close()
+
 		sc.Deploy = _const.DeployIng
-		sc.Span = span.Context()
+		sc.Span = ns.Context()
 		this.NotifyDevEx(sc)
+	} else if strings.ToLower(msg.Msg) == "status" {
+		ns, reporter, err := tool.GetChildZipKinSpan(MonitorAgentName+"-Check-Result", tool.GetLocalIP(), true, span.Context())
+		if err != nil {
+			return errors.New(fmt.Sprintf("Generate Span Error [%v]", err))
+		}
+
+		logrus.WithFields(logrus.Fields{"Span ID": ns.Context().ID.String(), "Traceid": ns.Context().TraceID.String(), "Parentid": ns.Context().ParentID.String(), "P-Span ID": span.Context().ID, "P-Traceid": span.Context().TraceID, "P-Parentid": span.Context().ParentID}).Info(ModuleName)
+		ns.Annotate(time.Now(), fmt.Sprintf("%s Query Service Status", MonitorAgentName))
+		ns.Tag("check result", msg.Status)
+		ns.Finish()
+		reporter.Close()
 	} else {
 		/*clear msg*/
-		msg.Destory()
+		//msg.Destory()
 		return this.stopSVC(msg, span)
 	}
 

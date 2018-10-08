@@ -355,8 +355,8 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		"log_opt":               os.Getenv(_const.EnvDefaultLogOpt),
 		"LOGCHAIN_DRIVER":       os.Getenv(_const.EnvDefaultLogDriver),
 		"ZIPKIN_TRACID":         traceid,
-		"ZIPKIN_ID":             id,
-		"ZIPKIN_PARENTID":       parentid,
+		"ZIPKIN_ID":             parentid,
+		"ZIPKIN_PARENTID":       id,
 		"HULK_PROJECT_NAME":     "Scheduler-Spider-Agent",
 		"HULK_PROJECT_VERSION":  "v0.1.0-beta",
 	}
