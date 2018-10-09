@@ -4,10 +4,11 @@ import (
 	"errors"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/server/mongo"
-	"gopkg.in/mgo.v2/bson"
 	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/sirupsen/logrus"
 	zmodel "github.com/openzipkin/zipkin-go/model"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2/bson"
+	"reflect"
 )
 
 const (
@@ -55,7 +56,7 @@ func (mm *MonitorModule) Save() error {
 		}
 
 		err = nil
-		//logrus.WithFields(logrus.Fields{"type": reflect.TypeOf(oom), "value": oom}).Info(ModuleName)
+		logrus.WithFields(logrus.Fields{"type": reflect.TypeOf(oom), "value": oom}).Info(ModuleName)
 		om, err := conver(oom)
 		if err != nil {
 			return err

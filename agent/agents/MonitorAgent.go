@@ -227,7 +227,6 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule, span zipkin.Span) 
 // 如果健康检测成功，则将服务置为成功
 func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Span) error {
 	logrus.WithFields(logrus.Fields{"Confirm Svc": msg.Svcname, "namespace": msg.Namespace, "msg": msg.Msg, "ip": msg.Ip}).Info(this.Name)
-	defer msg.Destory()
 
 	if strings.ToLower(msg.Msg) == "ok" {
 		sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
@@ -249,6 +248,7 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 			return err
 		}
 
+		logrus.WithFields(logrus.Fields{"service": msg.Svcname, "value": mm}).Info(ModuleName)
 		if sc.Replicas == len(mm.Ip) {
 			/*clear msg*/
 			mm.Destory()
@@ -311,13 +311,19 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 
 					resp, err := q.QuerySvcInfo()
 
-					if err != nil || resp.Code != 0 {
-						errmessage = err.Error()
-						sc.Deploy = _const.DeployFailed
-						sc.Msg = err.Error()
-						if err := svcconf.UpdateSvcConf(sc); err != nil {
+					if err != nil {
+						if resp.Code != 0 {
+							logrus.WithFields(logrus.Fields{"RespCode": resp.Code, "Desc": resp.CodeDesc, "service": sc.SvcName}).Error(ModuleName)
+							errmessage = fmt.Sprintf("RespCode [%v] Desc [%v]", resp.Code, resp.CodeDesc)
+						} else {
 							errmessage = err.Error()
+							sc.Deploy = _const.DeployFailed
+							sc.Msg = err.Error()
+							if err := svcconf.UpdateSvcConf(sc); err != nil {
+								errmessage = err.Error()
+							}
 						}
+
 						//span.Finish()
 						//reporter.Close()
 						break
