@@ -1,10 +1,10 @@
 package bridge
 
 import (
-	"os"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
+	"os"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/5.
@@ -56,6 +56,7 @@ func SendDestoryMsg(msg string) error {
 
 // SendMonitorMsg 发布监控信息消息
 func SendMonitorMsg(msg string) error {
+	logrus.WithFields(logrus.Fields{"Send Message": msg}).Info(ModuleName)
 	return makeMsg(_const.SvcMonitorMsg, msg)
 }
 

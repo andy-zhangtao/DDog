@@ -53,7 +53,10 @@ func (this *MonitorAgent) Run() {
 
 	go func() {
 		for m := range workerChan {
-			defer m.Finish()
+			//defer func() {
+			//	logrus.WithFields(logrus.Fields{"Finish": m.ID}).Info(ModuleName)
+			//	m.Finish()
+			//}()
 
 			var errmessage = ""
 			logrus.WithFields(logrus.Fields{_const.SvcMonitorMsg: string(m.Body)}).Info(ModuleName)
@@ -63,7 +66,7 @@ func (this *MonitorAgent) Run() {
 			if err != nil {
 				errmessage = fmt.Sprintf("Unmarshal Msg [%s] Origin Byte [%s]", err.Error(), string(m.Body))
 				logrus.WithFields(logrus.Fields{"Unmarshal Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
-				//m.Finish()
+				m.Finish()
 				continue
 			}
 
@@ -80,17 +83,17 @@ func (this *MonitorAgent) Run() {
 				span.Tag("ip", fmt.Sprintf("%v", msg.Ip))
 			}
 
-			defer func() {
-				span.Finish()
-				reporter.Close()
-			}()
+			//defer func() {
+			//	span.Finish()
+			//	reporter.Close()
+			//}()
 
 			logrus.WithFields(logrus.Fields{"Kind": msg.Kind, "Origin Svc": msg.Svcname, "Origin Namespace": msg.Namespace, "ip": msg.Ip, "msg": msg.Msg}).Info(ModuleName)
 			err = this.distMsg(&msg)
 			if err != nil {
 				errmessage = fmt.Sprintf("Save Msg Error [%s] Origin Byte [%s]", err.Error(), string(m.Body))
 				logrus.WithFields(logrus.Fields{"Save Msg": err, "Origin Byte": string(m.Body)}).Error(ModuleName)
-				//m.Finish()
+				m.Finish()
 				continue
 			}
 
@@ -121,9 +124,9 @@ func (this *MonitorAgent) Run() {
 				span.Annotate(time.Now(), fmt.Sprintf("%s Error [%s]", MonitorAgentName, errmessage))
 			}
 
-			//span.Finish()
-			//reporter.Close()
-			//m.Finish()
+			span.Finish()
+			reporter.Close()
+			m.Finish()
 		}
 	}()
 
