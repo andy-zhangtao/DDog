@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/andy-zhangtao/_hulk_client"
+	"github.com/andy-zhangtao/DDog/agent/agents"
+	"github.com/andy-zhangtao/DDog/const"
 	"github.com/sirupsen/logrus"
 	"os"
-	"github.com/andy-zhangtao/DDog/const"
-	"github.com/andy-zhangtao/DDog/agent/agents"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/5.
@@ -48,6 +48,10 @@ func main() {
 		<-ret.StopChan
 	case agents.ReplicaAgentName:
 		ret := &agents.ReplicaAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.ReplicaAgentName}
+		go ret.Run()
+		<-ret.StopChan
+	case agents.K8sMonitorAgentName:
+		ret := &agents.K8sMonitorAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.K8sMonitorAgentName}
 		go ret.Run()
 		<-ret.StopChan
 	default:

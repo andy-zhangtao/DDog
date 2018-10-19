@@ -1,26 +1,27 @@
 package agents
 
 import (
-	"github.com/nsqio/go-nsq"
-	"github.com/andy-zhangtao/DDog/const"
-	"github.com/sirupsen/logrus"
 	"encoding/json"
-	"github.com/andy-zhangtao/DDog/server/svcconf"
-	"os"
-	"github.com/andy-zhangtao/DDog/model/monitor"
 	"github.com/andy-zhangtao/DDog/bridge"
+	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/model/monitor"
+	"github.com/andy-zhangtao/DDog/server/svcconf"
+	"github.com/nsqio/go-nsq"
+	"github.com/sirupsen/logrus"
+	"os"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/5.
 
 const (
-	ModuleName       = "DDog-Agent-Nsq"
-	DestoryAgent     = "DestoryAgent"
-	MonitorAgentName = "MonitorAgent"
-	RetriAgentName   = "RetriAgent"
-	SpiderAgentName  = "SpiderAgent"
-	DeployAgentName  = "DeployAgent"
-	ReplicaAgentName = "ReplicaAgent"
+	ModuleName          = "DDog-Agent-Nsq"
+	DestoryAgent        = "DestoryAgent"
+	MonitorAgentName    = "MonitorAgent"
+	RetriAgentName      = "RetriAgent"
+	SpiderAgentName     = "SpiderAgent"
+	DeployAgentName     = "DeployAgent"
+	ReplicaAgentName    = "ReplicaAgent"
+	K8sMonitorAgentName = "K8sMonitorAgent"
 )
 
 type AgentNsq struct {

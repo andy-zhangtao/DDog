@@ -1,14 +1,14 @@
 package qcloud
 
 import (
-	"github.com/andy-zhangtao/DDog/model/metadata"
-	"github.com/andy-zhangtao/qcloud_api/v1/service"
-	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"errors"
 	"fmt"
-	"github.com/andy-zhangtao/DDog/server/svcconf"
-	sc "github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	sc "github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/svcconf"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/4.
@@ -108,5 +108,6 @@ func ModifyInstancesReplica(name, namespace string, replica int) (err error) {
 	}
 
 	scf.Deploy = _const.ModifyReplica
+	scf.Status = _const.ModifyReplica
 	return sc.UpdateSvcConf(&scf)
 }

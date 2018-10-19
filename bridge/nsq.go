@@ -57,7 +57,8 @@ func SendDestoryMsg(msg string) error {
 // SendMonitorMsg 发布监控信息消息
 func SendMonitorMsg(msg string) error {
 	logrus.WithFields(logrus.Fields{"Send Message": msg}).Info(ModuleName)
-	return makeMsg(_const.SvcMonitorMsg, msg)
+	return makeMsg(_const.SvcK8sMonitorMsg, msg)
+	//return makeMsg(_const.SvcMonitorMsg, msg)
 }
 
 func SendDeployMsg(msg string) error {

@@ -61,3 +61,8 @@ type RespMsg struct {
 const OperationSucc = "Operation Succ!"
 const OperationFaile = "Operation Faile!"
 const DataNotFound = OperationSucc + " But donot find any data!"
+
+const PROENV = "proenv"
+const RELEASEENV = "release"
+const DEVENV = "devenv"
+const TESTENV = "testenv"

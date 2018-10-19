@@ -1,20 +1,20 @@
 package k8s
 
 import (
-	"fmt"
 	"crypto/tls"
-	"github.com/andy-zhangtao/DDog/const"
-	"log"
-	"net/http"
-	"io/ioutil"
-	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
 	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
 
 const (
-	GetAllDeployMent  = iota
+	GetAllDeployMent = iota
 	GetSpecDeployMent
 	GetAllService
 	GetSpecService
@@ -135,6 +135,22 @@ func (k *K8sMetaData) GetServiceV1Beta() (service k8smodel.K8sServiceInfo, err e
 	return
 }
 
+// GetServiceV1Beta 获取V1版本的Service数据
+func (k *K8sMetaData) GetServiceV1() (service k8smodel.K8sService, err error) {
+	data, err := k.invokeK8sAPI(GetSpecService)
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Get ALl Service Error [%s]", err.Error()))
+		return
+	}
+
+	if err = json.Unmarshal(data, &service); err != nil {
+		logrus.Println(string(data))
+		err = errors.New(fmt.Sprintf("Unmarshal Error [%s]", err.Error()))
+	}
+
+	return
+}
+
 // GetDeployMentV1Beta 获取V1Beta版本的Deploymen数据
 func (k *K8sMetaData) GetDeployMentV1Beta() (deploy k8smodel.K8sDeploymentInfo, err error) {
 	data, err := k.invokeK8sAPI(GetAllDeployMent)
@@ -161,7 +177,7 @@ func (k *K8sMetaData) GetDeployMentStatus() (*k8smodel.K8sDeployment, error) {
 
 	k8d, err := k8smodel.K8dUnmarshal(data)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("%v Raw Data[%s]", err, string(data)))
 	}
 
 	if k8d == nil {

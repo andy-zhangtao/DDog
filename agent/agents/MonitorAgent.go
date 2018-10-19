@@ -8,6 +8,7 @@ import (
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/DDog/model/monitor"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
@@ -221,7 +222,7 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule, span zipkin.Span) 
 	sc.Msg = msg.Msg
 	sc.Span = span.Context()
 	//sc.SvcName = ""
-	this.NotifyDevEx(sc)
+	NotifyDevEx(sc)
 	return svcconf.UpdateSvcConf(sc)
 }
 
@@ -230,9 +231,38 @@ func (this *MonitorAgent) stopSVC(msg *monitor.MonitorModule, span zipkin.Span) 
 // 如果健康检测成功，则将服务置为成功
 func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Span) error {
 	logrus.WithFields(logrus.Fields{"Confirm Svc": msg.Svcname, "namespace": msg.Namespace, "msg": msg.Msg, "ip": msg.Ip}).Info(this.Name)
+	sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
+	if err != nil {
+		return err
+	}
+
+	if sc == nil {
+		return errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
+	}
+
+	var md *metadata.MetaData
+	switch msg.Namespace {
+	case "proenv":
+		fallthrough
+	case "release":
+		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
+	default:
+		md, err = metadata.GetMetaDataByRegion("", )
+	}
+
+	if err != nil {
+		sc.Deploy = _const.DeployFailed
+		sc.Msg = msg.Msg
+		return svcconf.UpdateSvcConf(sc)
+	}
+
+	mm, err := monitor.GetMonitroModule(msg.Kind, msg.Svcname, msg.Namespace)
+	if err != nil {
+		return err
+	}
 
 	if strings.ToLower(msg.Msg) == "ok" {
-		sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
+
 		if err != nil {
 			return err
 		}
@@ -241,42 +271,36 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 			return errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
 		}
 
-		if sc.Status == _const.ModifyReplica {
-			logrus.WithFields(logrus.Fields{"ID": sc.SvcName, "Status": "Modify Replica"}).Info(ModuleName)
-			return nil
-		}
+		//if sc.Status == _const.ModifyReplica {
+		//	logrus.WithFields(logrus.Fields{"ID": sc.SvcName, "Status": "Modify Replica"}).Info(ModuleName)
+		//	return nil
+		//}
 
-		mm, err := monitor.GetMonitroModule(msg.Kind, msg.Svcname, msg.Namespace)
-		if err != nil {
-			return err
-		}
+		//mm, err := monitor.GetMonitroModule(msg.Kind, msg.Svcname, msg.Namespace)
+		//if err != nil {
+		//	return err
+		//}
 
 		logrus.WithFields(logrus.Fields{"service": msg.Svcname, "value": mm}).Info(ModuleName)
 		if sc.Replicas == len(mm.Ip) {
 			/*clear msg*/
 			mm.Destory()
 			/*获取负载信息*/
-			var md *metadata.MetaData
-			switch msg.Namespace {
-			case "proenv":
-				fallthrough
-			case "release":
-				md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
-			default:
-				md, err = metadata.GetMetaDataByRegion("", )
-			}
-
-			//if msg.Namespace == "proenv" {
-			//	md, err = metadata.GetMetaDataByRegion("", "proenv")
-			//} else {
-			//	md, err = metadata.GetMetaDataByRegion("")
+			//var md *metadata.MetaData
+			//switch msg.Namespace {
+			//case "proenv":
+			//	fallthrough
+			//case "release":
+			//	md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
+			//default:
+			//	md, err = metadata.GetMetaDataByRegion("", )
 			//}
-
-			if err != nil {
-				sc.Deploy = _const.DeployFailed
-				sc.Msg = msg.Msg
-				return svcconf.UpdateSvcConf(sc)
-			}
+			//
+			//if err != nil {
+			//	sc.Deploy = _const.DeployFailed
+			//	sc.Msg = msg.Msg
+			//	return svcconf.UpdateSvcConf(sc)
+			//}
 
 			go func(span zipkin.Span) {
 				q := service.Service{
@@ -329,7 +353,9 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 
 						//span.Finish()
 						//reporter.Close()
-						break
+						//有可能是配额的问题导致失败,所以不能退出
+						time.Sleep(5 * time.Second)
+						continue
 					}
 
 					span.Annotate(time.Now(), strings.ToLower(resp.Data.ServiceInfo.Status))
@@ -373,9 +399,10 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 						lb.Port = port
 						sc.LbConfig = lb
 						sc.Deploy = _const.DeploySuc
+						sc.Status = _const.NeedDeploy
 						sc.Msg = msg.Msg
 						sc.Span = span.Context()
-						this.NotifyDevEx(sc)
+						NotifyDevEx(sc)
 						if err := svcconf.UpdateSvcConf(sc); err != nil {
 							errmessage = err.Error()
 						}
@@ -398,15 +425,16 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 		}
 	} else if strings.ToLower(msg.Msg) == "deploy" {
 		//	开始部署服务
-		sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
-		if err != nil {
-			return err
-		}
-		if sc == nil {
-			logrus.WithFields(logrus.Fields{"SvcConf": "nil"}).Error(ModuleName)
-			//msg.Destory()
-			return errors.New("SvcConf nil")
-		}
+		//sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
+		//if err != nil {
+		//	return err
+		//}
+		//if sc == nil {
+		//	logrus.WithFields(logrus.Fields{"SvcConf": "nil"}).Error(ModuleName)
+		//	//msg.Destory()
+		//	return errors.New("SvcConf nil")
+		//}
+
 		ns, reporter, err := tool.GetChildZipKinSpan(MonitorAgentName+"-Status-Service", tool.GetLocalIP(), true, span.Context())
 		if err != nil {
 			return errors.New(fmt.Sprintf("Generate Span Error [%v]", err))
@@ -422,7 +450,36 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 
 		sc.Deploy = _const.DeployIng
 		sc.Span = ns.Context()
-		this.NotifyDevEx(sc)
+
+		if sc.Status == _const.ModifyReplica {
+			q := service.Service{
+				Pub: public.Public{
+					SecretId: md.Sid,
+					Region:   md.Region,
+				},
+				ClusterId:   md.ClusterID,
+				Namespace:   msg.Namespace,
+				SecretKey:   md.Skey,
+				ServiceName: sc.SvcName,
+			}
+			q.SetDebug(true)
+			resp, err := q.QuerySvcInfo()
+
+			if err != nil {
+				if resp.Code != 0 {
+					logrus.WithFields(logrus.Fields{"RespCode": resp.Code, "Desc": resp.CodeDesc, "service": sc.SvcName}).Error(ModuleName)
+				}
+			}
+
+			mm.Ip = []string{}
+			for i := 0; i < resp.Data.ServiceInfo.CurrentReplicas; i++ {
+				mm.Ip = append(mm.Ip, "Padding By MonitorAgent")
+			}
+
+			mm.Destory()
+			mongo.SaveMonitor(mm)
+		}
+		NotifyDevEx(sc)
 	} else if strings.ToLower(msg.Msg) == "status" {
 		ns, reporter, err := tool.GetChildZipKinSpan(MonitorAgentName+"-Check-Result", tool.GetLocalIP(), true, span.Context())
 		if err != nil {
@@ -444,7 +501,7 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 }
 
 // NotifyDevEx 通知Devex更新状态
-func (this *MonitorAgent) NotifyDevEx(scf *svcconf.SvcConf) {
+func NotifyDevEx(scf *svcconf.SvcConf) {
 	var lb []string
 	for _, port := range scf.LbConfig.Port {
 		lb = append(lb, fmt.Sprintf("%s:%d", scf.LbConfig.IP, port))
@@ -465,13 +522,13 @@ func (this *MonitorAgent) NotifyDevEx(scf *svcconf.SvcConf) {
 
 	data, err := json.Marshal(&req)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"Marshal DevEx Request Error": err}).Error(this.Name)
+		logrus.WithFields(logrus.Fields{"Marshal DevEx Request Error": err}).Error(ModuleName)
 		return
 	}
 
 	err = producer.Publish("DevEx-Request-Status", data)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"Notify DevEx Error": err}).Error(this.Name)
+		logrus.WithFields(logrus.Fields{"Notify DevEx Error": err}).Error(ModuleName)
 		return
 	}
 
