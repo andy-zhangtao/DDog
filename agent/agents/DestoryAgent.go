@@ -39,7 +39,7 @@ func init() {
 }
 
 func checkEnv() {
-	for _, e := range []string{_const.EnvMongo, _const.EnvMongoDB, _const.EnvMongoName, _const.EnvMongoPasswd} {
+	for _, e := range []string{_const.EnvMongo, _const.EnvMongoDB} {
 		if os.Getenv(e) == "" {
 			logrus.WithFields(logrus.Fields{"Env Empty": e}).Panic(ModuleName)
 		}

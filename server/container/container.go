@@ -3,7 +3,6 @@ package container
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
@@ -171,55 +170,56 @@ func checkContainer(con *container.Container) error {
 	//获取不同环境的日志参数
 	//日志参数规则如下：
 	//"--log-opt gelf-address=default:udp://192.168.0.8:12201|+|proenv:udp://xxxxxxxxxxx|+|; --log-opt buf=1; --log-opt env=svcname;"
+	//不再通过gelf来搜集日志，因此去除此部分逻辑 modfiy in 2018-10-24
 	var logOpt string
-	var logOpts []string
-
-	lops := strings.Split(os.Getenv(_const.EnvDefaultLogOpt), ";")
-	if len(lops) > 0 {
-		logOpts = lops[1 : len(lops)-1]
-
-		for _, l := range lops {
-			if strings.HasPrefix(strings.TrimSpace(l), "\"--log-opt") {
-				ops := strings.Split(l, "=")
-				if len(ops) > 1 {
-					logOpt = ops[1]
-				} else {
-					logOpt = os.Getenv(_const.EnvDefaultLogOpt)
-					logrus.WithFields(logrus.Fields{"GelfAddress Value Error": l}).Error(ModuleName)
-				}
-				break
-			}
-		}
-	} else {
-		logOpt = os.Getenv(_const.EnvDefaultLogOpt)
-		logrus.WithFields(logrus.Fields{"LogOpt Value Error": os.Getenv(_const.EnvDefaultLogOpt)}).Error(ModuleName)
-	}
-
-	switch con.Nsme {
-	case "proenv":
-		_logOpt := strings.Split(logOpt, "|+|")
-		for _, l := range _logOpt {
-			if strings.HasPrefix(l, "proenv:") {
-				logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "proenv:")[1], strings.Join(logOpts, ";"))
-			}
-		}
-	case "release":
-		_logOpt := strings.Split(logOpt, "|+|")
-		for _, l := range _logOpt {
-			if strings.HasPrefix(l, "release:") {
-				logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "release:")[1], strings.Join(logOpts, ";"))
-			}
-		}
-	default:
-		_logOpt := strings.Split(logOpt, "|+|")
-		for _, l := range _logOpt {
-			if strings.HasPrefix(l, "default:") {
-				logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "default:")[1], strings.Join(logOpts, ";"))
-			}
-		}
-	}
-
-	logrus.WithFields(logrus.Fields{"namespace": con.Nsme, "log-opt": logOpt}).Info(ModuleName)
+	//var logOpts []string
+	//
+	//lops := strings.Split(os.Getenv(_const.EnvDefaultLogOpt), ";")
+	//if len(lops) > 0 {
+	//	logOpts = lops[1 : len(lops)-1]
+	//
+	//	for _, l := range lops {
+	//		if strings.HasPrefix(strings.TrimSpace(l), "\"--log-opt") {
+	//			ops := strings.Split(l, "=")
+	//			if len(ops) > 1 {
+	//				logOpt = ops[1]
+	//			} else {
+	//				logOpt = os.Getenv(_const.EnvDefaultLogOpt)
+	//				logrus.WithFields(logrus.Fields{"GelfAddress Value Error": l}).Error(ModuleName)
+	//			}
+	//			break
+	//		}
+	//	}
+	//} else {
+	//	logOpt = os.Getenv(_const.EnvDefaultLogOpt)
+	//	logrus.WithFields(logrus.Fields{"LogOpt Value Error": os.Getenv(_const.EnvDefaultLogOpt)}).Error(ModuleName)
+	//}
+	//
+	//switch con.Nsme {
+	//case "proenv":
+	//	_logOpt := strings.Split(logOpt, "|+|")
+	//	for _, l := range _logOpt {
+	//		if strings.HasPrefix(l, "proenv:") {
+	//			logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "proenv:")[1], strings.Join(logOpts, ";"))
+	//		}
+	//	}
+	//case "release":
+	//	_logOpt := strings.Split(logOpt, "|+|")
+	//	for _, l := range _logOpt {
+	//		if strings.HasPrefix(l, "release:") {
+	//			logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "release:")[1], strings.Join(logOpts, ";"))
+	//		}
+	//	}
+	//default:
+	//	_logOpt := strings.Split(logOpt, "|+|")
+	//	for _, l := range _logOpt {
+	//		if strings.HasPrefix(l, "default:") {
+	//			logOpt = fmt.Sprintf("\"--log-opt gelf-address=%s;%s;\"", strings.Split(l, "default:")[1], strings.Join(logOpts, ";"))
+	//		}
+	//	}
+	//}
+	//
+	//logrus.WithFields(logrus.Fields{"namespace": con.Nsme, "log-opt": logOpt}).Info(ModuleName)
 	if con.Env == nil {
 		con.Env = map[string]string{
 			"LOGCHAIN_DRIVER": os.Getenv(_const.EnvDefaultLogDriver),

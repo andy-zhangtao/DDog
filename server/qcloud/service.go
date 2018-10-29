@@ -1,30 +1,30 @@
 package qcloud
 
 import (
-	"net/http"
-	"github.com/andy-zhangtao/qcloud_api/v1/public"
-	"github.com/andy-zhangtao/qcloud_api/v1/service"
-	"errors"
 	"encoding/json"
-	"github.com/andy-zhangtao/DDog/const"
-	"github.com/andy-zhangtao/DDog/server/mongo"
-	"gopkg.in/mgo.v2/bson"
-	"strconv"
-	"strings"
-	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/andy-zhangtao/gogather/zsort"
+	"errors"
 	"fmt"
+	"github.com/andy-zhangtao/DDog/bridge"
+	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/k8s"
 	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
-	gt "github.com/andy-zhangtao/gogather/time"
-	"github.com/andy-zhangtao/DDog/model/container"
-	"github.com/andy-zhangtao/DDog/model/svcconf"
-	"github.com/andy-zhangtao/DDog/model/metadata"
-	"time"
-	"github.com/sirupsen/logrus"
-	"github.com/andy-zhangtao/DDog/bridge"
-	"os"
 	"github.com/andy-zhangtao/DDog/model/agent"
+	"github.com/andy-zhangtao/DDog/model/container"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/andy-zhangtao/DDog/server/tool"
+	gt "github.com/andy-zhangtao/gogather/time"
+	"github.com/andy-zhangtao/gogather/zsort"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2/bson"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var globalChan chan int
@@ -357,7 +357,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		"ZIPKIN_TRACID":         traceid,
 		"ZIPKIN_ID":             parentid,
 		"ZIPKIN_PARENTID":       id,
-		"HULK_PROJECT_NAME":     "Scheduler-Spider-Agent",
+		"HULK_PROJECT_NAME":     "Scheduler-Spider-Agent" + os.Getenv(_const.ENV_DEPLOY_ENV),
 		"HULK_PROJECT_VERSION":  "v0.1.0-beta",
 	}
 

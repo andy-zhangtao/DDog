@@ -1,15 +1,16 @@
 package cloudservice
 
 import (
-	"github.com/andy-zhangtao/DDog/model/caasmodel"
-	"strings"
-	"github.com/andy-zhangtao/DDog/model/metadata"
 	"errors"
 	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/model/caasmodel"
+	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/DDog/server/dbservice"
 	"github.com/andy-zhangtao/qcloud_api/v1/namespace"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
+	"github.com/sirupsen/logrus"
 	"net/url"
-	"github.com/andy-zhangtao/DDog/server/dbservice"
+	"strings"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/19.
@@ -66,6 +67,7 @@ func CheckNamespace(ns caasmodel.NameSpace) (err error) {
 				Owner: ns.Owner,
 			})
 		} else {
+			logrus.WithFields(logrus.Fields{"Get Namespace Error": err}).Error(ModuleName)
 			return err
 		}
 	}

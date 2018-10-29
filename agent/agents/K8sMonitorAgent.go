@@ -44,7 +44,7 @@ func (this *K8sMonitorAgent) Run() {
 
 	workerHome[K8sMonitorAgentName] = workerChan
 	producer, _ = nsq.NewProducer(os.Getenv(_const.EnvNsqdEndpoint), nsq.NewConfig())
-	
+
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = 1000
 	r, err := nsq.NewConsumer(_const.SvcK8sMonitorMsg, K8sMonitorAgentName, cfg)
@@ -186,7 +186,7 @@ func checkServiceStata(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModul
 	}
 
 	(*span).Annotate(time.Now(), fmt.Sprintf("Repllicas [%v] ReadyReplicas [%v]", deploy.Status.Replicas, deploy.Status.ReadyReplicas))
-	if deploy.Status.Replicas == deploy.Status.ReadyReplicas {
+	if (deploy.Status.Replicas == deploy.Status.ReadyReplicas) && (deploy.Status.ReadyReplicas == deploy.Status.UpdatedReplicas) {
 		return true, nil
 	}
 

@@ -9,6 +9,8 @@ import (
 	"github.com/andy-zhangtao/DDog/server/svcconf"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/sirupsen/logrus"
+	"strings"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/4.
@@ -63,7 +65,13 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 		return
 	}
 
-	return smData.Data.Instance, nil
+	for _, i := range smData.Data.Instance {
+		logrus.WithFields(logrus.Fields{"status": i.Status, "name": i.Name}).Info(ModuleName)
+		if strings.ToLower(i.Status) == "running" {
+			instance = append(instance, i)
+		}
+	}
+	return instance, nil
 }
 
 //ModifyInstancesReplica  修改实例副本集数量
@@ -73,7 +81,7 @@ func ModifyInstancesReplica(name, namespace string, replica int) (err error) {
 		return err
 	}
 
-	scf.Replicas = replica
+	//scf.Replicas = replica
 	var md *metadata.MetaData
 
 	switch namespace {
@@ -96,7 +104,7 @@ func ModifyInstancesReplica(name, namespace string, replica int) (err error) {
 		ClusterId:   md.ClusterID,
 		ServiceName: scf.SvcName,
 		Namespace:   scf.Namespace,
-		ScaleTo:     scf.Replicas,
+		ScaleTo:     replica,
 		SecretKey:   md.Skey,
 	}
 

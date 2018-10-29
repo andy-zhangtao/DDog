@@ -71,12 +71,14 @@ func Restart(servicename, namespace string) (err error) {
 		return
 	}
 
-	go waitRestartEnd(md, servicename, namespace, producer)
+	go waitRestartEnd(md, scf.SvcName, servicename, namespace, producer)
 	return
 
 }
 
-func waitRestartEnd(md *metadata.MetaData, servicename, namespace string, producer *nsq.Producer) {
+//svcname 集群中deployment名称
+//servicename 对外暴露的统一服务名
+func waitRestartEnd(md *metadata.MetaData, svcname, servicename, namespace string, producer *nsq.Producer) {
 	q := service.Service{
 		Pub: public.Public{
 			SecretId: md.Sid,
@@ -85,7 +87,7 @@ func waitRestartEnd(md *metadata.MetaData, servicename, namespace string, produc
 		ClusterId:   md.ClusterID,
 		Namespace:   namespace,
 		SecretKey:   md.Skey,
-		ServiceName: servicename,
+		ServiceName: svcname,
 	}
 	q.SetDebug(true)
 

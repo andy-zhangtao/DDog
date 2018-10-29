@@ -1,11 +1,12 @@
 package mongo
 
 import (
-	"os"
-	"github.com/andy-zhangtao/DDog/const"
 	"errors"
-	"gopkg.in/mgo.v2"
+	"github.com/andy-zhangtao/_hulk_client"
+	"github.com/andy-zhangtao/DDog/const"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2"
+	"os"
 	"time"
 )
 
@@ -31,6 +32,7 @@ func check() error {
 }
 
 func init() {
+	_hulk_client.Run()
 	logrus.Println("=====Connect Mongo=====")
 	err := check()
 	if err != nil {
