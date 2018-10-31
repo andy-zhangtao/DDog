@@ -91,12 +91,27 @@ func (this *K8sMonitorAgent) Run() {
 
 			logrus.WithFields(logrus.Fields{"Kind": msg.Kind, "Svc": msg.Svcname, "Namespace": msg.Namespace, "ip": msg.Ip, "msg": msg.Msg}).Info(K8sMonitorAgentName)
 
+			isStand := false
+			var apiServer k8sconfig.K8sCluster
 			for _, a := range k8sMasters {
 				if a.Namespace == msg.Namespace {
-					this.handlerMsg(a, &msg, &span)
+					isStand = true
+					apiServer = a
+					break
 				}
 			}
 
+			if !isStand {
+				//	使用默认的K8s集群数据
+				for _, a := range k8sMasters {
+					if a.Namespace == "devenv" {
+						apiServer = a
+						apiServer.Namespace = msg.Namespace
+						break
+					}
+				}
+			}
+			go this.handlerMsg(apiServer, &msg, &span)
 			span.Finish()
 			reporter.Close()
 			m.Finish()
@@ -135,6 +150,7 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 			return
 		}
 
+		logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "stat": currentDeploySvc[msg.Svcname]}).Info(ModuleName)
 		if currentDeploySvc[msg.Svcname] == INSTANCE_INIT {
 			currentDeploySvc[msg.Svcname] = INSTANCE_LOOKUP
 
@@ -186,6 +202,7 @@ func checkServiceStata(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModul
 	}
 
 	(*span).Annotate(time.Now(), fmt.Sprintf("Repllicas [%v] ReadyReplicas [%v]", deploy.Status.Replicas, deploy.Status.ReadyReplicas))
+	logrus.WithFields(logrus.Fields{"Repllicas": deploy.Status.Replicas, "ReadyReplicas": deploy.Status.ReadyReplicas, "UpdatedReplicas": deploy.Status.UpdatedReplicas, "name": deploy.Metadata.Name}).Info(ModuleName)
 	if (deploy.Status.Replicas == deploy.Status.ReadyReplicas) && (deploy.Status.ReadyReplicas == deploy.Status.UpdatedReplicas) {
 		return true, nil
 	}
@@ -222,6 +239,8 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 			case _const.DEVENV:
 				fallthrough
 			case _const.TESTENV:
+				fallthrough
+			default:
 				//	开发和测试环境，IP属于192.168.0.0/16网段
 				if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "192.168.") {
 					time.Sleep(3 * time.Second)
