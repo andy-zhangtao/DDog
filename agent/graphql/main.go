@@ -8,6 +8,8 @@ import (
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/server/caas"
 	"github.com/andy-zhangtao/DDog/server/dbservice"
+	"github.com/andy-zhangtao/DDog/server/eventService"
+
 	"github.com/gorilla/mux"
 	"github.com/graphql-go/graphql"
 	"github.com/rs/cors"
@@ -87,6 +89,7 @@ func main() {
 var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 	Name: "RootQuery",
 	Fields: graphql.Fields{
+		"queryEvents": eventService.WatchEvent,
 		//返回所有命名空间数据
 		"namespace": &graphql.Field{
 			Type:        graphql.NewList(caas.CaasNameSpaceType),

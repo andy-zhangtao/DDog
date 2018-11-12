@@ -1,18 +1,19 @@
 package agents
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/model/agent"
+	"github.com/andy-zhangtao/DDog/model/monitor"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/qcloud"
+	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
-	"github.com/andy-zhangtao/DDog/const"
-	"encoding/json"
-	"github.com/andy-zhangtao/DDog/model/agent"
 	"net/http"
-	"fmt"
-	"github.com/andy-zhangtao/DDog/server/qcloud"
-	"errors"
 	"os"
-	"github.com/andy-zhangtao/DDog/model/monitor"
-	"github.com/andy-zhangtao/DDog/server/tool"
 	"time"
 )
 
@@ -34,6 +35,7 @@ func (this *DeployAgent) Run() {
 	workerChan := make(chan *nsq.Message)
 
 	workerHome[this.Name] = workerChan
+	producer, _ = nsq.NewProducer(os.Getenv(_const.EnvNsqdEndpoint), nsq.NewConfig())
 
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = 1000
@@ -56,32 +58,32 @@ func (this *DeployAgent) Run() {
 
 			logrus.WithFields(logrus.Fields{"SvcName": msg.SvcName, "NameSpace": msg.NameSpace, "Upgrade": msg.Upgrade, "Replicas": msg.Replicas}).Info(this.Name)
 
-			span, reporter, err := tool.GetChildZipKinSpan(DeployAgentName, tool.GetLocalIP(), true, msg.Span)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(DeployAgentName)
-			} else {
-				logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(DeployAgentName)
-				span.Tag("service", msg.SvcName)
-				span.Tag("namespace", msg.NameSpace)
-				span.Tag("upgrade", fmt.Sprintf("%v", msg.Upgrade))
-				span.Tag("replicas", fmt.Sprintf("%v", msg.Replicas))
-				span.Annotate(time.Now(), "Deploy Agent Server Receive Message")
-			}
-
 			go func() {
+				span, reporter, err := tool.GetChildZipKinSpan(DeployAgentName, tool.GetLocalIP(), true, msg.Span)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(DeployAgentName)
+				} else {
+					logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(DeployAgentName)
+					span.Tag("service", msg.SvcName)
+					span.Tag("namespace", msg.NameSpace)
+					span.Tag("upgrade", fmt.Sprintf("%v", msg.Upgrade))
+					span.Tag("replicas", fmt.Sprintf("%v", msg.Replicas))
+					span.Annotate(time.Now(), "Deploy Agent Server Receive Message")
+				}
+
 				var errmessage = ""
-				defer func() {
-					if errmessage != "" {
-						span.Annotate(time.Now(), fmt.Sprintf("%s-Deploy Error [%s]", DeployAgentName, errmessage))
-					}
-					span.Finish()
-					reporter.Close()
-				}()
+
 				err = this.handlerMsg(&msg)
 				if err != nil {
-					errmessage = err.Error()
 					logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(this.Name)
+					errmessage = err.Error()
 				}
+
+				if errmessage != "" {
+					span.Annotate(time.Now(), fmt.Sprintf("%s-Deploy Error [%s]", DeployAgentName, errmessage))
+				}
+				span.Finish()
+				reporter.Close()
 			}()
 
 			m.Finish()
@@ -133,7 +135,25 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 
 	qcloud.RunService(&writer, r)
 
+	sc, err := svcconf.GetSvcConfByName(msg.SvcName, msg.NameSpace)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"err": err, "name": msg.SvcName}).Error(DeployAgentName)
+		return err
+	}
+
+	if sc == nil {
+		err = errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.SvcName, msg.NameSpace))
+		logrus.WithFields(logrus.Fields{"err": err, "name": msg.SvcName}).Error(DeployAgentName)
+		return err
+	}
+
 	logrus.WithFields(logrus.Fields{"Status": writer.status, "Header": writer.header}).Info(this.Name)
+	//发送服务创建信息
+	sc.Deploy = _const.DeployIng
+	//sc.Msg = msg.SvcName
+	NotifyEvent(sc, _const.CREATESERVICE)
+	NotifyDevEx(sc)
+
 	if writer.status != http.StatusOK && writer.status != 0 {
 		logrus.WithFields(logrus.Fields{"Deploy Service Error": writer.data}).Error(this.Name)
 		m := monitor.MonitorModule{
@@ -146,7 +166,7 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 		if err != nil {
 			return err
 		}
-		producer, _ := nsq.NewProducer(os.Getenv(_const.EnvNsqdEndpoint), nsq.NewConfig())
+
 		producer.Publish(_const.SvcMonitorMsg, data)
 		return errors.New(writer.data)
 	}

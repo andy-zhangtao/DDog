@@ -25,7 +25,7 @@ func init() {
 
 func main() {
 
-	logrus.WithFields(logrus.Fields{"Version": "v0.6.10", "Agent": os.Getenv("DDOG_AGENT_NAME")}).Info(ModuleName)
+	logrus.WithFields(logrus.Fields{"Version": "v1.0.1", "Agent": os.Getenv("DDOG_AGENT_NAME")}).Info(ModuleName)
 
 	switch (os.Getenv("DDOG_AGENT_NAME")) {
 	case agents.MonitorAgentName:

@@ -101,6 +101,8 @@ func (this *K8sMonitorAgent) Run() {
 				}
 			}
 
+			//logrus.WithFields(logrus.Fields{"isStand": isStand, "api": apiServer.Name}).Info(K8sMonitorAgentName)
+
 			if !isStand {
 				//	使用默认的K8s集群数据
 				for _, a := range k8sMasters {
@@ -111,6 +113,8 @@ func (this *K8sMonitorAgent) Run() {
 					}
 				}
 			}
+
+			logrus.WithFields(logrus.Fields{"isStand": isStand, "api": apiServer.Name}).Info(K8sMonitorAgentName)
 			go this.handlerMsg(apiServer, &msg, &span)
 			span.Finish()
 			reporter.Close()
@@ -130,25 +134,47 @@ func (this *K8sMonitorAgent) Run() {
 }
 
 func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, span *zipkin.Span) {
+	logrus.WithFields(logrus.Fields{"msg": msg.Msg, "name": msg.Svcname}).Info(K8sMonitorAgentName)
+	sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"err": err, "name": msg.Svcname}).Error(K8sMonitorAgentName)
+		return
+	}
+
+	if sc == nil {
+		err = errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
+		logrus.WithFields(logrus.Fields{"err": err, "name": msg.Svcname}).Error(K8sMonitorAgentName)
+		(*span).Annotate(time.Now(), err.Error())
+		return
+	}
+
 	switch strings.ToLower(msg.Msg) {
 	case "deploy":
 		//	接受到部署消息
 		if _, ok := currentDeploySvc[msg.Svcname]; !ok {
 			//只添加新增的服务
 			currentDeploySvc[msg.Svcname] = INSTANCE_INIT
+			//	发送服务创建事件，同时通知Devex修改状态
+			sc.Deploy = _const.HealthCheck
+			//sc.Msg = sc.SvcName
+			//sc.Span = (*span).Context()
+			//NotifyEvent(sc, _const.CREATESERVICE)
+			NotifyDevEx(sc)
 		}
 	case "ok":
 		//	实例部署成功
-		sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
-		if err != nil {
-			return
-		}
-
-		if sc == nil {
-			err = errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
-			(*span).Annotate(time.Now(), err.Error())
-			return
-		}
+		//sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
+		//if err != nil {
+		//	logrus.WithFields(logrus.Fields{"err": err, "name": msg.Svcname}).Error(K8sMonitorAgentName)
+		//	return
+		//}
+		//
+		//if sc == nil {
+		//	err = errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
+		//	logrus.WithFields(logrus.Fields{"err": err, "name": msg.Svcname}).Error(K8sMonitorAgentName)
+		//	(*span).Annotate(time.Now(), err.Error())
+		//	return
+		//}
 
 		logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "stat": currentDeploySvc[msg.Svcname]}).Info(ModuleName)
 		if currentDeploySvc[msg.Svcname] == INSTANCE_INIT {

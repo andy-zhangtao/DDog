@@ -512,12 +512,14 @@ func NotifyDevEx(scf *svcconf.SvcConf) {
 		DeployEnv   string             `json:"deploy_env"`
 		LoadBalance []string           `json:"load_balance"`
 		Span        zmodel.SpanContext `json:"span"`
+		Svcname     string             `json:"image"`
 	}{
 		scf.Name,
 		scf.Deploy,
 		scf.Namespace,
 		lb,
 		scf.Span,
+		scf.SvcName,
 	}
 
 	data, err := json.Marshal(&req)
@@ -529,6 +531,46 @@ func NotifyDevEx(scf *svcconf.SvcConf) {
 	err = producer.Publish("DevEx-Request-Status", data)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"Notify DevEx Error": err}).Error(ModuleName)
+		return
+	}
+
+	return
+}
+
+func NotifyEvent(scf *svcconf.SvcConf, kind int) {
+
+	ext := make(map[string]string)
+
+	e := struct {
+		Name      string            `json:"name"`
+		Service   string            `json:"service"`
+		Namespace string            `json:"namespace"`
+		Kind      int               `json:"kind"`
+		Ext       map[string]string `json:"ext"`
+	}{
+		Name:      scf.Name,
+		Service:   scf.SvcName,
+		Namespace: scf.Namespace,
+		Kind:      kind,
+		Ext:       ext,
+	}
+
+	switch kind {
+	case _const.CREATESERVICE:
+		e.Ext["type"] = "Normal"
+		e.Ext["reason"] = "Check Point"
+		e.Ext["message"] = "开始创建服务"
+	}
+
+	data, err := json.Marshal(&e)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"MarshalError": err, "Event": e}).Errorln(ModuleName)
+		return
+	}
+
+	err = producer.Publish("K8sEventsSvc", data)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Notify Event Error": err}).Error(ModuleName)
 		return
 	}
 

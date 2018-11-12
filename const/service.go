@@ -16,6 +16,13 @@ const (
 )
 
 const (
-	ReplicaIng = 25
-	ReplicaEnd = 26
+	ReplicaIng       = 25
+	ReplicaEnd       = 26
+	HealthCheck      = 29
+	HealthCheckFAILE = 30
+)
+
+const (
+	CREATESERVICE = 1
+	HEALTHCHECK   = 2
 )
