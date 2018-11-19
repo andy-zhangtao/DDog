@@ -78,24 +78,29 @@ func (this *SpiderAgent) Run() {
 				if err != nil {
 					logrus.WithFields(logrus.Fields{"Get Process Error": err}).Error(SpiderAgentName)
 				}
-				if len(porcess) == 2 && ((porcess[0].Executable() == "pause" && porcess[1].Executable() == "ddog-agent") || (porcess[1].Executable() == "pause" && porcess[0].Executable() == "ddog-agent")) {
-					//	另外一个容器已经退出
-					logrus.WithFields(logrus.Fields{"Send Quit Msg": msg}).Info(ModuleName)
-					if msg != "" {
-						data, _ := json.Marshal(monitor.MonitorModule{
-							Kind:      this.Name,
-							Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
-							Namespace: os.Getenv("DDOG_AGENT_SPIDER_NS"),
-							Msg:       "status",
-							Status:    msg,
-							Span:      ctx,
-						})
+				//兼容k8s 1.10版本
+				if len(porcess) == 1 && porcess[0].Executable() == "ddog-agent" {
+					this.AlivaChan <- 2 // 为了兼容以前的判断，所以给个固定值
+				} else {
+					if len(porcess) == 2 && ((porcess[0].Executable() == "pause" && porcess[1].Executable() == "ddog-agent") || (porcess[1].Executable() == "pause" && porcess[0].Executable() == "ddog-agent")) {
+						//	另外一个容器已经退出
+						logrus.WithFields(logrus.Fields{"Send Quit Msg": msg}).Info(ModuleName)
+						if msg != "" {
+							data, _ := json.Marshal(monitor.MonitorModule{
+								Kind:      this.Name,
+								Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
+								Namespace: os.Getenv("DDOG_AGENT_SPIDER_NS"),
+								Msg:       "status",
+								Status:    msg,
+								Span:      ctx,
+							})
 
-						bridge.SendMonitorMsg(string(data))
+							bridge.SendMonitorMsg(string(data))
+						}
+
 					}
-
+					this.AlivaChan <- len(porcess)
 				}
-				this.AlivaChan <- len(porcess)
 			}
 		}
 	}()

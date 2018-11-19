@@ -73,6 +73,11 @@ func init() {
 
 //使用GraphQL接口的DDog Server
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
 
 	router := mux.NewRouter()
 	router.Path("/api").HandlerFunc(handleGraphQL)
@@ -830,6 +835,45 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					return err.Error(), nil
 				}
 				return nil, nil
+			},
+		},
+		"miniReplicas": &graphql.Field{
+			Type:        graphql.Int,
+			Description: "Update the service mini instance number",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"namespace": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"replica": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.Int),
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				namespace, _ := p.Args["namespace"].(string)
+				replica, _ := p.Args["replica"].(int)
+
+				cf, err := svcconf.GetSvcConfByName(name, namespace)
+				if err != nil {
+					if strings.Contains(err.Error(), "not found") {
+						return nil, nil
+					}
+					return nil, err
+				}
+
+				cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", replica)
+				if err = mongo.DeleteSvcConfById(cf.Id.Hex()); err != nil {
+					return nil, err
+				} else {
+					if err = mongo.SaveSvcConfig(cf); err != nil {
+						return nil, err
+					}
+				}
+
+				return replica, nil
 			},
 		},
 		"replica": &graphql.Field{
