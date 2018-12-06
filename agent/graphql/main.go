@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/DDog/check"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/server/caas"
 	"github.com/andy-zhangtao/DDog/server/dbservice"
 	"github.com/andy-zhangtao/DDog/server/eventService"
+	"github.com/andy-zhangtao/_hulk_client"
 
 	"github.com/gorilla/mux"
 	"github.com/graphql-go/graphql"
@@ -41,8 +41,10 @@ import (
 )
 
 const ModuleName = "DDog-Server-GraphQL"
-const ModuleVersion = "v0.1.0"
-const ModuleResume = "Caas Graphql接口平台"
+
+var _VERSION_ string
+var _BUILD_ string
+//const ModuleResume = "Caas Graphql接口平台"
 
 var producer *nsq.Producer
 
@@ -80,6 +82,8 @@ func main() {
 	}()
 
 	router := mux.NewRouter()
+	router.Path("/version").HandlerFunc(ping)
+	router.Path("/ping").HandlerFunc(ping)
 	router.Path("/api").HandlerFunc(handleGraphQL)
 	router.Path("/backup/{filename}").HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		filename := mux.Vars(request)["filename"]
@@ -89,6 +93,10 @@ func main() {
 	router.Handle("/download/{filename}", http.StripPrefix("/download/", http.FileServer(http.Dir("/tmp"))))
 	handler := cors.AllowAll().Handler(router)
 	logrus.Fatal(http.ListenAndServe(":8000", handler))
+}
+
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(fmt.Sprintf("%s BUILD %s", _VERSION_, _BUILD_)))
 }
 
 var rootQuery = graphql.NewObject(graphql.ObjectConfig{

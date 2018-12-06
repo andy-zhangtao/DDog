@@ -1,6 +1,7 @@
 package bridge
 
 import (
+	"fmt"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
@@ -57,6 +58,9 @@ func SendDestoryMsg(msg string) error {
 // SendMonitorMsg 发布监控信息消息
 func SendMonitorMsg(msg string) error {
 	logrus.WithFields(logrus.Fields{"Send Message": msg}).Info(ModuleName)
+	if os.Getenv("DDOG_AGENT_SPIDER_NS") != "" {
+		return makeMsg(fmt.Sprintf("%s_%s", _const.SvcK8sMonitorMsg, os.Getenv("DDOG_AGENT_SPIDER_NS")), msg)
+	}
 	return makeMsg(_const.SvcK8sMonitorMsg, msg)
 	//return makeMsg(_const.SvcMonitorMsg, msg)
 }

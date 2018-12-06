@@ -47,9 +47,11 @@ func (this *K8sMonitorAgent) Run() {
 
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = 1000
-	r, err := nsq.NewConsumer(_const.SvcK8sMonitorMsg, K8sMonitorAgentName, cfg)
+
+	topic := fmt.Sprintf("%s_%s", _const.SvcK8sMonitorMsg, os.Getenv(_const.ENV_WATCH_MONITOR_NAMESPACE))
+	r, err := nsq.NewConsumer(topic, K8sMonitorAgentName, cfg)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"Create Consumer Error": err, "Agent": K8sMonitorAgentName}).Error(this.Name)
+		logrus.WithFields(logrus.Fields{"Create Consumer Error": err, "Agent": K8sMonitorAgentName, "topic": topic}).Error(this.Name)
 		return
 	}
 
@@ -61,11 +63,11 @@ func (this *K8sMonitorAgent) Run() {
 
 	currentDeploySvc = make(map[string]int)
 
-	logrus.WithFields(logrus.Fields{"K8s API Service": k8sMasters}).Info(K8sMonitorAgentName)
+	logrus.WithFields(logrus.Fields{"K8s API Service": k8sMasters, "Watch-Namespace": os.Getenv(_const.ENV_WATCH_MONITOR_NAMESPACE)}).Info(K8sMonitorAgentName)
 
 	go func() {
 		for m := range workerChan {
-			logrus.WithFields(logrus.Fields{_const.SvcK8sMonitorMsg: string(m.Body)}).Info(K8sMonitorAgentName)
+			logrus.WithFields(logrus.Fields{topic: string(m.Body)}).Info(K8sMonitorAgentName)
 			msg := monitor.MonitorModule{}
 
 			err = json.Unmarshal(m.Body, &msg)
@@ -76,7 +78,6 @@ func (this *K8sMonitorAgent) Run() {
 			}
 
 			span, reporter, err := tool.GetChildZipKinSpan(K8sMonitorAgentName, tool.GetLocalIP(), true, msg.Span)
-
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(K8sMonitorAgentName)
 			} else {
@@ -90,7 +91,6 @@ func (this *K8sMonitorAgent) Run() {
 			}
 
 			logrus.WithFields(logrus.Fields{"Kind": msg.Kind, "Svc": msg.Svcname, "Namespace": msg.Namespace, "ip": msg.Ip, "msg": msg.Msg}).Info(K8sMonitorAgentName)
-
 			isStand := false
 			var apiServer k8sconfig.K8sCluster
 			for _, a := range k8sMasters {
@@ -100,8 +100,6 @@ func (this *K8sMonitorAgent) Run() {
 					break
 				}
 			}
-
-			//logrus.WithFields(logrus.Fields{"isStand": isStand, "api": apiServer.Name}).Info(K8sMonitorAgentName)
 
 			if !isStand {
 				//	使用默认的K8s集群数据
@@ -190,6 +188,7 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 					return
 				}
 
+				logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "isReady": isReady}).Info(ModuleName)
 				if isReady {
 					ip, port, err := getServiceLB(apiServer, msg, span)
 					if err != nil {
@@ -207,6 +206,7 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 					sc.Status = _const.NeedDeploy
 					sc.Msg = msg.Msg
 					sc.Span = (*span).Context()
+					logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "lb": lb}).Info(ModuleName)
 					NotifyDevEx(sc)
 
 					break

@@ -15,6 +15,8 @@ const (
 	ModuleName = "DDog Agent"
 )
 
+var _VERSION_ string
+
 func init() {
 	_hulk_client.Run()
 	if os.Getenv(_const.EnvNsqdEndpoint) == "" {
@@ -25,7 +27,7 @@ func init() {
 
 func main() {
 
-	logrus.WithFields(logrus.Fields{"Version": "v1.0.1", "Agent": os.Getenv("DDOG_AGENT_NAME")}).Info(ModuleName)
+	logrus.WithFields(logrus.Fields{"Version": _VERSION_, "Agent": os.Getenv("DDOG_AGENT_NAME")}).Info(ModuleName)
 
 	switch (os.Getenv("DDOG_AGENT_NAME")) {
 	case agents.MonitorAgentName:

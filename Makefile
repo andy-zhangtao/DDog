@@ -1,25 +1,26 @@
 
 .PHONY: build
 name = ddog
+version = v1.1.1-DEBUG
 
 client: agent/*.go
 	rm -rf bin/ddog-agent
-	cd agent;go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o $(name)-agent
+	cd agent;go build -ldflags "-X main._VERSION_=$(version) -X main._BUILD_=$(shell date +%Y%m%d_%H%M%S)" -o $(name)-agent
 	mv agent/ddog-agent bin/ddog-agent
 
 runclient: client
 	bin/ddog-agent
 
 graphql: agent/graphql/*.go
-	cd agent/graphql;     go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o ddog-graph-srv
+	cd agent/graphql;     go build -ldflags "-X main._VERSION_=$(version) -X main._BUILD_=$(shell date +%Y%m%d_%H%M%S)" -o ddog-graph-srv
 	mv agent/graphql/ddog-graph-srv bin/ddog-graph-srv
 
 graphql-release: agent/graphql/*.go
-	cd agent/graphql;GOOS=linux GOARCH=amd64 go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d)" -a -o ddog-graph-srv
+	cd agent/graphql;GOOS=linux GOARCH=amd64 go build -ldflags "-X main._VERSION_=$(version) -X main._BUILD_=$(shell date +%Y%m%d_%H%M%S)" -a -o ddog-graph-srv
 	mv agent/graphql/ddog-graph-srv bin/ddog-graph-srv
 
 build: *.go
-	go build -ldflags "-X main._VERSION_=$(shell date +%Y%m%d-%H%M%S)" -o $(name)
+	go build -ldflags "-X main._VERSION_=$(version) -X main._BUILD_=$(shell date +%Y%m%d_%H%M%S)" -o $(name)
 
 run: build
 	./$(name)

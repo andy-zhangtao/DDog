@@ -33,9 +33,10 @@ const (
 	ENV_AGENT_HULK_ENDPOINT    = "Agent_Hulk_Endpoint"
 	ENV_DEVEX_GRAPHQL_ENDPOINT = "Devex_Graph_Endpoint"
 	//服务部署标志位,用来区分部署集群.
-	ENV_DEPLOY_ENV            = "DDOG_DEPLOY_ENV"
-	ENV_AGENT_INFLUX_DB       = "DDOG_Influx_DB"
-	Env_AGENT_INFLUX_ENDPOINT = "DDOG_Influx_Endpoint"
+	ENV_DEPLOY_ENV              = "DDOG_DEPLOY_ENV"
+	ENV_AGENT_INFLUX_DB         = "DDOG_Influx_DB"
+	Env_AGENT_INFLUX_ENDPOINT   = "DDOG_Influx_Endpoint"
+	ENV_WATCH_MONITOR_NAMESPACE = "DDOG_WATCH_MON_NAMESPACE" //K8sMonitor 监控命名空间
 )
 
 var DEBUG = false

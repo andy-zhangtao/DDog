@@ -14,6 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -220,16 +221,23 @@ func checkContainer(con *container.Container) error {
 	//}
 	//
 	//logrus.WithFields(logrus.Fields{"namespace": con.Nsme, "log-opt": logOpt}).Info(ModuleName)
+	//生成两个时间变量，一个是日期用来区分日志时间，一个是时分秒，用来区分日志顺序
+	create_date := time.Now().Format("2006-01-02")
+	create_time := strings.Replace(time.Now().Format("15:04:05"), ":", "_", -1)
 	if con.Env == nil {
 		con.Env = map[string]string{
 			"LOGCHAIN_DRIVER": os.Getenv(_const.EnvDefaultLogDriver),
 			"svcname":         con.Svc,
+			"CREATEDATE":      create_date,
+			"CREATETIME":      create_time,
 			"log_opt":         logOpt,
 		}
 	} else {
 		con.Env["LOGCHAIN_DRIVER"] = os.Getenv(_const.EnvDefaultLogDriver)
 		con.Env["svcname"] = con.Svc
 		con.Env["log_opt"] = logOpt
+		con.Env["CREATEDATE"] = create_date
+		con.Env["CREATETIME"] = create_time
 	}
 
 	return nil
