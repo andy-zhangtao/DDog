@@ -407,11 +407,14 @@ func createContainer(con *container.Container) (err error) {
 // upgreadeSvcConf 异步更新服务配置信息
 // updataNet 是否需要同步更新网络信息，在更新容器配置信息时，已经更新过网络信息了，这里就不需要再更新了
 func upgreadeSvcConf(con container.Container, updateNet bool) (err error) {
+	logrus.WithFields(logrus.Fields{"reqdy-find-old-svc": con}).Info(ModuleName)
 	sv, err := svcconf.GetSvcConfByName(con.Svc, con.Nsme)
 	if sv == nil {
 		err = errors.New(_const.SVCNoExist)
 		return
 	}
+
+	logrus.WithFields(logrus.Fields{"find-old-svc": sv}).Info(ModuleName)
 	sv.Status = 0
 	if updateNet {
 		//portMap := make(map[int]int)

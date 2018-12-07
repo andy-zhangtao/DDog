@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/DDog/agent/agents"
 	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/sirupsen/logrus"
 	"os"
 )
@@ -15,7 +15,7 @@ const (
 	ModuleName = "DDog Agent"
 )
 
-var _VERSION_ string
+var _VERSION_ = "v1.1.0"
 
 func init() {
 	_hulk_client.Run()

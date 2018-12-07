@@ -561,11 +561,17 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				} else {
 					cf.Replicas = conf.Replicas
 					cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", cf.Replicas)
+					cf.SvcNameBak = map[string]svcconf.LoadBlance{cf.SvcName: cf.LbConfig}
+					cf.SvcName = ""
+					logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex()}).Info(ModuleName)
 					if err = mongo.DeleteSvcConfById(cf.Id.Hex()); err != nil {
+						logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex(), "error": err}).Info(ModuleName)
 						errmessage = err.Error()
 						return nil, err
 					} else {
+						logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex(), "save": cf}).Info(ModuleName)
 						if err = mongo.SaveSvcConfig(cf); err != nil {
+							logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex(), "save-error": err}).Info(ModuleName)
 							errmessage = err.Error()
 							return nil, err
 						}

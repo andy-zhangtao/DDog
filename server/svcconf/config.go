@@ -1,25 +1,25 @@
 package svcconf
 
 import (
-	"net/http"
-	"gopkg.in/mgo.v2/bson"
-	"errors"
-	"github.com/andy-zhangtao/DDog/const"
-	"io/ioutil"
-	"github.com/andy-zhangtao/DDog/server/tool"
 	"encoding/json"
-	"github.com/andy-zhangtao/DDog/server/mongo"
-	"strings"
-	"strconv"
-	"log"
-	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"errors"
+	"github.com/andy-zhangtao/DDog/bridge"
+	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/container"
-	"net/url"
-	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/DDog/model/metadata"
+	"github.com/andy-zhangtao/DDog/model/svcconf"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/sirupsen/logrus"
-	"github.com/andy-zhangtao/DDog/bridge"
+	"gopkg.in/mgo.v2/bson"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 )
 
 type Operation struct{}
@@ -742,6 +742,15 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 			return errors.New(resp.Message)
 		}
 		return nil
+	}
+
+	if scf.SvcName == "" {
+		logrus.WithFields(logrus.Fields{"SvcName-Empty": scf.Name, "Not-Delete": true}).Error(ModuleName)
+		return nil
+	}
+
+	if len(scf.SvcNameBak) > 0 {
+		needDeleteService = false
 	}
 
 	q := service.Service{

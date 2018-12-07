@@ -81,6 +81,7 @@ func (this *AgentNsq) RunDestoryAgent() {
 					Msg:       err.Error(),
 				})
 
+
 				m.Finish()
 				bridge.SendMonitorMsg(string(data))
 				continue

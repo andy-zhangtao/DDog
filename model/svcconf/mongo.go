@@ -1,16 +1,16 @@
 package svcconf
 
 import (
-	"gopkg.in/mgo.v2/bson"
-	"github.com/andy-zhangtao/DDog/server/mongo"
-	"github.com/andy-zhangtao/DDog/server/tool"
-	"github.com/andy-zhangtao/DDog/model/container"
-	"log"
 	"errors"
 	"fmt"
-	"math"
-	"github.com/sirupsen/logrus"
+	"github.com/andy-zhangtao/DDog/model/container"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/andy-zhangtao/DDog/server/tool"
 	zmodel "github.com/openzipkin/zipkin-go/model"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2/bson"
+	"log"
+	"math"
 )
 
 // SvcConf 服务配置信息
@@ -354,8 +354,12 @@ func (sc *SvcConf) DeleteMySelf() (err error) {
 		mongo.DeleteSvcConfById(sc.BackID)
 	}
 
-	logrus.WithFields(logrus.Fields{"Delete SvcConf ID": sc.Id.Hex()}).Info("DeleteMySelf")
-	err = mongo.DeleteSvcConfById(sc.Id.Hex())
+	/*如果属于同名升级的情况，则不需要删除原纪录*/
+	if len(sc.SvcNameBak) == 0 {
+		logrus.WithFields(logrus.Fields{"Delete SvcConf ID": sc.Id.Hex()}).Info("DeleteMySelf")
+		err = mongo.DeleteSvcConfById(sc.Id.Hex())
+	}
+
 	return
 }
 

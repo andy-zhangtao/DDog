@@ -26,7 +26,7 @@ run: build
 	./$(name)
 
 agent-release: agent/*.go
-	docker run -it --rm -v ${PWD}:/go/src/github.com/andy-zhangtao/DDog vikings/golang:onbuild-v1.0.5 /go/src/github.com/andy-zhangtao/DDog/agent ddog-agent
+	docker run -it --rm -v ${PWD}:/go/src/github.com/andy-zhangtao/DDog vikings/golang:onbuild-v1.0.5 /go/src/github.com/andy-zhangtao/DDog/agent ddog-agent -ldflags "-X main._VERSION_=$(shell date +%Y%m%d_%H%M%S)"
 	ls -ltr agent/bin
 	@echo "############"
 	@echo "ddog-agent build complete"

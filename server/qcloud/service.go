@@ -247,12 +247,23 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	if isUpgrade {
 		// 服务直接升级,不需要通过蓝绿发布
-		if cf.SvcName != "" {
-			data, _ := json.Marshal(_const.DestoryMsg{
-				Svcname:   cf.SvcName,
-				Namespace: cf.Namespace,
-			})
-			bridge.SendDestoryMsg(string(data))
+		//if cf.SvcName != "" {
+		//	data, _ := json.Marshal(_const.DestoryMsg{
+		//		Svcname:   cf.SvcName,
+		//		Namespace: cf.Namespace,
+		//	})
+		//	bridge.SendDestoryMsg(string(data))
+		//}
+		//cf.SvcName = sn
+		if len(cf.SvcNameBak) > 0 {
+			for key, _ := range cf.SvcNameBak {
+				data, _ := json.Marshal(_const.DestoryMsg{
+					Svcname:   key,
+					Namespace: cf.Namespace,
+				})
+				logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
+				bridge.SendDestoryMsg(string(data))
+			}
 		}
 		cf.SvcName = sn
 	} else {
