@@ -246,42 +246,54 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 
 		(*span).Annotate(time.Now(), fmt.Sprintf("Service LB [%v]", service.Status.LoadBalancer.Ingress))
 
-		if len(service.Status.LoadBalancer.Ingress) > 0 {
-			switch msg.Namespace {
-			case _const.PROENV:
-				fallthrough
-			case _const.RELEASEENV:
-				if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "10.0.") {
-					time.Sleep(3 * time.Second)
-					continue
-				}
-
-				ip = service.Status.LoadBalancer.Ingress[0].IP
-				for _, p := range service.Spec.Ports {
-					port = append(port, p.Port)
-				}
-
-				return ip, port, err
-			case _const.DEVENV:
-				fallthrough
-			case _const.TESTENV:
-				fallthrough
-			default:
-				//	开发和测试环境，IP属于192.168.0.0/16网段
-				if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "192.168.") {
-					time.Sleep(3 * time.Second)
-					continue
-				}
-				ip = service.Status.LoadBalancer.Ingress[0].IP
-				for _, p := range service.Spec.Ports {
-					port = append(port, p.Port)
-				}
-				return ip, port, err
+		//如果服务网络类型为LoadBalancer则需要获取负载IP, 如果是ClusterIP,只需要获取集群访问IP
+		switch service.Spec.Type {
+		case "ClusterIP":
+			if service.Spec.ClusterIP != "" {
+				return service.Spec.ClusterIP, port, err
 			}
-		} else {
+
 			time.Sleep(3 * time.Second)
 			continue
+		case "LoadBalancer":
+			if len(service.Status.LoadBalancer.Ingress) > 0 {
+				switch msg.Namespace {
+				case _const.PROENV:
+					fallthrough
+				case _const.RELEASEENV:
+					if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "10.0.") {
+						time.Sleep(3 * time.Second)
+						continue
+					}
+
+					ip = service.Status.LoadBalancer.Ingress[0].IP
+					for _, p := range service.Spec.Ports {
+						port = append(port, p.Port)
+					}
+
+					return ip, port, err
+				case _const.DEVENV:
+					fallthrough
+				case _const.TESTENV:
+					fallthrough
+				default:
+					//	开发和测试环境，IP属于192.168.0.0/16网段
+					if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "192.168.") {
+						time.Sleep(3 * time.Second)
+						continue
+					}
+					ip = service.Status.LoadBalancer.Ingress[0].IP
+					for _, p := range service.Spec.Ports {
+						port = append(port, p.Port)
+					}
+					return ip, port, err
+				}
+			} else {
+				time.Sleep(3 * time.Second)
+				continue
+			}
 		}
+
 	}
 
 }

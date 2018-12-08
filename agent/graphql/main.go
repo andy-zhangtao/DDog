@@ -641,11 +641,15 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"parentid": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
+				"uselb": &graphql.ArgumentConfig{
+					Type: graphql.Boolean,
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["service"].(string)
 				image, _ := p.Args["image"].(string)
 				namespace, _ := p.Args["namespace"].(string)
+				uselb, _ := p.Args["uselb"].(bool)
 
 				//zipkin parameters
 				traceid, _ := p.Args["traceid"].(string)
@@ -702,12 +706,27 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 
 				var nt []container.NetConfigure
 				for _, p := range con.Port {
-					nt = append(nt, container.NetConfigure{
-						AccessType: 0,
-						InPort:     p,
-						OutPort:    p,
-						Protocol:   0,
-					})
+
+					_cnf := container.NetConfigure{
+						//AccessType: 0,
+						InPort:   p,
+						OutPort:  p,
+						Protocol: 0,
+					}
+
+					if uselb {
+						_cnf.AccessType = 0
+					} else {
+						_cnf.AccessType = 2
+					}
+
+					nt = append(nt, _cnf)
+					//nt = append(nt, container.NetConfigure{
+					//	AccessType: 0,
+					//	InPort:     p,
+					//	OutPort:    p,
+					//	Protocol:   0,
+					//})
 				}
 
 				con.Net = nt
