@@ -231,6 +231,12 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, err)
 			return
 		}
+	case "testenv":
+		md, err = metadata.GetMetaDataByRegion("", "testenv")
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 		if err != nil {
