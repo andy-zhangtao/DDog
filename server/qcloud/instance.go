@@ -29,6 +29,8 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 		fallthrough
 	case "release":
 		md, err = metadata.GetMetaDataByRegion("", namespace)
+	case "testenv":
+		md, err = metadata.GetMetaDataByRegion("", "testenv")
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 	}

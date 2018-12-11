@@ -697,6 +697,8 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	case "release":
 		needDeleteService = false
 		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
+	case "testenv":
+		md, err = metadata.GetMetaDataByRegion("", "testenv")
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 	}
