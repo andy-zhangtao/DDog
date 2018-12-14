@@ -182,6 +182,8 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 						fallthrough
 					case "release":
 						md, err = metadata.GetMetaDataByRegion("", s.Namespace)
+					case "testenv":
+						md, err = metadata.GetMetaDataByRegion("", "testenv")
 					default:
 						md, err = metadata.GetMetaDataByRegion("")
 					}

@@ -135,7 +135,7 @@ func (this *SpiderAgent) Run() {
 				}
 
 				/*errNum == 60*10几乎等同为10分钟*/
-				if (!needCheck && msg != "") || (errNum == 60*10) {
+				if (!needCheck && msg != "") || (errNum == 60*10) || (errNum%5 == 0) {
 					data, _ := json.Marshal(monitor.MonitorModule{
 						Kind:      this.Name,
 						Svcname:   os.Getenv("DDOG_AGENT_SPIDER_SVC"),
@@ -147,7 +147,7 @@ func (this *SpiderAgent) Run() {
 
 					bridge.SendMonitorMsg(string(data))
 					msg = ""
-					errNum = 0
+					//errNum = 0
 				}
 			}
 		}
@@ -206,7 +206,7 @@ func (this *SpiderAgent) checkPort(ctx zmodel.SpanContext) {
 		msg = ""
 		errNum ++
 		for k, _ := range portMap {
-			msg += fmt.Sprintf("Port[%d] Check Failed. ", k)
+			msg += fmt.Sprintf("Health Check Failed Port=%d.Check times=%d ", k, errNum)
 		}
 		logrus.WithFields(logrus.Fields{"msg": msg}).Info(SpiderAgentName)
 	} else {

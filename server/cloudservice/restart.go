@@ -32,8 +32,13 @@ func Restart(servicename, namespace string) (err error) {
 		if err != nil {
 			return errors.New(_const.RegionNotFound)
 		}
+	case "testenv":
+		md, err = metadata.GetMetaDataByRegion("", "testenv")
+		if err != nil {
+			return errors.New(_const.RegionNotFound)
+		}
 	default:
-		md, err = metadata.GetMetaDataByRegion("")
+		md, err = metadata.GetMetaDataByRegion("", "devenv")
 		if err != nil {
 			return errors.New(_const.RegionNotFound)
 		}

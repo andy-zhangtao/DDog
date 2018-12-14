@@ -217,6 +217,13 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 			delete(currentDeploySvc, sc.Name)
 		}
 
+	default:
+		if _, ok := currentDeploySvc[msg.Svcname]; ok {
+			//	发送服务监控检查失败事件，同时通知Devex
+			sc.Deploy = _const.HealthCheckFAILE
+			sc.SvcName = msg.Msg
+			NotifyDevEx(sc)
+		}
 	}
 }
 
