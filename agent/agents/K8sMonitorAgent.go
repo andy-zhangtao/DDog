@@ -209,6 +209,11 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 					logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "lb": lb}).Info(ModuleName)
 					NotifyDevEx(sc)
 
+					if err := svcconf.UpdateSvcConf(sc); err != nil {
+						(*span).Annotate(time.Now(), fmt.Sprintf("Update-Service-Error %s ", err.Error()))
+						return
+					}
+
 					break
 				}
 
