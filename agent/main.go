@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/DDog/agent/agents"
 	"github.com/andy-zhangtao/DDog/const"
-	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/sirupsen/logrus"
 	"os"
 )

@@ -231,7 +231,15 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, err)
 			return
 		}
+	case "autoenv":
+		//	自动化测试环境
+		md, err = metadata.GetMetaDataByRegion("", "autoenv")
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	case "testenv":
+		//	自动化测试环境
 		md, err = metadata.GetMetaDataByRegion("", "testenv")
 		if err != nil {
 			tool.ReturnError(w, err)

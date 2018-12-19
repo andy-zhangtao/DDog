@@ -36,6 +36,18 @@ func CheckNamespace(ns caasmodel.NameSpace) (err error) {
 				if err != nil {
 					return errors.New(_const.RegionNotFound)
 				}
+			case "autoenv":
+				//	自动化测试环境
+				md, err = metadata.GetMetaDataByRegion("", "autoenv")
+				if err != nil {
+					return errors.New(_const.RegionNotFound)
+				}
+			case "testenv":
+				//	自动化测试环境
+				md, err = metadata.GetMetaDataByRegion("", "testenv")
+				if err != nil {
+					return errors.New(_const.RegionNotFound)
+				}
 			default:
 				md, err = metadata.GetMetaDataByRegion("")
 				if err != nil {
@@ -97,6 +109,18 @@ func DeleteNamespace(ns caasmodel.NameSpace) (err error) {
 	case "release":
 		//	预发布环境
 		md, err = metadata.GetMetaDataByRegion("", "release")
+		if err != nil {
+			return errors.New(_const.RegionNotFound)
+		}
+	case "autoenv":
+		//	自动化测试环境
+		md, err = metadata.GetMetaDataByRegion("", "autoenv")
+		if err != nil {
+			return errors.New(_const.RegionNotFound)
+		}
+	case "testenv":
+		//	自动化测试环境
+		md, err = metadata.GetMetaDataByRegion("", "testenv")
 		if err != nil {
 			return errors.New(_const.RegionNotFound)
 		}

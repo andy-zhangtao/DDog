@@ -699,6 +699,8 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
 	case "testenv":
 		md, err = metadata.GetMetaDataByRegion("", "testenv")
+	case "autoenv":
+		md, err = metadata.GetMetaDataByRegion("", "autoenv")
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 	}

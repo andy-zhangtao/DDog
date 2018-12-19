@@ -31,6 +31,8 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 		md, err = metadata.GetMetaDataByRegion("", namespace)
 	case "testenv":
 		md, err = metadata.GetMetaDataByRegion("", "testenv")
+	case "autoenv":
+		md, err = metadata.GetMetaDataByRegion("", "autoenv")
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 	}
@@ -91,6 +93,10 @@ func ModifyInstancesReplica(name, namespace string, replica int) (err error) {
 		fallthrough
 	case "release":
 		md, err = metadata.GetMetaDataByRegion("", namespace)
+	case "testenv":
+		md, err = metadata.GetMetaDataByRegion("", "testenv")
+	case "autoenv":
+		md, err = metadata.GetMetaDataByRegion("", "autoenv")
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 	}
