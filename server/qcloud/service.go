@@ -173,6 +173,8 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 // 7. 每个服务默认存在2个实例
 func RunService(w http.ResponseWriter, r *http.Request) {
 
+	var enableJVMExporter = false
+
 	name := r.URL.Query().Get("svcname")
 	if name == "" {
 		tool.ReturnError(w, errors.New(_const.SvcConfNotFound))
@@ -238,6 +240,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, err)
 			return
 		}
+		enableJVMExporter = true
 	case "testenv":
 		//	自动化测试环境
 		md, err = metadata.GetMetaDataByRegion("", "testenv")
@@ -466,6 +469,24 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cons = append(cons, sideCar)
+	//	添加jvmExporter
+	if enableJVMExporter {
+		jvm := service.Containers{
+			ContainerName: "jvm-exporter",
+			Image:         "ccr.ccs.tencentyun.com/eqxiu/devex-jvm-exporter:v1.0.0",
+			Memory:        20,
+			MemoryLimits:  20,
+			Envs: map[string]string{
+				"HULK_PROJECT_NAME":    "devex-jvm-exporter" + os.Getenv(_const.ENV_DEPLOY_ENV),
+				"HULK_PROJECT_VERSION": "v1.0.0-probe",
+				"HULK_ENDPOINT":        sideCarEnv["HULK_ENDPOINT"],
+				"svcname":              cf.Name,
+			},
+		}
+
+		cons = append(cons, jvm)
+	}
+
 	q.Containers = cons
 
 	logrus.WithFields(logrus.Fields{"QCloud Request": q, "Deploy Type": isUpgrade}).Info(ModuleName)
