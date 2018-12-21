@@ -248,6 +248,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, err)
 			return
 		}
+		enableJVMExporter = true
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 		if err != nil {
