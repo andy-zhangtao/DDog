@@ -474,7 +474,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	if enableJVMExporter {
 		jvm := service.Containers{
 			ContainerName: "jvm-exporter",
-			Image:         "ccr.ccs.tencentyun.com/eqxiu/devex-jvm-exporter:v1.0.0",
+			Image:         "ccr.ccs.tencentyun.com/eqxiu/devex-jvm-exporter:latest",
 			Memory:        20,
 			MemoryLimits:  20,
 			Envs: map[string]string{
