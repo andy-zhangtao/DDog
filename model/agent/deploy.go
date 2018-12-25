@@ -10,4 +10,5 @@ type DeployMsg struct {
 	NameSpace string             `json:"name_space"`
 	Upgrade   bool               `json:"upgrade"`
 	Replicas  int                `json:"replicas"`
+	DC        string             `json:"dc"`
 }

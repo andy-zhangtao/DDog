@@ -409,11 +409,16 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"parentid": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
+				"dc": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 			},
 
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["name"].(string)
 				namespace, _ := p.Args["namespace"].(string)
+				dc, _ := p.Args["dc"].(string)
+
 				instance := 2
 
 				//zipkin parameters
@@ -459,6 +464,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					NameSpace: namespace,
 					Upgrade:   true,
 					Replicas:  instance,
+					DC:        dc,
 				}
 
 				cf.Deploy = _const.DeployIng

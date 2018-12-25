@@ -249,6 +249,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		enableJVMExporter = true
+	case "testenv-b":
+		//	测试环境B区
+		md, err = metadata.GetMetaDataByRegion("", "testenv-b")
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 		if err != nil {

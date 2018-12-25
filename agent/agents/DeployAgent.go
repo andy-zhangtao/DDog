@@ -123,6 +123,10 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 		mm.Destory()
 	}
 
+	if msg.DC != "" {
+		msg.NameSpace = fmt.Sprintf("%s-%s", msg.NameSpace, msg.DC)
+	}
+
 	logrus.WithFields(logrus.Fields{"url": fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid)}).Info(this.Name)
 	r, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid), nil)
 	if err != nil {
