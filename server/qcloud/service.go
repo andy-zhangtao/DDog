@@ -221,6 +221,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	switch nsme {
 	case "proenv":
 		//	预发布环境
+		enableJVMExporter = true
 		md, err = metadata.GetMetaDataByRegion("", "proenv")
 		if err != nil {
 			tool.ReturnError(w, err)
@@ -240,7 +241,6 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, err)
 			return
 		}
-		enableJVMExporter = true
 	case "testenv":
 		//	自动化测试环境
 		md, err = metadata.GetMetaDataByRegion("", "testenv")
@@ -248,7 +248,13 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 			tool.ReturnError(w, err)
 			return
 		}
-		enableJVMExporter = true
+	case "testenv-b":
+		//	测试环境B区
+		md, err = metadata.GetMetaDataByRegion("", "testenv-b")
+		if err != nil {
+			tool.ReturnError(w, err)
+			return
+		}
 	default:
 		md, err = metadata.GetMetaDataByRegion("")
 		if err != nil {

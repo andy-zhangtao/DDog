@@ -24,18 +24,19 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 	}
 
 	var md *metadata.MetaData
-	switch namespace {
-	case "proenv":
-		fallthrough
-	case "release":
-		md, err = metadata.GetMetaDataByRegion("", namespace)
-	case "testenv":
-		md, err = metadata.GetMetaDataByRegion("", "testenv")
-	case "autoenv":
-		md, err = metadata.GetMetaDataByRegion("", "autoenv")
-	default:
-		md, err = metadata.GetMetaDataByRegion("")
-	}
+	md, err = metadata.GetMetaDataByRegion("", namespace)
+	//switch namespace {
+	//case "proenv":
+	//	fallthrough
+	//case "release":
+	//	md, err = metadata.GetMetaDataByRegion("", namespace)
+	//case "testenv":
+	//	md, err = metadata.GetMetaDataByRegion("", "testenv")
+	//case "autoenv":
+	//	md, err = metadata.GetMetaDataByRegion("", "autoenv")
+	//default:
+	//	md, err = metadata.GetMetaDataByRegion("")
+	//}
 	//if namespace == "proenv" {
 	//	md, err = metadata.GetMetaDataByRegion("", namespace)
 	//} else {
