@@ -11,6 +11,7 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/sirupsen/logrus"
 	"strings"
+	"time"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/4.
@@ -60,12 +61,18 @@ func GetInstanceInfo(name, namespace string) (instance []service.Instance, err e
 
 	q.SetDebug(true)
 
+REPEAT:
 	smData, err := q.QueryInstance()
 	if err != nil {
 		return
 	}
 
 	if smData.Code != 0 {
+		logrus.WithFields(logrus.Fields{"ERROR": fmt.Sprintf("Query Instance Error [%d] Msg[%s][%s]", smData.Code, smData.Message, smData.CodeDesc)}).Error(ModuleName)
+		if smData.Code == 4400 {
+			time.Sleep(15 * time.Second)
+			goto REPEAT
+		}
 		err = errors.New(fmt.Sprintf("Query Instance Error [%d] Msg[%s][%s]", smData.Code, smData.Message, smData.CodeDesc))
 		return
 	}
