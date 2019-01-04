@@ -22,33 +22,38 @@ import (
 // 逐个重启服务容器
 func Restart(servicename, namespace string) (err error) {
 	var md *metadata.MetaData
-	switch namespace {
-	case "proenv":
-		//	预发布环境
-		fallthrough
-	case "release":
-		//	预发布环境
-		md, err = metadata.GetMetaDataByRegion("", namespace)
-		if err != nil {
-			return errors.New(_const.RegionNotFound)
-		}
-	case "autoenv":
-		//	自动化测试环境
-		md, err = metadata.GetMetaDataByRegion("", "autoenv")
-		if err != nil {
-			return errors.New(_const.RegionNotFound)
-		}
-	case "testenv":
-		//	自动化测试环境
-		md, err = metadata.GetMetaDataByRegion("", "testenv")
-		if err != nil {
-			return errors.New(_const.RegionNotFound)
-		}
-	default:
-		md, err = metadata.GetMetaDataByRegion("", "devenv")
-		if err != nil {
-			return errors.New(_const.RegionNotFound)
-		}
+	//switch namespace {
+	//case "proenv":
+	//	//	预发布环境
+	//	fallthrough
+	//case "release":
+	//	//	预发布环境
+	//	md, err = metadata.GetMetaDataByRegion("", namespace)
+	//	if err != nil {
+	//		return errors.New(_const.RegionNotFound)
+	//	}
+	//case "autoenv":
+	//	//	自动化测试环境
+	//	md, err = metadata.GetMetaDataByRegion("", "autoenv")
+	//	if err != nil {
+	//		return errors.New(_const.RegionNotFound)
+	//	}
+	//case "testenv":
+	//	//	自动化测试环境
+	//	md, err = metadata.GetMetaDataByRegion("", "testenv")
+	//	if err != nil {
+	//		return errors.New(_const.RegionNotFound)
+	//	}
+	//default:
+	//	md, err = metadata.GetMetaDataByRegion("", "devenv")
+	//	if err != nil {
+	//		return errors.New(_const.RegionNotFound)
+	//	}
+	//}
+
+	md, err = metadata.GetMetaDataByRegion("", namespace)
+	if err != nil {
+		return errors.New(_const.RegionNotFound)
 	}
 
 	scf, err := svcconf.GetSvcConfByName(servicename, namespace)

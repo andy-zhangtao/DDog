@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/DDog/check"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/server/caas"
 	"github.com/andy-zhangtao/DDog/server/dbservice"
 	"github.com/andy-zhangtao/DDog/server/eventService"
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 
 	"github.com/gorilla/mux"
@@ -209,11 +209,13 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 
 				var instance []service.Instance
 				for _, i := range pods.Items {
-					instance = append(instance, service.Instance{
-						Name:   i.Metadata.Name,
-						Status: i.Status.Phase,
-						Ip:     i.Status.PodIP,
-					})
+					if i.Status.Phase == "Running" {
+						instance = append(instance, service.Instance{
+							Name:   i.Metadata.Name,
+							Status: i.Status.Phase,
+							Ip:     i.Status.PodIP,
+						})
+					}
 				}
 
 				return instance, nil
