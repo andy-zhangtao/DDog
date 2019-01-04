@@ -9,6 +9,7 @@ import (
 	"github.com/andy-zhangtao/DDog/server/dbservice"
 	"github.com/andy-zhangtao/DDog/server/eventService"
 	"github.com/andy-zhangtao/_hulk_client"
+	"github.com/andy-zhangtao/qcloud_api/v1/service"
 
 	"github.com/gorilla/mux"
 	"github.com/graphql-go/graphql"
@@ -201,7 +202,22 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 				name, _ := p.Args["name"].(string)
 				namespace, _ := p.Args["namespace"].(string)
 
-				return qcloud.GetInstanceInfo(name, namespace)
+				pods, err := k8service.GetDeploymentsPods("sh", namespace, name)
+				if err != nil {
+					return nil, err
+				}
+
+				var instance []service.Instance
+				for _, i := range pods.Items {
+					instance = append(instance, service.Instance{
+						Name:   i.Metadata.Name,
+						Status: i.Status.Phase,
+						Ip:     i.Status.PodIP,
+					})
+				}
+
+				return instance, nil
+				//return qcloud.GetInstanceInfo(name, namespace)
 			},
 		},
 		"k8scluster": &graphql.Field{

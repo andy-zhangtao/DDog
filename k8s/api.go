@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 const (
@@ -19,6 +20,7 @@ const (
 	GetAllService
 	GetSpecService
 	GetAllPods
+	GetSpecPods
 )
 
 const (
@@ -41,6 +43,10 @@ func (k *K8sMetaData) invokeK8sAPI(kind int) ([]byte, error) {
 			path = fmt.Sprintf("%s/api/v1/namespaces/%s/services/%s", k.Endpoint, k.Namespace, k.Svcname)
 		case GetAllPods:
 			path = fmt.Sprintf("%s/api/v1/namespaces/%s/pods", k.Endpoint, k.Namespace)
+		case GetSpecPods:
+			query := fmt.Sprintf("qcloud-app=%s",k.Svcname)
+			query = url.QueryEscape(query)
+			path = fmt.Sprintf("%s/api/v1/namespaces/%s/pods?labelSelector=%s", k.Endpoint, k.Namespace, query)
 		}
 	}
 
@@ -117,6 +123,21 @@ func (k *K8sMetaData) GetDeployMent() (*k8smodel.K8s, error) {
 	}
 
 	return &kapi, nil
+}
+
+func (k *K8sMetaData) GetServiceV1BetaPods() (pods k8smodel.K8sPodsInfo, err error) {
+	data, err := k.invokeK8sAPI(GetSpecPods)
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Get Specify Pods Error [%s]", err.Error()))
+		return
+	}
+
+	if err = json.Unmarshal(data, &pods); err != nil {
+		logrus.Println(string(data))
+		err = errors.New(fmt.Sprintf("Unmarshal Error [%s]", err.Error()))
+	}
+
+	return
 }
 
 // GetServiceV1Beta 获取V1Beta版本的Service数据

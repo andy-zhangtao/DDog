@@ -1,19 +1,19 @@
 package k8service
 
 import (
-	"github.com/andy-zhangtao/DDog/model/k8sconfig"
+	"archive/zip"
 	"errors"
 	"fmt"
-	"github.com/andy-zhangtao/DDog/server/mongo"
-	"os"
 	"github.com/andy-zhangtao/DDog/const"
-	"gopkg.in/mgo.v2/bson"
-	"github.com/sirupsen/logrus"
 	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
+	"github.com/andy-zhangtao/DDog/model/k8sconfig"
+	"github.com/andy-zhangtao/DDog/server/mongo"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/yaml.v2"
-	"strings"
-	"archive/zip"
 	"log"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -42,6 +42,31 @@ func GetALlK8sCluster() (kc []k8sconfig.K8sCluster, err error) {
 	}
 
 	return
+}
+
+func GetK8sClusterWithNamespace(region, namespace string) (kc k8sconfig.K8sCluster, err error) {
+	if region == "" {
+		region = os.Getenv(_const.EnvRegion)
+	}
+
+	if region == "" {
+		err = errors.New(fmt.Sprintf("Region Empty!"))
+		return
+	}
+
+	kcs, err := mongo.GetAllK8sClusterData()
+	if err != nil {
+		err = errors.New(fmt.Sprintf("Query K8s Cluster Data Error [%s] Region [%s]", err.Error(), region))
+		return
+	}
+
+	for _, k := range kcs {
+		if strings.Compare(k.Namespace, namespace) == 0 {
+			return k, nil
+		}
+	}
+
+	return kc, errors.New("No K8s Cluster")
 }
 
 func GetK8sCluster(region string) (kc k8sconfig.K8sCluster, err error) {
