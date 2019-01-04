@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/DDog/check"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/server/caas"
 	"github.com/andy-zhangtao/DDog/server/dbservice"
 	"github.com/andy-zhangtao/DDog/server/eventService"
-	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 
 	"github.com/gorilla/mux"
@@ -1068,7 +1068,7 @@ func handleGraphQL(w http.ResponseWriter, r *http.Request) {
 		}
 		logrus.WithFields(logrus.Fields{"graph": g}).Info(ModuleName)
 		result := executeQuery(g, schema)
-		logrus.WithFields(logrus.Fields{"result": result.Data}).Info(ModuleName)
+		//logrus.WithFields(logrus.Fields{"result": result.Data}).Info(ModuleName)
 		json.NewEncoder(w).Encode(result)
 	}
 }
