@@ -388,6 +388,15 @@ var InstanceType = graphql.NewObject(
 					return nil, nil
 				},
 			},
+			"ip": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if i, ok := p.Source.(service.Instance); ok {
+						return i.Ip, nil
+					}
+					return nil, nil
+				},
+			},
 		},
 	},
 )
