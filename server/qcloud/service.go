@@ -228,7 +228,7 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 	case "release":
 		//	预发布环境
-		enableJVMExporter = true
+		enableJVMExporter = false
 		md, err = metadata.GetMetaDataByRegion("", "release")
 		if err != nil {
 			tool.ReturnError(w, err)
