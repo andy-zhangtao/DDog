@@ -2,6 +2,7 @@ package _const
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/6.
 //保存服务状态常量
+const WAIITING = -1
 const (
 	NeedDeploy = iota
 	DeploySuc

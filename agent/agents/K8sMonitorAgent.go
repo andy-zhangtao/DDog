@@ -178,6 +178,12 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 		if currentDeploySvc[msg.Svcname] == INSTANCE_INIT {
 			currentDeploySvc[msg.Svcname] = INSTANCE_LOOKUP
 
+			// 发送等待通知消息
+			sc.Deploy = _const.WAIITING
+			sc.Msg = "watting"
+
+			NotifyDevExWithMessage(sc)
+
 			//	开始轮询当前实例状态
 			//	Spider上送的是统一服务名称，这里需要的实际服务名称
 			msg.Svcname = sc.SvcName

@@ -271,6 +271,13 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 			return errors.New(fmt.Sprintf("Can not find svcConf [%s][%s]", msg.Svcname, msg.Namespace))
 		}
 
+		//发送等待通知
+		sc.Deploy = _const.DeploySuc
+		sc.Status = _const.NeedDeploy
+		sc.Msg = msg.Msg
+		sc.Span = span.Context()
+		NotifyDevEx(sc)
+
 		//if sc.Status == _const.ModifyReplica {
 		//	logrus.WithFields(logrus.Fields{"ID": sc.SvcName, "Status": "Modify Replica"}).Info(ModuleName)
 		//	return nil
@@ -528,6 +535,45 @@ func NotifyDevEx(scf *svcconf.SvcConf) {
 		return
 	}
 
+	err = producer.Publish("DevEx-Request-Status", data)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Notify DevEx Error": err}).Error(ModuleName)
+		return
+	}
+
+	return
+}
+
+// NotifyDevExWithMessage 通过devex发送通知消息
+// 通过IP发送消息
+func NotifyDevExWithMessage(scf *svcconf.SvcConf) {
+	e := make(map[string]string)
+	e["message"] = scf.Msg
+	e["source"] = "K8sMonitor"
+	req := struct {
+		ProjectID   string             `json:"project_id"`
+		Stage       int                `json:"stage"`
+		DeployEnv   string             `json:"deploy_env"`
+		LoadBalance []string           `json:"load_balance"`
+		Span        zmodel.SpanContext `json:"span"`
+		Svcname     string             `json:"image"`
+		Ext         map[string]string  `json:"ext" bson:"ext"`
+	}{
+		scf.Name,
+		scf.Deploy,
+		scf.Namespace,
+		[]string{scf.LbConfig.IP},
+		scf.Span,
+		scf.SvcName,
+		e,
+	}
+
+	data, err := json.Marshal(&req)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Marshal DevEx Request Error": err}).Error(ModuleName)
+		return
+	}
+	logrus.WithFields(logrus.Fields{"Send-Message": string(data)}).Info(ModuleName)
 	err = producer.Publish("DevEx-Request-Status", data)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"Notify DevEx Error": err}).Error(ModuleName)
