@@ -33,6 +33,7 @@ func (k *K8sMonitorAgent) HandleMessage(m *nsq.Message) error {
 }
 
 var currentDeploySvc map[string]int
+var message string
 
 const (
 	INSTANCE_INIT = iota
@@ -194,6 +195,13 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 					return
 				}
 
+				if message != "" {
+					sc.Deploy = _const.WAIITING
+					sc.Msg = message
+
+					NotifyDevExWithMessage(sc)
+				}
+
 				logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "isReady": isReady}).Info(ModuleName)
 				if isReady {
 					ip, port, err := getServiceLB(apiServer, msg, span)
@@ -247,6 +255,7 @@ func checkServiceStata(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModul
 
 	(*span).Annotate(time.Now(), fmt.Sprintf("Repllicas [%v] ReadyReplicas [%v]", deploy.Status.Replicas, deploy.Status.ReadyReplicas))
 	logrus.WithFields(logrus.Fields{"Repllicas": deploy.Status.Replicas, "ReadyReplicas": deploy.Status.ReadyReplicas, "UpdatedReplicas": deploy.Status.UpdatedReplicas, "name": deploy.Metadata.Name}).Info(ModuleName)
+	message = fmt.Sprintf("预期服务实例数[%d],就绪服务实例数[%d],状态变更实例数[%d]", deploy.Status.Replicas, deploy.Status.ReadyReplicas, deploy.Status.UpdatedReplicas)
 	if (deploy.Status.Replicas == deploy.Status.ReadyReplicas) && (deploy.Status.ReadyReplicas == deploy.Status.UpdatedReplicas) {
 		return true, nil
 	}
