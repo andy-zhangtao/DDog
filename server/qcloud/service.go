@@ -342,15 +342,23 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 		logrus.WithFields(logrus.Fields{"port map ": pm}).Info("DeployAgent")
 		q.PortMappings = pm
-		switch cf.Netconf[0].AccessType {
-		case 2:
+		//2019-02-13 不再需要生成集群外可访问的LB，直接使用集群内LB
+		switch nsme {
+		case "proenv":
+			fallthrough
+		case "release":
+			switch cf.Netconf[0].AccessType {
+			case 2:
+				q.AccessType = "ClusterIP"
+			case 1:
+				q.AccessType = "LoadBalancer"
+			case 0:
+				q.AccessType = "SvcLBTypeInner"
+				q.SubnetId = md.NetID
+				//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
+			}
+		default:
 			q.AccessType = "ClusterIP"
-		case 1:
-			q.AccessType = "LoadBalancer"
-		case 0:
-			q.AccessType = "SvcLBTypeInner"
-			q.SubnetId = md.NetID
-			//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
 		}
 	} else {
 		q.AccessType = "None"
