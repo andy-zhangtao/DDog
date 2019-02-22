@@ -279,16 +279,57 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		//	bridge.SendDestoryMsg(string(data))
 		//}
 		//cf.SvcName = sn
-		if len(cf.SvcNameBak) > 0 {
-			for key, _ := range cf.SvcNameBak {
-				data, _ := json.Marshal(_const.DestoryMsg{
-					Svcname:   key,
-					Namespace: cf.Namespace,
-				})
-				logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
-				bridge.SendDestoryMsg(string(data))
+		if cf.Namespace == _const.RELEASEENV {
+			//	1.如果是创建灰度服务的情况, 则不能做任何操作
+			//	2.如果是直接部署并且当前存在此服务的灰度服务, 则不能删除旧服务
+			//	3.如果是直接部署并且当前没有灰度服务，则删除旧服务
+			if !strings.HasSuffix(cf.Name, "-graypublish") {
+				_cf, err := svcconf.GetSvcConfByName(cf.Name+"-graypublish", cf.Namespace)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{"query-svc-error": err}).Error(ModuleName)
+				} else if _cf != nil {
+					//	第二种情况
+					//	线上环境,SvcBak应该只存在一份
+					//	并且为了平滑过渡,在部署新服务时先不删除旧服务.而是等待新服务部署成功之后再删除旧服务.
+					snb := make(map[string]svcconf.LoadBlance)
+					for name, conf := range cf.SvcNameBak {
+						//	对当前存在的旧服务标记为old. 留待以后删除
+						if !strings.HasSuffix(name, "-old") {
+							snb[fmt.Sprintf("%s-old", name)] = conf
+						}
+					}
+					cf.SvcNameBak = snb
+				} else {
+					// 第三种情况
+					if len(cf.SvcNameBak) > 0 {
+						for key, _ := range cf.SvcNameBak {
+							if strings.HasSuffix(key, "-old") {
+								key = strings.Split(key, "-old")[0]
+							}
+
+							data, _ := json.Marshal(_const.DestoryMsg{
+								Svcname:   key,
+								Namespace: cf.Namespace,
+							})
+							logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
+							bridge.SendDestoryMsg(string(data))
+						}
+					}
+				}
 			}
+		} else {
+			if len(cf.SvcNameBak) > 0 {
+				for key, _ := range cf.SvcNameBak {
+					data, _ := json.Marshal(_const.DestoryMsg{
+						Svcname:   key,
+						Namespace: cf.Namespace,
+					})
+					logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
+					bridge.SendDestoryMsg(string(data))
+				}
+			} /**/
 		}
+
 		cf.SvcName = sn
 	} else {
 		//蓝绿发布
@@ -342,24 +383,34 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		}
 		logrus.WithFields(logrus.Fields{"port map ": pm}).Info("DeployAgent")
 		q.PortMappings = pm
-		//2019-02-13 不再需要生成集群外可访问的LB，直接使用集群内LB
-		switch nsme {
-		case "proenv":
-			fallthrough
-		case "release":
-			switch cf.Netconf[0].AccessType {
-			case 2:
-				q.AccessType = "ClusterIP"
-			case 1:
-				q.AccessType = "LoadBalancer"
-			case 0:
-				q.AccessType = "SvcLBTypeInner"
-				q.SubnetId = md.NetID
-				//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
-			}
-		default:
+		switch cf.Netconf[0].AccessType {
+		case 2:
 			q.AccessType = "ClusterIP"
+		case 1:
+			q.AccessType = "LoadBalancer"
+		case 0:
+			q.AccessType = "SvcLBTypeInner"
+			q.SubnetId = md.NetID
+			//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
 		}
+		//2019-02-13 不再需要生成集群外可访问的LB，直接使用集群内LB
+		//switch nsme {
+		//case _const.PROENV:
+		//	fallthrough
+		//case _const.RELEASEENV:
+		//	switch cf.Netconf[0].AccessType {
+		//	case 2:
+		//		q.AccessType = "ClusterIP"
+		//	case 1:
+		//		q.AccessType = "LoadBalancer"
+		//	case 0:
+		//		q.AccessType = "SvcLBTypeInner"
+		//		q.SubnetId = md.NetID
+		//		//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
+		//	}
+		//default:
+		//	q.AccessType = "ClusterIP"
+		//}
 	} else {
 		q.AccessType = "None"
 	}

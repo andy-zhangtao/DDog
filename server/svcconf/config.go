@@ -788,6 +788,11 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	}
 	/*删除可能存在的升级服务*/
 	for k, _ := range scf.SvcNameBak {
+		//	标记为old的服务需要还原回去
+		if strings.HasSuffix(k, "-old") {
+			k = strings.Split(k, "-old")[0]
+		}
+
 		q := service.Service{
 			Pub: public.Public{
 				SecretId: md.Sid,
@@ -815,6 +820,52 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 				"svcname":   k,
 				"msg":       resp.Message,
 			}).Error("Delete Service Failed")
+		}
+	}
+
+	//	如果删除的是一个灰度服务, 那么需要删除相对应的old服务
+	if strings.HasSuffix(scf.Name, "-graypublish") {
+		currSvcName := strings.Split(scf.Name, "-graypublish")[0]
+		needDeleteService = true //灰度服务不需要存在
+		currScf, err := svcconf.GetSvcConfByName(currSvcName, msg.Namespace)
+		if err == nil {
+			logrus.WithFields(logrus.Fields{"Query SvcConf": currScf}).Info(ModuleName)
+			/*删除可能存在的升级服务*/
+			for k, _ := range currScf.SvcNameBak {
+				//	标记为old的服务需要还原回去
+				if strings.HasSuffix(k, "-old") {
+					k = strings.Split(k, "-old")[0]
+				}
+
+				q := service.Service{
+					Pub: public.Public{
+						SecretId: md.Sid,
+						Region:   md.Region,
+					},
+					ClusterId:   md.ClusterID,
+					Namespace:   currScf.Namespace,
+					ServiceName: k,
+					SecretKey:   md.Skey,
+				}
+
+				q.SetDebug(true)
+
+				resp, err := q.DeleteService()
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"error":   err.Error(),
+						"svcname": k,
+					}).Error("Delete Service Error")
+				}
+
+				if resp.Code != 0 {
+					logrus.WithFields(logrus.Fields{
+						"resp_code": resp.Code,
+						"svcname":   k,
+						"msg":       resp.Message,
+					}).Error("Delete Service Failed")
+				}
+			}
 		}
 	}
 

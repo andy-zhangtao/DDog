@@ -11,6 +11,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"math"
+	"strings"
 )
 
 // SvcConf 服务配置信息
@@ -355,7 +356,7 @@ func (sc *SvcConf) DeleteMySelf() (err error) {
 	}
 
 	/*如果属于同名升级的情况，则不需要删除原纪录*/
-	if len(sc.SvcNameBak) == 0 {
+	if len(sc.SvcNameBak) == 0 || strings.HasSuffix(sc.Name, "-graypublish") {
 		logrus.WithFields(logrus.Fields{"Delete SvcConf ID": sc.Id.Hex()}).Info("DeleteMySelf")
 		err = mongo.DeleteSvcConfById(sc.Id.Hex())
 	}

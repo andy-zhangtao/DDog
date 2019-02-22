@@ -293,7 +293,8 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 				case _const.PROENV:
 					fallthrough
 				case _const.RELEASEENV:
-					if !strings.HasPrefix(service.Spec.ClusterIP, "10.30.") {
+					if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "10.0.") {
+						//if !strings.HasPrefix(service.Spec.ClusterIP, "10.30.") {
 						time.Sleep(3 * time.Second)
 						continue
 					}
@@ -309,12 +310,15 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 				case _const.TESTENV:
 					fallthrough
 				default:
+					if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "192.168."){
 					//	开发和测试环境，IP属于172.0.0.0/8网段
-					if !strings.HasPrefix(service.Spec.ClusterIP, "172.") {
+					//if !strings.HasPrefix(service.Spec.ClusterIP, "172.") {
 						time.Sleep(3 * time.Second)
 						continue
 					}
-					ip = service.Spec.ClusterIP
+
+					ip = service.Status.LoadBalancer.Ingress[0].IP
+					//ip = service.Spec.ClusterIP
 					for _, p := range service.Spec.Ports {
 						port = append(port, p.Port)
 					}
