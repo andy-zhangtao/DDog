@@ -211,9 +211,10 @@ var rootQuery = graphql.NewObject(graphql.ObjectConfig{
 				for _, i := range pods.Items {
 					if i.Status.Phase == "Running" {
 						instance = append(instance, service.Instance{
-							Name:   i.Metadata.Name,
-							Status: i.Status.Phase,
-							Ip:     i.Status.PodIP,
+							Name:      i.Metadata.Name,
+							Status:    i.Status.Phase,
+							Ip:        i.Status.PodIP,
+							CreatedAt: i.Status.StartTime.Format("2006-01-02T15:04:05"),
 						})
 					}
 				}

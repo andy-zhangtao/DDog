@@ -397,6 +397,15 @@ var InstanceType = graphql.NewObject(
 					return nil, nil
 				},
 			},
+			"createat": &graphql.Field{
+				Type: graphql.String,
+				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+					if i, ok := p.Source.(service.Instance); ok {
+						return i.CreatedAt, nil
+					}
+					return nil, nil
+				},
+			},
 		},
 	},
 )

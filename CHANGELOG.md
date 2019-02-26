@@ -1,5 +1,10 @@
 # DDOG CHANGE LOG
 
+### 2019-02-26
+> Enhance
++ 支持返回实例创建时间
+    * eqxiu-caas-deploy-agent 1.5.4
+
 ### 2019-02-22
 > Enhance
 + 调整灰度服务部署逻辑 (k8smonitor存在判断开发环境IP代码,上线之前必须去掉)
