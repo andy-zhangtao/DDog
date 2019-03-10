@@ -292,6 +292,8 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 				switch msg.Namespace {
 				case _const.PROENV:
 					fallthrough
+				case _const.RELEASEENVB:
+					fallthrough
 				case _const.RELEASEENV:
 					if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "10.0.") {
 						//if !strings.HasPrefix(service.Spec.ClusterIP, "10.30.") {

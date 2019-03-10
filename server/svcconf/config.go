@@ -3,6 +3,15 @@ package svcconf
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/container"
@@ -12,14 +21,9 @@ import (
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/openzipkin/zipkin-go"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
 )
 
 type Operation struct{}
@@ -682,7 +686,7 @@ func DeleteSvcConfGroup(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
+func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg, span zipkin.Span) error {
 	// 当只需要删除单个服务时(例如整体服务升级，不需要通过蓝绿发布时),此时服务名为 SVC-xxx格式
 	// 在数据库中肯定无法找到相对应的记录，因此数据库记录不作为必须条件
 	// 当数据库有记录时，删除其名下所有服务
@@ -692,19 +696,21 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	needDeleteService := true //在预发布环境中不需要删除服务
 
 	switch msg.Namespace {
-	case "proenv":
+	case _const.PROENV:
 		fallthrough
-	case "release":
+	case _const.RELEASEENVB:
+		fallthrough
+	case _const.RELEASEENV:
 		needDeleteService = false
 		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
-	case "testenv":
-		md, err = metadata.GetMetaDataByRegion("", "testenv")
-	case "testenv-b":
-		md, err = metadata.GetMetaDataByRegion("", "testenv-b")
-	case "autoenv":
-		md, err = metadata.GetMetaDataByRegion("", "autoenv")
+	//case "testenv":
+	//	md, err = metadata.GetMetaDataByRegion("", "testenv")
+	//case "testenv-b":
+	//	md, err = metadata.GetMetaDataByRegion("", "testenv-b")
+	//case "autoenv":
+	//	md, err = metadata.GetMetaDataByRegion("", "autoenv")
 	default:
-		md, err = metadata.GetMetaDataByRegion("")
+		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
 	}
 	//if msg.Namespace == "proenv" {
 	//	needDeleteService = false
@@ -713,15 +719,18 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	//	md, err = metadata.GetMetaDataByRegion("")
 	//}
 
+	span.Annotate(time.Now(), fmt.Sprintf("NeedDeleteService [%v] Namespace [%s]", needDeleteService, msg.Namespace))
 	if err != nil {
 		return err
 	}
+
 	scf, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
 	if err != nil {
 		return err
 	}
 
 	logrus.WithFields(logrus.Fields{"Query SvcConf": scf}).Info(ModuleName)
+	span.Annotate(time.Now(), fmt.Sprintf("Query SvcConf [%v]", scf))
 	if scf == nil {
 		q := service.Service{
 			Pub: public.Public{
@@ -826,10 +835,13 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 	//	如果删除的是一个灰度服务, 那么需要删除相对应的old服务
 	if strings.HasSuffix(scf.Name, "-graypublish") {
 		currSvcName := strings.Split(scf.Name, "-graypublish")[0]
+		span.Annotate(time.Now(), fmt.Sprintf("Remove the old service [%s]", currSvcName))
 		needDeleteService = true //灰度服务不需要存在
 		currScf, err := svcconf.GetSvcConfByName(currSvcName, msg.Namespace)
+		span.Annotate(time.Now(), fmt.Sprintf("Query the old service [%v]", err == nil))
 		if err == nil {
 			logrus.WithFields(logrus.Fields{"Query SvcConf": currScf}).Info(ModuleName)
+			span.Annotate(time.Now(), fmt.Sprintf("Query the old service [%v]", currScf))
 			/*删除可能存在的升级服务*/
 			for k, _ := range currScf.SvcNameBak {
 				//	标记为old的服务需要还原回去
@@ -843,7 +855,7 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg) error {
 						Region:   md.Region,
 					},
 					ClusterId:   md.ClusterID,
-					Namespace:   currScf.Namespace,
+					Namespace:   msg.Namespace,
 					ServiceName: k,
 					SecretKey:   md.Skey,
 				}

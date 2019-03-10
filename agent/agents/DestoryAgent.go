@@ -2,13 +2,16 @@ package agents
 
 import (
 	"encoding/json"
+	"os"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/monitor"
 	"github.com/andy-zhangtao/DDog/server/svcconf"
+	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/nsqio/go-nsq"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/5.
@@ -81,14 +84,23 @@ func (this *AgentNsq) RunDestoryAgent() {
 					Msg:       err.Error(),
 				})
 
-
 				m.Finish()
 				bridge.SendMonitorMsg(string(data))
 				continue
 			}
 
+			span, reporter, err := tool.GetChildZipKinSpan(DestoryAgent, tool.GetLocalIP(), true, msg.Span)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{"Get ZipKin Span Error": err}).Error(DestoryAgent)
+			} else {
+				logrus.WithFields(logrus.Fields{"span": span.Context()}).Info(DestoryAgent)
+				span.Tag("service", msg.Svcname)
+				span.Tag("namespace", msg.Namespace)
+				span.Annotate(time.Now(), "Destory Agent Server Receive Message")
+			}
+
 			oper := svcconf.Operation{}
-			err = oper.DeleteSvcConf(msg)
+			err = oper.DeleteSvcConf(msg,span)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{"Delete Service Error": err, "Origin Svc": msg.Svcname, "Origin Namespace": msg.Namespace}).Error(ModuleName)
 				data, _ := json.Marshal(monitor.MonitorModule{
@@ -105,6 +117,8 @@ func (this *AgentNsq) RunDestoryAgent() {
 
 			logrus.WithFields(logrus.Fields{"Delete Service": "Success", "Origin Svc": msg.Svcname, "Origin Namespace": msg.Namespace}).Info(ModuleName)
 			m.Finish()
+			span.Finish()
+			reporter.Close()
 		}
 	}()
 

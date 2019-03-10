@@ -3,15 +3,17 @@ package svcconf
 import (
 	"errors"
 	"fmt"
+	"log"
+	"math"
+	"strings"
+
+	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/andy-zhangtao/DDog/server/tool"
 	zmodel "github.com/openzipkin/zipkin-go/model"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
-	"log"
-	"math"
-	"strings"
 )
 
 // SvcConf 服务配置信息
@@ -156,6 +158,23 @@ func Unmarshal(scg interface{}) (nscf SvcConfGroup, err error) {
 }
 
 func GetSvcConfByName(svcname, namespace string) (scf *SvcConf, err error) {
+	//需要考虑线上多集群的场景
+	if namespace == _const.RELEASEENV || namespace == _const.RELEASEENVB {
+		for _, e := range []string{
+			_const.RELEASEENVB,
+			_const.RELEASEENV,
+		} {
+			scf, err = getSvcConfByName(svcname, e)
+			if scf != nil {
+				return
+			}
+		}
+	}
+
+	return getSvcConfByName(svcname, namespace)
+}
+
+func getSvcConfByName(svcname, namespace string) (scf *SvcConf, err error) {
 	sv, err := mongo.GetSvcConfByName(svcname, namespace)
 	if err != nil {
 		if !tool.IsNotFound(err) {

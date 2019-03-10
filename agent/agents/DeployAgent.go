@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/agent"
 	"github.com/andy-zhangtao/DDog/model/monitor"
@@ -11,10 +15,8 @@ import (
 	"github.com/andy-zhangtao/DDog/server/qcloud"
 	"github.com/andy-zhangtao/DDog/server/tool"
 	"github.com/nsqio/go-nsq"
+	"github.com/openzipkin/zipkin-go"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"os"
-	"time"
 )
 
 /*DeployAgent 部署Agent.
@@ -73,7 +75,7 @@ func (this *DeployAgent) Run() {
 
 				var errmessage = ""
 
-				err = this.handlerMsg(&msg)
+				err = this.handlerMsg(&msg, span)
 				if err != nil {
 					logrus.WithFields(logrus.Fields{"HandlerMsg Error": err}).Error(this.Name)
 					errmessage = err.Error()
@@ -103,7 +105,7 @@ func (this *DeployAgent) Run() {
 }
 
 // handlerMsg 调用部署API开始部署服务
-func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
+func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg, span zipkin.Span) error {
 	var traceid = ""
 	var parentid = ""
 	var id = ""
@@ -128,6 +130,7 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 	}
 
 	logrus.WithFields(logrus.Fields{"url": fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid)}).Info(this.Name)
+	span.Annotate(time.Now(), fmt.Sprintf("Deploy url[%s]", fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid)))
 	r, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/cloud/svc/deploy?svcname=%s&namespace=%s&upgrade=%v%s%s%s", msg.SvcName, msg.NameSpace, msg.Upgrade, traceid, id, parentid), nil)
 	if err != nil {
 		return err
@@ -137,7 +140,7 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 		header: make(map[string][]string),
 	}
 
-	qcloud.RunService(&writer, r)
+	qcloud.RunService(&writer, r, span)
 
 	sc, err := svcconf.GetSvcConfByName(msg.SvcName, msg.NameSpace)
 	if err != nil {
@@ -152,6 +155,8 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg) error {
 	}
 
 	logrus.WithFields(logrus.Fields{"Status": writer.status, "Header": writer.header}).Info(this.Name)
+	span.Annotate(time.Now(), fmt.Sprintf("Deploy Service Status [%d]", writer.status))
+
 	//发送服务创建信息
 	sc.Deploy = _const.DeployIng
 	//sc.Msg = msg.SvcName

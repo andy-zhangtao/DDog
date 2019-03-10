@@ -4,6 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/k8s"
@@ -18,13 +24,9 @@ import (
 	"github.com/andy-zhangtao/gogather/zsort"
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
+	"github.com/openzipkin/zipkin-go"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var globalChan chan int
@@ -171,9 +173,14 @@ func GetSampleSVCInfo(w http.ResponseWriter, r *http.Request) {
 // 5. 连续三次，间隔10秒，健康均失败则检查失败
 // 6. 每次检查超时时间为5秒
 // 7. 每个服务默认存在2个实例
-func RunService(w http.ResponseWriter, r *http.Request) {
+func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 
-	var enableJVMExporter = false
+	//var enableJVMExporter = false
+	var enableZipkin = false
+
+	if len(span) > 0 && span[0].Context().ID.String() != "" {
+		enableZipkin = true
+	}
 
 	name := r.URL.Query().Get("svcname")
 	if name == "" {
@@ -205,6 +212,12 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logrus.WithFields(logrus.Fields{"origin Service Conf": cf}).Info(ModuleName)
+	//如果是线上集群, 则集群名称会不同
+	cf.Namespace = nsme
+	if enableZipkin {
+		span[0].Annotate(time.Now(), fmt.Sprintf("Origin Service Conf [%v]", cf))
+	}
+
 	replicas := 0
 	if r.URL.Query().Get("replicas") == "" {
 		replicas = cf.Replicas
@@ -217,56 +230,61 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	logrus.WithFields(logrus.Fields{"svc_conf": cf,}).Info("RunService")
 
-	var md *metadata.MetaData
-	switch nsme {
-	case "proenv":
-		//	预发布环境
-		md, err = metadata.GetMetaDataByRegion("", "proenv")
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	case "release":
-		//	预发布环境
-		enableJVMExporter = false
-		md, err = metadata.GetMetaDataByRegion("", "release")
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	case "autoenv":
-		//	自动化测试环境
-		md, err = metadata.GetMetaDataByRegion("", "autoenv")
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	case "testenv":
-		//	自动化测试环境
-		md, err = metadata.GetMetaDataByRegion("", "testenv")
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	case "testenv-b":
-		//	测试环境B区
-		md, err = metadata.GetMetaDataByRegion("", "testenv-b")
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	default:
-		md, err = metadata.GetMetaDataByRegion("")
-		if err != nil {
-			tool.ReturnError(w, err)
-			return
-		}
-	}
+	md, err := metadata.GetMetaDataByRegion("", nsme)
+	//var md *metadata.MetaData
+	//switch nsme {
+	//case "proenv":
+	//	//	预发布环境
+	//	md, err = metadata.GetMetaDataByRegion("", "proenv")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//case "release":
+	//	//	预发布环境
+	//	enableJVMExporter = false
+	//	md, err = metadata.GetMetaDataByRegion("", "release")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//case "autoenv":
+	//	//	自动化测试环境
+	//	md, err = metadata.GetMetaDataByRegion("", "autoenv")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//case "testenv":
+	//	//	自动化测试环境
+	//	md, err = metadata.GetMetaDataByRegion("", "testenv")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//case "testenv-b":
+	//	//	测试环境B区
+	//	md, err = metadata.GetMetaDataByRegion("", "testenv-b")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//default:
+	//	md, err = metadata.GetMetaDataByRegion("")
+	//	if err != nil {
+	//		tool.ReturnError(w, err)
+	//		return
+	//	}
+	//}
 
 	sn := cf.Name + "-" + gt.GetTimeStamp(10)
 	isUpgrade, err = strconv.ParseBool(r.URL.Query().Get("upgrade"))
 	if err != nil {
 		isUpgrade = false
+	}
+
+	if enableZipkin {
+		span[0].Annotate(time.Now(), fmt.Sprintf("Upgrade [%v]", isUpgrade))
 	}
 
 	if isUpgrade {
@@ -279,12 +297,20 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 		//	bridge.SendDestoryMsg(string(data))
 		//}
 		//cf.SvcName = sn
-		if cf.Namespace == _const.RELEASEENV {
+		if enableZipkin {
+			span[0].Annotate(time.Now(), fmt.Sprintf("Namespace [%v] Name [%s]", cf.Namespace, cf.Name))
+		}
+
+		if cf.Namespace == _const.RELEASEENV || cf.Namespace == _const.RELEASEENVB {
 			//	1.如果是创建灰度服务的情况, 则不能做任何操作
 			//	2.如果是直接部署并且当前存在此服务的灰度服务, 则不能删除旧服务
 			//	3.如果是直接部署并且当前没有灰度服务，则删除旧服务
 			if !strings.HasSuffix(cf.Name, "-graypublish") {
 				_cf, err := svcconf.GetSvcConfByName(cf.Name+"-graypublish", cf.Namespace)
+				if enableZipkin {
+					span[0].Annotate(time.Now(), fmt.Sprintf("Find GrayPublish [%v]", _cf))
+				}
+
 				if err != nil {
 					logrus.WithFields(logrus.Fields{"query-svc-error": err}).Error(ModuleName)
 				} else if _cf != nil {
@@ -303,16 +329,30 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 					// 第三种情况
 					if len(cf.SvcNameBak) > 0 {
 						for key, _ := range cf.SvcNameBak {
-							if strings.HasSuffix(key, "-old") {
-								key = strings.Split(key, "-old")[0]
-							}
+							if key != "" {
+								if strings.HasSuffix(key, "-old") {
+									key = strings.Split(key, "-old")[0]
+								}
 
-							data, _ := json.Marshal(_const.DestoryMsg{
-								Svcname:   key,
-								Namespace: cf.Namespace,
-							})
-							logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
-							bridge.SendDestoryMsg(string(data))
+								if enableZipkin {
+									span[0].Annotate(time.Now(), fmt.Sprintf("Will Remove Bak Service [%s]", key))
+								}
+								data, _ := json.Marshal(_const.DestoryMsg{
+									Svcname:   key,
+									Namespace: _const.RELEASEENVB,
+									Span:      span[0].Context(),
+								})
+								logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
+								bridge.SendDestoryMsg(string(data))
+
+								data, _ = json.Marshal(_const.DestoryMsg{
+									Svcname:   key,
+									Namespace: _const.RELEASEENV,
+									Span:      span[0].Context(),
+								})
+								logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
+								bridge.SendDestoryMsg(string(data))
+							}
 						}
 					}
 				}
@@ -456,10 +496,12 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch nsme {
-	case "proenv":
+	case _const.PROENV:
 		//	预发布环境
 		fallthrough
-	case "release":
+	case _const.RELEASEENVB:
+		fallthrough
+	case _const.RELEASEENV:
 		//	预发布环境
 		sideCarEnv["HULK_ENDPOINT"] = os.Getenv(_const.ENV_AGENT_HULK_ENDPOINT)
 	default:
@@ -536,27 +578,29 @@ func RunService(w http.ResponseWriter, r *http.Request) {
 
 	cons = append(cons, sideCar)
 	//	添加jvmExporter
-	if enableJVMExporter {
-		jvm := service.Containers{
-			ContainerName: "jvm-exporter",
-			Image:         "ccr.ccs.tencentyun.com/eqxiu/devex-jvm-exporter:latest",
-			Memory:        20,
-			MemoryLimits:  20,
-			Envs: map[string]string{
-				"HULK_PROJECT_NAME":    "devex-jvm-exporter" + os.Getenv(_const.ENV_DEPLOY_ENV),
-				"HULK_PROJECT_VERSION": "v1.0.0-probe",
-				"HULK_ENDPOINT":        sideCarEnv["HULK_ENDPOINT"],
-				"svcname":              cf.Name,
-			},
-		}
-
-		cons = append(cons, jvm)
-	}
+	//if enableJVMExporter {
+	//	jvm := service.Containers{
+	//		ContainerName: "jvm-exporter",
+	//		Image:         "ccr.ccs.tencentyun.com/eqxiu/devex-jvm-exporter:latest",
+	//		Memory:        20,
+	//		MemoryLimits:  20,
+	//		Envs: map[string]string{
+	//			"HULK_PROJECT_NAME":    "devex-jvm-exporter" + os.Getenv(_const.ENV_DEPLOY_ENV),
+	//			"HULK_PROJECT_VERSION": "v1.0.0-probe",
+	//			"HULK_ENDPOINT":        sideCarEnv["HULK_ENDPOINT"],
+	//			"svcname":              cf.Name,
+	//		},
+	//	}
+	//
+	//	cons = append(cons, jvm)
+	//}
 
 	q.Containers = cons
 
 	logrus.WithFields(logrus.Fields{"QCloud Request": q, "Deploy Type": isUpgrade}).Info(ModuleName)
-
+	if enableZipkin {
+		span[0].Annotate(time.Now(), fmt.Sprintf("Deploy [%v]", q))
+	}
 	resp, err := q.CreateNewSerivce()
 	if err != nil {
 		tool.ReturnError(w, err)

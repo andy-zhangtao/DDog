@@ -69,5 +69,8 @@ const DataNotFound = OperationSucc + " But donot find any data!"
 
 const PROENV = "proenv"
 const RELEASEENV = "release"
+const RELEASEENVB = "release-b"
 const DEVENV = "devenv"
 const TESTENV = "testenv"
+const TESTENVB = "testenv-b"
+const AUTOENV = "autoenv"

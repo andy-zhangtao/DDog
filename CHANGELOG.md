@@ -1,5 +1,14 @@
 # DDOG CHANGE LOG
 
+### 2019-03-04
+> Enhance
++ 支持线上多集群
+
+    * 数据维护: k8s_config / metadata
+    * deployagent 1.6.2
+    * destoryagent 1.3.2
+    * caas-deploy-agent 1.5.5
+
 ### 2019-02-26
 > Enhance
 + 支持返回实例创建时间

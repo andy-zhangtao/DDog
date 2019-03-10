@@ -3,6 +3,9 @@ package qcloud
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	sc "github.com/andy-zhangtao/DDog/model/svcconf"
@@ -10,8 +13,6 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/public"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/sirupsen/logrus"
-	"strings"
-	"time"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/4.
@@ -96,18 +97,21 @@ func ModifyInstancesReplica(name, namespace string, replica int) (err error) {
 	//scf.Replicas = replica
 	var md *metadata.MetaData
 
-	switch namespace {
-	case "proenv":
-		fallthrough
-	case "release":
-		md, err = metadata.GetMetaDataByRegion("", namespace)
-	case "testenv":
-		md, err = metadata.GetMetaDataByRegion("", "testenv")
-	case "autoenv":
-		md, err = metadata.GetMetaDataByRegion("", "autoenv")
-	default:
-		md, err = metadata.GetMetaDataByRegion("")
-	}
+	//switch namespace {
+	//case _const.PROENV:
+	//	fallthrough
+	//case _const.RELEASEENVB:
+	//	fallthrough
+	//case _const.RELEASEENV:
+	//	md, err = metadata.GetMetaDataByRegion("", namespace)
+	//case _const.TESTENV:
+	//	md, err = metadata.GetMetaDataByRegion("", "testenv")
+	//case "autoenv":
+	//	md, err = metadata.GetMetaDataByRegion("", "autoenv")
+	//default:
+	//	md, err = metadata.GetMetaDataByRegion("")
+	//}
+	md, err = metadata.GetMetaDataByRegion("", namespace)
 	if err != nil {
 		return err
 	}

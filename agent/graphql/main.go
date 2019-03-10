@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/andy-zhangtao/DDog/check"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/server/caas"
@@ -11,15 +12,20 @@ import (
 	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 
-	"github.com/gorilla/mux"
-	"github.com/graphql-go/graphql"
-	"github.com/rs/cors"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
+	"github.com/graphql-go/graphql"
+	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
+
 	"errors"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/bridge"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/agent"
@@ -36,9 +42,6 @@ import (
 	"github.com/nsqio/go-nsq"
 	"github.com/openzipkin/zipkin-go"
 	"gopkg.in/mgo.v2/bson"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const ModuleName = "DDog-Server-GraphQL"
@@ -578,6 +581,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				//这里的判断不优雅，需要改掉
 				if cf == nil {
 					conf.Id = bson.NewObjectId()
+					conf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", conf.Replicas)
 					if err = mongo.SaveSvcConfig(conf); err != nil {
 						errmessage = err.Error()
 						return nil, err
