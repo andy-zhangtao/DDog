@@ -4,18 +4,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/andy-zhangtao/DDog/const"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
+	_const "github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
 	"github.com/andy-zhangtao/DDog/model/monitor"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
 	"github.com/andy-zhangtao/DDog/server/k8service"
 	"github.com/andy-zhangtao/DDog/server/tool"
+	"github.com/gorilla/mux"
 	"github.com/nsqio/go-nsq"
 	"github.com/openzipkin/zipkin-go"
+	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
-	"os"
-	"strings"
-	"time"
 )
 
 //调用K8s APIServer API获取服务状态数据
@@ -39,6 +43,33 @@ const (
 	INSTANCE_INIT = iota
 	INSTANCE_LOOKUP
 )
+
+func startHttp() {
+	router := mux.NewRouter()
+	router.Path("/_ping").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Im a K8sMonitor Agent"))
+	})
+
+	router.Path("/monitor").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		service := make(map[string]int)
+		if len(currentDeploySvc) > 0 {
+			for name, flag := range currentDeploySvc {
+				service[name] = flag
+			}
+		}
+
+		json.NewEncoder(w).Encode(service)
+	})
+
+	router.Path("/clear/{name}").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		service := vars["name"]
+
+		delete(currentDeploySvc, service)
+	})
+
+	logrus.Fatal(http.ListenAndServe(":8001", cors.AllowAll().Handler(router)))
+}
 
 func (this *K8sMonitorAgent) Run() {
 	workerChan := make(chan *nsq.Message)
@@ -65,6 +96,8 @@ func (this *K8sMonitorAgent) Run() {
 	currentDeploySvc = make(map[string]int)
 
 	logrus.WithFields(logrus.Fields{"K8s API Service": k8sMasters, "Watch-Namespace": os.Getenv(_const.ENV_WATCH_MONITOR_NAMESPACE)}).Info(K8sMonitorAgentName)
+
+	go startHttp()
 
 	go func() {
 		for m := range workerChan {
@@ -312,9 +345,9 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 				case _const.TESTENV:
 					fallthrough
 				default:
-					if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "192.168."){
-					//	开发和测试环境，IP属于172.0.0.0/8网段
-					//if !strings.HasPrefix(service.Spec.ClusterIP, "172.") {
+					if !strings.HasPrefix(service.Status.LoadBalancer.Ingress[0].IP, "192.168.") {
+						//	开发和测试环境，IP属于172.0.0.0/8网段
+						//if !strings.HasPrefix(service.Spec.ClusterIP, "172.") {
 						time.Sleep(3 * time.Second)
 						continue
 					}
