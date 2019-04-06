@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/andy-zhangtao/DDog/bridge"
-	"github.com/andy-zhangtao/DDog/const"
+	_const "github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/DDog/model/svcconf"
@@ -187,14 +187,14 @@ func DeleteSvcConf(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"Marshal DestoryMsg Error": err,}).Error(ModuleName)
+		logrus.WithFields(logrus.Fields{"Marshal DestoryMsg Error": err}).Error(ModuleName)
 		tool.ReturnError(w, errors.New(err.Error()))
 		return
 	}
 
 	err = bridge.SendDestoryMsg(string(data))
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"DestorySvc Error": err,}).Error(ModuleName)
+		logrus.WithFields(logrus.Fields{"DestorySvc Error": err}).Error(ModuleName)
 		tool.ReturnError(w, errors.New(err.Error()))
 		return
 	}
@@ -699,6 +699,8 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg, span zipkin.Span) er
 	case _const.PROENV:
 		fallthrough
 	case _const.RELEASEENVB:
+		fallthrough
+	case _const.RELEASEENVC:
 		fallthrough
 	case _const.RELEASEENV:
 		needDeleteService = false

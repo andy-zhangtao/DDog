@@ -7,7 +7,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/andy-zhangtao/DDog/const"
+	_const "github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/andy-zhangtao/DDog/server/tool"
@@ -157,12 +157,15 @@ func Unmarshal(scg interface{}) (nscf SvcConfGroup, err error) {
 	return
 }
 
+// GetSvcConfByName 根据命名空间查询服务信息
+// 为了兼容以前的逻辑，如果新增了线上集群，则需要动态添加集群名称
 func GetSvcConfByName(svcname, namespace string) (scf *SvcConf, err error) {
 	//需要考虑线上多集群的场景
-	if namespace == _const.RELEASEENV || namespace == _const.RELEASEENVB {
+	if namespace == _const.RELEASEENV || namespace == _const.RELEASEENVB || namespace == _const.RELEASEENVC {
 		for _, e := range []string{
 			_const.RELEASEENVB,
 			_const.RELEASEENV,
+			_const.RELEASEENVC,
 		} {
 			scf, err = getSvcConfByName(svcname, e)
 			if scf != nil {
@@ -324,12 +327,12 @@ func (sc *SvcConf) CountInstances(scope float64) ([]string, []string, int) {
 	log.Printf("[CountInstance] Ready Roll Up [%v] Service, In Face I Can Support [%v] Services \n", scope, maxNumber)
 	number := int(maxNumber)
 	if number > 0 {
-		for i := 0; i < number; i ++ {
+		for i := 0; i < number; i++ {
 			name = append(name, instances[i].Name)
 		}
 	}
 
-	for i := number; i < len(instances); i ++ {
+	for i := number; i < len(instances); i++ {
 		leftName = append(leftName, instances[i].Name)
 	}
 

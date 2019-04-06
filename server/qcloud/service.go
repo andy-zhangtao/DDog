@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/andy-zhangtao/DDog/bridge"
-	"github.com/andy-zhangtao/DDog/const"
+	_const "github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/k8s"
 	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
 	"github.com/andy-zhangtao/DDog/model/agent"
@@ -36,7 +36,7 @@ const (
 	ModuleName = "QCloud Service"
 )
 
-func getChan(gc string) (chan int) {
+func getChan(gc string) chan int {
 	/*需要判断是否有不存在的chan，否则有可能会产生阻塞*/
 	if c, ok := globalMap[gc]; ok {
 		return c
@@ -228,7 +228,7 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		}
 	}
 
-	logrus.WithFields(logrus.Fields{"svc_conf": cf,}).Info("RunService")
+	logrus.WithFields(logrus.Fields{"svc_conf": cf}).Info("RunService")
 
 	md, err := metadata.GetMetaDataByRegion("", nsme)
 	//var md *metadata.MetaData
@@ -301,14 +301,14 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 			span[0].Annotate(time.Now(), fmt.Sprintf("Namespace [%v] Name [%s]", cf.Namespace, cf.Name))
 		}
 
-		if cf.Namespace == _const.RELEASEENV || cf.Namespace == _const.RELEASEENVB {
+		if cf.Namespace == _const.RELEASEENV || cf.Namespace == _const.RELEASEENVB || cf.Namespace == _const.RELEASEENVC {
 			//	1.如果是创建灰度服务的情况, 则不能做任何操作
 			//	2.如果是直接部署并且当前存在此服务的灰度服务, 则不能删除旧服务
 			//	3.如果是直接部署并且当前没有灰度服务，则删除旧服务
 			if !strings.HasSuffix(cf.Name, "-graypublish") {
 				_cf, err := svcconf.GetSvcConfByName(cf.Name+"-graypublish", cf.Namespace)
 				if enableZipkin {
-					span[0].Annotate(time.Now(), fmt.Sprintf("Find GrayPublish [%v]", _cf))
+					span[0].Annotate(time.Now(), fmt.Sprintf("Find GrayPublish [%v] Will Backup Svc [%v]", _cf, cf.SvcNameBak))
 				}
 
 				if err != nil {
@@ -328,7 +328,7 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 				} else {
 					// 第三种情况
 					if len(cf.SvcNameBak) > 0 {
-						for key, _ := range cf.SvcNameBak {
+						for key := range cf.SvcNameBak {
 							if key != "" {
 								if strings.HasSuffix(key, "-old") {
 									key = strings.Split(key, "-old")[0]
@@ -338,6 +338,14 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 									span[0].Annotate(time.Now(), fmt.Sprintf("Will Remove Bak Service [%s]", key))
 								}
 								data, _ := json.Marshal(_const.DestoryMsg{
+									Svcname:   key,
+									Namespace: _const.RELEASEENVC,
+									Span:      span[0].Context(),
+								})
+								logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
+								bridge.SendDestoryMsg(string(data))
+
+								data, _ = json.Marshal(_const.DestoryMsg{
 									Svcname:   key,
 									Namespace: _const.RELEASEENVB,
 									Span:      span[0].Context(),
@@ -359,7 +367,7 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 			}
 		} else {
 			if len(cf.SvcNameBak) > 0 {
-				for key, _ := range cf.SvcNameBak {
+				for key := range cf.SvcNameBak {
 					data, _ := json.Marshal(_const.DestoryMsg{
 						Svcname:   key,
 						Namespace: cf.Namespace,
@@ -500,6 +508,8 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		//	预发布环境
 		fallthrough
 	case _const.RELEASEENVB:
+		fallthrough
+	case _const.RELEASEENVC:
 		fallthrough
 	case _const.RELEASEENV:
 		//	预发布环境
@@ -1358,7 +1368,7 @@ func RunSvcGroup(w http.ResponseWriter, r *http.Request) {
 		rawQuery = rawQuery[:nd]
 	}
 
-	for i := len(svcPair) - 1; i >= 0; i -- {
+	for i := len(svcPair) - 1; i >= 0; i-- {
 
 		r.URL.RawQuery = rawQuery + "&svcname=" + svcPair[i].Key
 
@@ -1424,7 +1434,7 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 		rawQuery = rawQuery[:nd]
 	}
 
-	for i := len(svcPair) - 1; i >= 0; i -- {
+	for i := len(svcPair) - 1; i >= 0; i-- {
 		r.URL.RawQuery = rawQuery + "&svcname=" + svcPair[i].Key
 
 		logrus.Printf("[UninstallSvcGroup]Delete svcname :[%s] All header:[%v] \n", svcPair[i].Key, r.URL.Query())
@@ -1529,7 +1539,7 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 		resp, err := q.QuerySvcInfo()
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"QueryViaQCloud Error": err}).Error(ModuleName)
-			errIdx ++
+			errIdx++
 		}
 
 		if errIdx == 3 {
@@ -1539,7 +1549,7 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 
 		/*需要判断K8s是否出错,以免出现无效查询*/
 		if resp.Code != 0 {
-			errIdx ++
+			errIdx++
 			scf.Deploy = 4
 			//scf.Msg = resp.Message
 			break
@@ -1558,7 +1568,7 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 		if strings.ToLower(resp.Data.ServiceInfo.Status) != "normal" {
 			for key, _ := range resp.Data.ServiceInfo.ReasonMap {
 				if key == "容器进程崩溃" || strings.Contains(key, "失败") {
-					jinx ++
+					jinx++
 				}
 			}
 		} else if strings.ToLower(resp.Data.ServiceInfo.Status) == "normal" {
@@ -1585,7 +1595,7 @@ func asyncQueryServiceStatus(svc, namespace string, q service.Service, scf *svcc
 					if err != nil {
 						logrus.WithFields(logrus.Fields{"QueryInstance Error": err, "svc": svc, "namespace": namespace}).Error(ModuleName)
 						scf.Msg = err.Error()
-						errIdx ++
+						errIdx++
 					}
 				}
 
