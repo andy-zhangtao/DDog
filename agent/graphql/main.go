@@ -48,6 +48,7 @@ const ModuleName = "DDog-Server-GraphQL"
 
 var _VERSION_ string
 var _BUILD_ string
+
 //const ModuleResume = "Caas Graphql接口平台"
 
 var producer *nsq.Producer
@@ -744,7 +745,18 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					}
 
 					if uselb {
-						_cnf.AccessType = 0
+						// 以下环境不需要创建LB
+						switch namespace {
+						case _const.DEVENV:
+							// 	fallthrough
+							// case _const.TESTENV:
+							// 	fallthrough
+							// case _const.TESTENVB:
+							_cnf.AccessType = 2
+						default:
+							_cnf.AccessType = 0
+						}
+
 					} else {
 						_cnf.AccessType = 2
 					}
