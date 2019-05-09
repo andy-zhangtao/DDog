@@ -4,17 +4,18 @@ import (
 	"archive/zip"
 	"errors"
 	"fmt"
-	"github.com/andy-zhangtao/DDog/const"
+	"log"
+	"os"
+	"strings"
+	"time"
+
+	_const "github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
 	"github.com/andy-zhangtao/DDog/server/mongo"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/yaml.v2"
-	"log"
-	"os"
-	"strings"
-	"time"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/14.
@@ -62,6 +63,13 @@ func GetK8sClusterWithNamespace(region, namespace string) (kc k8sconfig.K8sClust
 
 	for _, k := range kcs {
 		if strings.Compare(k.Namespace, namespace) == 0 {
+			return k, nil
+		}
+	}
+
+	// 返回开发环境的K8s数据
+	for _, k := range kcs {
+		if strings.Compare(k.Namespace, _const.DEVENV) == 0 {
 			return k, nil
 		}
 	}
