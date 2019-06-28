@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"github.com/andy-zhangtao/DDog/bridge"
-	"github.com/andy-zhangtao/DDog/const"
+	_const "github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/agent"
 	"github.com/andy-zhangtao/DDog/model/container"
 	"github.com/andy-zhangtao/DDog/model/k8sconfig"
@@ -48,6 +48,7 @@ const ModuleName = "DDog-Server-GraphQL"
 
 var _VERSION_ string
 var _BUILD_ string
+
 //const ModuleResume = "Caas Graphql接口平台"
 
 var producer *nsq.Producer
@@ -739,12 +740,31 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					_cnf := container.NetConfigure{
 						//AccessType: 0,
 						InPort:   p,
-						OutPort:  p,
+						OutPort:  80, //将LB对外暴露端口固定为80
 						Protocol: 0,
 					}
 
 					if uselb {
-						_cnf.AccessType = 0
+						// 以下环境不需要创建LB
+						switch namespace {
+						case _const.DEVENV:
+							fallthrough
+						case _const.TESTENV:
+							fallthrough
+						case _const.TESTENVB:
+							fallthrough
+						case _const.PROENV:
+							fallthrough
+						case _const.RELEASEENV:
+							fallthrough
+						case _const.RELEASEENVB:
+							fallthrough
+						case _const.RELEASEENVC:
+							_cnf.AccessType = 2
+						default:
+							_cnf.AccessType = 0
+						}
+
 					} else {
 						_cnf.AccessType = 2
 					}
