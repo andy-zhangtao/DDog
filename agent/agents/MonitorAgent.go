@@ -247,7 +247,7 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 	case "release":
 		md, err = metadata.GetMetaDataByRegion("", msg.Namespace)
 	default:
-		md, err = metadata.GetMetaDataByRegion("", )
+		md, err = metadata.GetMetaDataByRegion("")
 	}
 
 	if err != nil {
@@ -386,7 +386,7 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 								continue
 							}
 						default:
-							md, err = metadata.GetMetaDataByRegion("", )
+							md, err = metadata.GetMetaDataByRegion("")
 						}
 						lip := resp.Data.ServiceInfo.ExternalIp
 						//if resp.Data.ServiceInfo.ExternalIp == "" {
