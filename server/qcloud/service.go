@@ -484,18 +484,18 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		MemoryLimits:  20,
 	}
 
-	switch nsme {
-	case "caas-test":
-		fallthrough
-	case _const.DEVENV:
-		fallthrough
-	case _const.TESTENVB:
-		fallthrough
-	case _const.TESTENV:
-		fallthrough
-	case _const.PROENV:
-		sideCar.Image = "ccr.ccs.tencentyun.com/eqxiu_caas/caas_healthsc:latest"
-	}
+	//switch nsme {
+	//case "caas-test":
+	//	fallthrough
+	//case _const.DEVENV:
+	//	fallthrough
+	//case _const.TESTENVB:
+	//	fallthrough
+	//case _const.TESTENV:
+	//	fallthrough
+	//case _const.PROENV:
+	//	sideCar.Image = "ccr.ccs.tencentyun.com/eqxiu_caas/caas_healthsc:latest"
+	//}
 
 	sideCarEnv := map[string]string{
 		_const.EnvNsqdEndpoint:  os.Getenv(_const.EnvNsqdEndpoint),
