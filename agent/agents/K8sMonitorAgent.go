@@ -138,7 +138,7 @@ func (this *K8sMonitorAgent) Run() {
 			if !isStand {
 				//	使用默认的K8s集群数据
 				for _, a := range k8sMasters {
-					if a.Namespace == "devenv" {
+					if a.Namespace == "study" {
 						apiServer = a
 						apiServer.Namespace = msg.Namespace
 						break
