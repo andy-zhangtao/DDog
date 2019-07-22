@@ -301,7 +301,7 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 			span[0].Annotate(time.Now(), fmt.Sprintf("Namespace [%v] Name [%s]", cf.Namespace, cf.Name))
 		}
 
-		if cf.Namespace == _const.RELEASEENV || cf.Namespace == _const.RELEASEENVB || cf.Namespace == _const.RELEASEENVC {
+		if cf.Namespace == _const.RELEASEENV || cf.Namespace == _const.RELEASEENVB || cf.Namespace == _const.RELEASEENVC || cf.Namespace == _const.RELEASEENVD {
 			//	1.如果是创建灰度服务的情况, 则不能做任何操作
 			//	2.如果是直接部署并且当前存在此服务的灰度服务, 则不能删除旧服务
 			//	3.如果是直接部署并且当前没有灰度服务，则删除旧服务
@@ -356,6 +356,14 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 								data, _ = json.Marshal(_const.DestoryMsg{
 									Svcname:   key,
 									Namespace: _const.RELEASEENV,
+									Span:      span[0].Context(),
+								})
+								logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
+								bridge.SendDestoryMsg(string(data))
+
+								data, _ = json.Marshal(_const.DestoryMsg{
+									Svcname:   key,
+									Namespace: _const.RELEASEENVD,
 									Span:      span[0].Context(),
 								})
 								logrus.WithFields(logrus.Fields{"svcname": key, "namespace": cf.Namespace, "operation": "destory"}).Info(ModuleName)
@@ -519,6 +527,8 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 	switch nsme {
 	case _const.PROENV:
 		//	预发布环境
+		fallthrough
+	case _const.RELEASEENVD:
 		fallthrough
 	case _const.RELEASEENVB:
 		fallthrough
