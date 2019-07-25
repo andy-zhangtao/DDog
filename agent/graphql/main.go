@@ -272,6 +272,29 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 	Name: "RootMutation",
 	Fields: graphql.Fields{
 		//对命名空间的新增操作,操作幂等
+		"rmTag": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Remove Image Tag",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"tag": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				tag, _ := p.Args["tag"].(string)
+
+				err := repository.RmMyTag(name, tag)
+				if err != nil {
+					return "Failed", err
+				}
+
+				return "OK", nil
+			},
+		},
 		"addNamespace": &graphql.Field{
 			Type:        caas.CaasNameSpaceType,
 			Description: "Create A New Namespace",
@@ -1071,7 +1094,7 @@ func executeQuery(query map[string]interface{}, schema graphql.Schema) *graphql.
 	result := graphql.Do(params)
 
 	if len(result.Errors) > 0 {
-		fmt.Println("wrong result, unexpected errors: %v", result.Errors)
+		fmt.Printf("wrong result, unexpected errors: %v \n", result.Errors)
 	}
 	return result
 }

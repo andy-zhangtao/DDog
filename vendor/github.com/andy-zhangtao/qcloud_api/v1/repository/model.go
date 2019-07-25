@@ -55,3 +55,9 @@ type QCTag struct {
 	CodeDesc string     `json:"codeDesc"`
 	Data     QCTag_data `json:"data"`
 }
+
+type QCTagSimple struct {
+	Code     int        `json:"code"`
+	Message  string     `json:"message"`
+	CodeDesc string     `json:"codeDesc"`
+}
