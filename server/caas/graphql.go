@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/caasmodel"
 	"github.com/andy-zhangtao/DDog/model/container"
@@ -16,9 +20,6 @@ import (
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 	"github.com/graphql-go/graphql"
 	sg "github.com/shurcooL/graphql"
-	"os"
-	"strconv"
-	"strings"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/4/18.
@@ -89,7 +90,8 @@ var CaasServiceConfType = graphql.NewObject(graphql.ObjectConfig{
 					if s.Desc == "" && !strings.Contains(s.Desc, "MINI_INSTANCES=") {
 						return 0, nil
 					}
-					r, _ := strconv.Atoi(strings.Split(s.Desc, "=")[1])
+
+					r, _ := strconv.Atoi(strings.Split(strings.Split(s.Desc, ";")[0], "=")[1])
 					return r, nil
 				}
 				return nil, nil

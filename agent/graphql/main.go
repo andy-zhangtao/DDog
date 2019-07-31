@@ -553,6 +553,9 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"parentid": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
+				"configmap": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["name"].(string)
@@ -563,6 +566,8 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				traceid, _ := p.Args["traceid"].(string)
 				id, _ := p.Args["id"].(string)
 				parentid, _ := p.Args["parentid"].(string)
+
+				useConfigMap, _ := p.Args["configmap"].(string)
 
 				var errmessage = ""
 				if traceid != "" && id != "" {
@@ -605,7 +610,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				//这里的判断不优雅，需要改掉
 				if cf == nil {
 					conf.Id = bson.NewObjectId()
-					conf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", conf.Replicas)
+					conf.Desc = fmt.Sprintf("MINI_INSTANCES=%d;CONFIGMAP=%s", conf.Replicas, useConfigMap)
 					if err = mongo.SaveSvcConfig(conf); err != nil {
 						errmessage = err.Error()
 						return nil, err
@@ -613,7 +618,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					return *conf, nil
 				} else {
 					cf.Replicas = conf.Replicas
-					cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", cf.Replicas)
+					cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d;CONFIGMAP=%s", cf.Replicas, useConfigMap)
 					cf.SvcNameBak = map[string]svcconf.LoadBlance{cf.SvcName: cf.LbConfig}
 					cf.SvcName = ""
 					logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex()}).Info(ModuleName)
