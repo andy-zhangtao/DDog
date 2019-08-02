@@ -4,6 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/andy-zhangtao/DDog/model/metadata"
 	"github.com/andy-zhangtao/DDog/model/monitor"
@@ -16,10 +21,6 @@ import (
 	"github.com/openzipkin/zipkin-go"
 	zmodel "github.com/openzipkin/zipkin-go/model"
 	"github.com/sirupsen/logrus"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // Write by zhangtao<ztao8607@gmail.com> . In 2018/2/7.
@@ -505,6 +506,30 @@ func (this *MonitorAgent) confirmSVC(msg *monitor.MonitorModule, span zipkin.Spa
 	}
 
 	return nil
+}
+
+func NotifyCMS(scf *svcconf.SvcConf) {
+
+	req := struct {
+		SvcName   string `json:"svc_name"`
+		NameSpace string `json:"name_space"`
+	}{
+		SvcName:   scf.SvcName,
+		NameSpace: scf.Namespace,
+	}
+
+	data, err := json.Marshal(&req)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Marshal DevEx Request Error": err}).Error(ModuleName)
+		return
+	}
+
+	err = producer.Publish("Enable-CM-Test", data)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{"Notify DevEx Error": err}).Error(ModuleName)
+		return
+	}
+
 }
 
 // NotifyDevEx 通知Devex更新状态

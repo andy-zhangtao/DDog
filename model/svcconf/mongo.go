@@ -36,6 +36,7 @@ type SvcConf struct {
 	BackContainer []container.Container    `json:"back_container,omitempty"`
 	//	Span 链路跟踪跨度数据
 	Span zmodel.SpanContext `json:"span" bson:"-"`
+	Ext  map[string]string  `json:"ext" bson:"ext"`
 }
 
 // SvcInstance 服务实例信息

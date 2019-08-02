@@ -177,8 +177,19 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg, span zipkin.Span) erro
 		}
 
 		producer.Publish(_const.SvcMonitorMsg, data)
+
 		return errors.New(writer.data)
 	}
+
+	if sc.Ext["CONFIGMAP"] == "true" {
+		// 延时5秒，是为了避免版本冲突
+		time.Sleep(5 * time.Second)
+		switch msg.NameSpace {
+		case _const.TESTENV:
+			NotifyCMS(sc)
+		}
+	}
+
 	return nil
 }
 

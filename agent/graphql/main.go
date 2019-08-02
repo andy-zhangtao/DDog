@@ -611,6 +611,10 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				if cf == nil {
 					conf.Id = bson.NewObjectId()
 					conf.Desc = fmt.Sprintf("MINI_INSTANCES=%d;CONFIGMAP=%s", conf.Replicas, useConfigMap)
+					conf.Ext = map[string]string{
+						"CONFIGMAP": useConfigMap,
+					}
+
 					if err = mongo.SaveSvcConfig(conf); err != nil {
 						errmessage = err.Error()
 						return nil, err
@@ -621,6 +625,14 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d;CONFIGMAP=%s", cf.Replicas, useConfigMap)
 					cf.SvcNameBak = map[string]svcconf.LoadBlance{cf.SvcName: cf.LbConfig}
 					cf.SvcName = ""
+					if cf.Ext != nil {
+						cf.Ext["CONFIGMAP"] = useConfigMap
+					} else {
+						cf.Ext = map[string]string{
+							"CONFIGMAP": useConfigMap,
+						}
+					}
+
 					logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex()}).Info(ModuleName)
 					if err = mongo.DeleteSvcConfById(cf.Id.Hex()); err != nil {
 						logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex(), "error": err}).Info(ModuleName)
