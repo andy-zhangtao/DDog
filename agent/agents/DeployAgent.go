@@ -187,6 +187,8 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg, span zipkin.Span) erro
 		switch msg.NameSpace {
 		case _const.TESTENV:
 			NotifyCMS(sc)
+		case _const.TESTENVB:
+			NotifyCMS(sc)
 		}
 	}
 
