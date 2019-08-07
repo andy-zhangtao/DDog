@@ -185,8 +185,16 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg, span zipkin.Span) erro
 		// 延时5秒，是为了避免版本冲突
 		time.Sleep(5 * time.Second)
 		switch msg.NameSpace {
+		case _const.RELEASEENVB:
+			fallthrough
+		case _const.RELEASEENVC:
+			fallthrough
+		case _const.RELEASEENVD:
+			fallthrough
+		case _const.PROENV:
+			fallthrough
 		case _const.TESTENV:
-			NotifyCMS(sc)
+			fallthrough
 		case _const.TESTENVB:
 			NotifyCMS(sc)
 		}
