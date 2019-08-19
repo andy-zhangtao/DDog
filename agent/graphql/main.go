@@ -272,6 +272,29 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 	Name: "RootMutation",
 	Fields: graphql.Fields{
 		//对命名空间的新增操作,操作幂等
+		"rmTag": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Remove Image Tag",
+			Args: graphql.FieldConfigArgument{
+				"name": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+				"tag": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				name, _ := p.Args["name"].(string)
+				tag, _ := p.Args["tag"].(string)
+
+				err := repository.RmMyTag(name, tag)
+				if err != nil {
+					return "Failed", err
+				}
+
+				return "OK", nil
+			},
+		},
 		"addNamespace": &graphql.Field{
 			Type:        caas.CaasNameSpaceType,
 			Description: "Create A New Namespace",
@@ -530,6 +553,9 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				"parentid": &graphql.ArgumentConfig{
 					Type: graphql.String,
 				},
+				"configmap": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
 			},
 			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 				name, _ := p.Args["name"].(string)
@@ -540,6 +566,8 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				traceid, _ := p.Args["traceid"].(string)
 				id, _ := p.Args["id"].(string)
 				parentid, _ := p.Args["parentid"].(string)
+
+				useConfigMap, _ := p.Args["configmap"].(string)
 
 				var errmessage = ""
 				if traceid != "" && id != "" {
@@ -582,7 +610,11 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 				//这里的判断不优雅，需要改掉
 				if cf == nil {
 					conf.Id = bson.NewObjectId()
-					conf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", conf.Replicas)
+					conf.Desc = fmt.Sprintf("MINI_INSTANCES=%d;CONFIGMAP=%s", conf.Replicas, useConfigMap)
+					conf.Ext = map[string]string{
+						"CONFIGMAP": useConfigMap,
+					}
+
 					if err = mongo.SaveSvcConfig(conf); err != nil {
 						errmessage = err.Error()
 						return nil, err
@@ -590,9 +622,17 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 					return *conf, nil
 				} else {
 					cf.Replicas = conf.Replicas
-					cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d", cf.Replicas)
+					cf.Desc = fmt.Sprintf("MINI_INSTANCES=%d;CONFIGMAP=%s", cf.Replicas, useConfigMap)
 					cf.SvcNameBak = map[string]svcconf.LoadBlance{cf.SvcName: cf.LbConfig}
 					cf.SvcName = ""
+					if cf.Ext != nil {
+						cf.Ext["CONFIGMAP"] = useConfigMap
+					} else {
+						cf.Ext = map[string]string{
+							"CONFIGMAP": useConfigMap,
+						}
+					}
+
 					logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex()}).Info(ModuleName)
 					if err = mongo.DeleteSvcConfById(cf.Id.Hex()); err != nil {
 						logrus.WithFields(logrus.Fields{"MINI_INSTANCES": cf.Replicas, "cf": cf.Id.Hex(), "error": err}).Info(ModuleName)
@@ -760,6 +800,8 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 						case _const.RELEASEENVB:
 							fallthrough
 						case _const.RELEASEENVC:
+							fallthrough
+						case _const.RELEASEENVD:
 							_cnf.AccessType = 2
 						default:
 							_cnf.AccessType = 0
@@ -1069,7 +1111,7 @@ func executeQuery(query map[string]interface{}, schema graphql.Schema) *graphql.
 	result := graphql.Do(params)
 
 	if len(result.Errors) > 0 {
-		fmt.Println("wrong result, unexpected errors: %v", result.Errors)
+		fmt.Printf("wrong result, unexpected errors: %v \n", result.Errors)
 	}
 	return result
 }

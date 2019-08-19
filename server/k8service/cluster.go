@@ -69,7 +69,7 @@ func GetK8sClusterWithNamespace(region, namespace string) (kc k8sconfig.K8sClust
 
 	// 返回开发环境的K8s数据
 	for _, k := range kcs {
-		if strings.Compare(k.Namespace, _const.DEVENV) == 0 {
+		if strings.Compare(k.Namespace, _const.STUDY) == 0 {
 			return k, nil
 		}
 	}

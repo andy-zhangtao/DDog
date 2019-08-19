@@ -1,9 +1,10 @@
 package repository
 
 import (
-	"github.com/andy-zhangtao/qcloud_api/v1/public"
-	"github.com/andy-zhangtao/qcloud_api/const/v1"
 	"net/url"
+
+	"github.com/andy-zhangtao/qcloud_api/const/v1"
+	"github.com/andy-zhangtao/qcloud_api/v1/public"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/5/15.
@@ -21,6 +22,7 @@ const (
 	QueryAllRepository = iota
 	QueryRepositoryTag
 	RenameRepository
+	DeleteRepositoryTag
 )
 
 func (this *Repository) generatePubParam(kind int) (string, string) {
@@ -45,7 +47,11 @@ func (this *Repository) generatePubParam(kind int) (string, string) {
 		field = append(field, []string{"src.image", "dest.image"}...)
 		reqmap["src.image"] = this.Params["src_image"].(string)
 		reqmap["dest.image"] = this.Params["dest_image"].(string)
-
+	case DeleteRepositoryTag:
+		optKind = "BatchDeleteTag"
+		field = append(field, []string{"reponame", "tags.0"}...)
+		reqmap["reponame"] = this.reponame
+		reqmap["tags.0"] = this.Params["tags.0"].(string)
 	}
 
 	pubMap := public.PublicParam(optKind, this.Pub.Region, this.Pub.SecretId)
