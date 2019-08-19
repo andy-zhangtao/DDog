@@ -28,6 +28,7 @@ const (
 	EnvDefaultLogOpt           = "DDOG_LOG_OPT"
 	EnvDefaultLogDriver        = "LOGCHAIN_DRIVER"
 	EnvNsqdEndpoint            = "DDOG_NSQD_ENDPOINT"
+	EnvNsqdEndpointRelease     = "DDOG_NSQD_ENDPOINT_RELEASE"
 	EnvSubNetID                = "DDOG_SUB_NET_ID"
 	ENV_AGENT_ZIPKIN_ENDPOINT  = "Agent_ZipKin_Endpoint"
 	ENV_AGENT_HULK_ENDPOINT    = "Agent_Hulk_Endpoint"

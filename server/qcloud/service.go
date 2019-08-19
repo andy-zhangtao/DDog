@@ -231,51 +231,6 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 	logrus.WithFields(logrus.Fields{"svc_conf": cf}).Info("RunService")
 
 	md, err := metadata.GetMetaDataByRegion("", nsme)
-	//var md *metadata.MetaData
-	//switch nsme {
-	//case "proenv":
-	//	//	预发布环境
-	//	md, err = metadata.GetMetaDataByRegion("", "proenv")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//case "release":
-	//	//	预发布环境
-	//	enableJVMExporter = false
-	//	md, err = metadata.GetMetaDataByRegion("", "release")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//case "autoenv":
-	//	//	自动化测试环境
-	//	md, err = metadata.GetMetaDataByRegion("", "autoenv")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//case "testenv":
-	//	//	自动化测试环境
-	//	md, err = metadata.GetMetaDataByRegion("", "testenv")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//case "testenv-b":
-	//	//	测试环境B区
-	//	md, err = metadata.GetMetaDataByRegion("", "testenv-b")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//default:
-	//	md, err = metadata.GetMetaDataByRegion("")
-	//	if err != nil {
-	//		tool.ReturnError(w, err)
-	//		return
-	//	}
-	//}
 
 	sn := cf.Name + "-" + gt.GetTimeStamp(10)
 	isUpgrade, err = strconv.ParseBool(r.URL.Query().Get("upgrade"))
@@ -289,14 +244,6 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 
 	if isUpgrade {
 		// 服务直接升级,不需要通过蓝绿发布
-		//if cf.SvcName != "" {
-		//	data, _ := json.Marshal(_const.DestoryMsg{
-		//		Svcname:   cf.SvcName,
-		//		Namespace: cf.Namespace,
-		//	})
-		//	bridge.SendDestoryMsg(string(data))
-		//}
-		//cf.SvcName = sn
 		if enableZipkin {
 			span[0].Annotate(time.Now(), fmt.Sprintf("Namespace [%v] Name [%s]", cf.Namespace, cf.Name))
 		}
@@ -449,24 +396,6 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 			q.SubnetId = md.NetID
 			//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
 		}
-		//2019-02-13 不再需要生成集群外可访问的LB，直接使用集群内LB
-		//switch nsme {
-		//case _const.PROENV:
-		//	fallthrough
-		//case _const.RELEASEENV:
-		//	switch cf.Netconf[0].AccessType {
-		//	case 2:
-		//		q.AccessType = "ClusterIP"
-		//	case 1:
-		//		q.AccessType = "LoadBalancer"
-		//	case 0:
-		//		q.AccessType = "SvcLBTypeInner"
-		//		q.SubnetId = md.NetID
-		//		//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
-		//	}
-		//default:
-		//	q.AccessType = "ClusterIP"
-		//}
 	} else {
 		q.AccessType = "None"
 	}
@@ -492,21 +421,8 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		MemoryLimits:  20,
 	}
 
-	//switch nsme {
-	//case "caas-test":
-	//	fallthrough
-	//case _const.DEVENV:
-	//	fallthrough
-	//case _const.TESTENVB:
-	//	fallthrough
-	//case _const.TESTENV:
-	//	fallthrough
-	//case _const.PROENV:
-	//	sideCar.Image = "ccr.ccs.tencentyun.com/eqxiu_caas/caas_healthsc:latest"
-	//}
-
 	sideCarEnv := map[string]string{
-		_const.EnvNsqdEndpoint:  os.Getenv(_const.EnvNsqdEndpoint),
+		_const.EnvNsqdEndpoint:  os.Getenv(_const.EnvNsqdEndpointRelease),
 		"DDOG_AGENT_NAME":       "SpiderAgent",
 		_const.EnvMongo:         os.Getenv(_const.EnvMongo),
 		_const.EnvMongoName:     os.Getenv(_const.EnvMongoName),
@@ -539,6 +455,19 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		sideCarEnv["HULK_ENDPOINT"] = os.Getenv(_const.ENV_AGENT_HULK_ENDPOINT)
 	default:
 		sideCarEnv["HULK_ENDPOINT"] = os.Getenv("HULK_ENDPOINT")
+	}
+
+	switch nsme {
+	case _const.DEVENV:
+		fallthrough
+	case _const.TESTENV:
+		fallthrough
+	case _const.TESTENVB:
+		sideCar.Image = _const.SideCarImgV11
+		sideCarEnv[_const.EnvNsqdEndpoint] = os.Getenv(_const.EnvNsqdEndpoint)
+		delete(sideCarEnv, "HULK_ENDPOINT")
+		delete(sideCarEnv, "HULK_PROJECT_NAME")
+		delete(sideCarEnv, "HULK_PROJECT_VERSION")
 	}
 
 	var sidePort []string
