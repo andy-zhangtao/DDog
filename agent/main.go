@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/andy-zhangtao/_hulk_client"
+	"os"
+
 	"github.com/andy-zhangtao/DDog/agent/agents"
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 //Write by zhangtao<ztao8607@gmail.com> . In 2018/2/5.
@@ -18,9 +18,9 @@ const (
 var _VERSION_ = "v1.1.0"
 
 func init() {
-	_hulk_client.Run()
+	//_hulk_client.Run()
 	if os.Getenv(_const.EnvNsqdEndpoint) == "" {
-		logrus.WithFields(logrus.Fields{"Env Empty": _const.EnvNsqdEndpoint,}).Panic(_const.EnvNsqdEndpoint)
+		logrus.WithFields(logrus.Fields{"Env Empty": _const.EnvNsqdEndpoint}).Panic(_const.EnvNsqdEndpoint)
 	}
 
 }
@@ -29,7 +29,7 @@ func main() {
 
 	logrus.WithFields(logrus.Fields{"Version": _VERSION_, "Agent": os.Getenv("DDOG_AGENT_NAME")}).Info(ModuleName)
 
-	switch (os.Getenv("DDOG_AGENT_NAME")) {
+	switch os.Getenv("DDOG_AGENT_NAME") {
 	case agents.MonitorAgentName:
 		mm := &agents.MonitorAgent{NsqEndpoint: os.Getenv(_const.EnvNsqdEndpoint), StopChan: make(chan int), Name: agents.MonitorAgentName}
 		go mm.Run()

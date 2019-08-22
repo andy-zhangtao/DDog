@@ -418,7 +418,7 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		ContainerName: _const.SideCarName,
 		Image:         _const.SideCarImg,
 		Memory:        10,
-		MemoryLimits:  20,
+		MemoryLimits:  25,
 	}
 
 	sideCarEnv := map[string]string{
@@ -465,6 +465,22 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 	case _const.TESTENVB:
 		sideCar.Image = _const.SideCarImgV11
 		sideCarEnv[_const.EnvNsqdEndpoint] = os.Getenv(_const.EnvNsqdEndpoint)
+		delete(sideCarEnv, "HULK_ENDPOINT")
+		delete(sideCarEnv, "HULK_PROJECT_NAME")
+		delete(sideCarEnv, "HULK_PROJECT_VERSION")
+	case _const.PROENV:
+		fallthrough
+	case _const.RELEASEENVB:
+		fallthrough
+	case _const.RELEASEENVC:
+		fallthrough
+	case _const.RELEASEENVD:
+		sideCar.Image = _const.SideCarImg
+		sideCarEnv[_const.EnvNsqdEndpoint] = os.Getenv(_const.EnvNsqdEndpointRelease)
+	default:
+		// 需要考虑私有环境
+		sideCar.Image = _const.SideCarImgV11
+		sideCarEnv[_const.EnvNsqdEndpoint] = "nsq.inter.devex.yqxiu.cn:4150"
 		delete(sideCarEnv, "HULK_ENDPOINT")
 		delete(sideCarEnv, "HULK_PROJECT_NAME")
 		delete(sideCarEnv, "HULK_PROJECT_VERSION")

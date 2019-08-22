@@ -9,7 +9,6 @@ import (
 	"github.com/andy-zhangtao/DDog/server/caas"
 	"github.com/andy-zhangtao/DDog/server/dbservice"
 	"github.com/andy-zhangtao/DDog/server/eventService"
-	"github.com/andy-zhangtao/_hulk_client"
 	"github.com/andy-zhangtao/qcloud_api/v1/service"
 
 	"io/ioutil"
@@ -54,7 +53,7 @@ var _BUILD_ string
 var producer *nsq.Producer
 
 func init() {
-	_hulk_client.Run()
+	//_hulk_client.Run()
 	if err := check.CheckMongo(); err != nil {
 		logrus.WithFields(logrus.Fields{"Check Mongo Error": err}).Error(ModuleName)
 		os.Exit(-1)

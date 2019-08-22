@@ -2,12 +2,12 @@ package mongo
 
 import (
 	"errors"
-	"github.com/andy-zhangtao/_hulk_client"
+	"os"
+	"time"
+
 	"github.com/andy-zhangtao/DDog/const"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2"
-	"os"
-	"time"
 )
 
 var endpoint = os.Getenv(_const.EnvMongo)
@@ -32,7 +32,7 @@ func check() error {
 }
 
 func init() {
-	_hulk_client.Run()
+	//_hulk_client.Run()
 	logrus.Println("=====Connect Mongo=====")
 	err := check()
 	if err != nil {
