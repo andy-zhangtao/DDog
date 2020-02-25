@@ -37,7 +37,7 @@ func (this *DeployAgent) Run() {
 	workerChan := make(chan *nsq.Message)
 
 	workerHome[this.Name] = workerChan
-	producer, _ = nsq.NewProducer(os.Getenv(_const.EnvNsqdEndpoint), nsq.NewConfig())
+	producer, _ = nsq.NewProducer(os.Getenv(_const.EnvMyNsqEndpoint), nsq.NewConfig())
 
 	cfg := nsq.NewConfig()
 	cfg.MaxInFlight = 1000
@@ -192,6 +192,8 @@ func (this *DeployAgent) handlerMsg(msg *agent.DeployMsg, span zipkin.Span) erro
 		case _const.RELEASEENVD:
 			fallthrough
 		case _const.PROENV:
+			fallthrough
+		case _const.PROENVB:
 			fallthrough
 		case _const.TESTENV:
 			fallthrough

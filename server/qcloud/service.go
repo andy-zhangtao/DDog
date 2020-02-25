@@ -444,6 +444,9 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 	case _const.PROENV:
 		//	预发布环境
 		fallthrough
+	case _const.PROENVB:
+		//	预发布环境B区
+		fallthrough
 	case _const.RELEASEENVD:
 		fallthrough
 	case _const.RELEASEENVB:
@@ -451,7 +454,6 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 	case _const.RELEASEENVC:
 		fallthrough
 	case _const.RELEASEENV:
-		//	预发布环境
 		sideCarEnv["HULK_ENDPOINT"] = os.Getenv(_const.ENV_AGENT_HULK_ENDPOINT)
 	default:
 		sideCarEnv["HULK_ENDPOINT"] = os.Getenv("HULK_ENDPOINT")
@@ -469,6 +471,8 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		delete(sideCarEnv, "HULK_PROJECT_NAME")
 		delete(sideCarEnv, "HULK_PROJECT_VERSION")
 	case _const.PROENV:
+		fallthrough
+	case _const.PROENVB:
 		fallthrough
 	case _const.RELEASEENVB:
 		fallthrough
@@ -1421,7 +1425,9 @@ func UninstallSvcGroup(w http.ResponseWriter, r *http.Request) {
 func queryInstance(svc, namespace string) (instances []service.Instance, err error) {
 	var md *metadata.MetaData
 	switch namespace {
-	case "proenv":
+	case _const.PROENV:
+		fallthrough
+	case _const.PROENVB:
 		fallthrough
 	case "release":
 		md, err = metadata.GetMetaDataByRegion("", namespace)
