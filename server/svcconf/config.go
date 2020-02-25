@@ -696,6 +696,8 @@ func (this *Operation) DeleteSvcConf(msg _const.DestoryMsg, span zipkin.Span) er
 	needDeleteService := true //在预发布环境中不需要删除服务
 
 	switch msg.Namespace {
+	case _const.PROENVB:
+		fallthrough
 	case _const.PROENV:
 		fallthrough
 	case _const.RELEASEENVB:

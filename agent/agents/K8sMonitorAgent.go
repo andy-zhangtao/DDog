@@ -325,6 +325,8 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 				switch msg.Namespace {
 				case _const.PROENV:
 					fallthrough
+				case _const.PROENVB:
+					fallthrough
 				case _const.RELEASEENVB:
 					fallthrough
 				case _const.RELEASEENVC:

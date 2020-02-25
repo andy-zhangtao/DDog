@@ -794,6 +794,8 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 							fallthrough
 						case _const.PROENV:
 							fallthrough
+						case _const.PROENVB:
+							fallthrough
 						case _const.RELEASEENV:
 							fallthrough
 						case _const.RELEASEENVB:
