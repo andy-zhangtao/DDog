@@ -44,4 +44,12 @@ type K8sService struct {
 			} `json:"ingress"`
 		} `json:"loadBalancer"`
 	} `json:"status"`
+	Code int `json:"code"`
+}
+
+type K8sServiceError struct {
+	Kind       string `json:"kind"`
+	APIVersion string `json:"apiVersion"`
+	Status     string `json:"status"`
+	Code       int    `json:"code"`
 }

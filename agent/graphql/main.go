@@ -809,7 +809,7 @@ var rootMutation = graphql.NewObject(graphql.ObjectConfig{
 						}
 
 					} else {
-						_cnf.AccessType = 2
+						_cnf.AccessType = 0
 					}
 
 					nt = append(nt, _cnf)

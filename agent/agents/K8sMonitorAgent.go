@@ -302,6 +302,10 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 	for {
 		service, err := k8service.GetK8sSpecifyService(apiServer, msg.Namespace, msg.Svcname)
 		if err != nil {
+			if err.Error() == "not found" {
+				return "0.0.0.0", []int{0}, nil
+			}
+
 			return ip, port, err
 		}
 

@@ -392,8 +392,8 @@ func RunService(w http.ResponseWriter, r *http.Request, span ...zipkin.Span) {
 		case 1:
 			q.AccessType = "LoadBalancer"
 		case 0:
-			q.AccessType = "SvcLBTypeInner"
-			q.SubnetId = md.NetID
+			q.AccessType = "None"
+			//q.SubnetId = md.NetID
 			//q.SubnetId = os.Getenv(_const.EnvSubNetID) //偷懒了. 应该是需要通过子网API来获取此值
 		}
 	} else {

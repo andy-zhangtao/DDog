@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/andy-zhangtao/DDog/const"
-	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/andy-zhangtao/DDog/const"
+	"github.com/andy-zhangtao/DDog/k8s/k8smodel"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -44,7 +45,7 @@ func (k *K8sMetaData) invokeK8sAPI(kind int) ([]byte, error) {
 		case GetAllPods:
 			path = fmt.Sprintf("%s/api/v1/namespaces/%s/pods", k.Endpoint, k.Namespace)
 		case GetSpecPods:
-			query := fmt.Sprintf("qcloud-app=%s",k.Svcname)
+			query := fmt.Sprintf("qcloud-app=%s", k.Svcname)
 			query = url.QueryEscape(query)
 			path = fmt.Sprintf("%s/api/v1/namespaces/%s/pods?labelSelector=%s", k.Endpoint, k.Namespace, query)
 		}
@@ -166,6 +167,13 @@ func (k *K8sMetaData) GetServiceV1() (service k8smodel.K8sService, err error) {
 
 	if err = json.Unmarshal(data, &service); err != nil {
 		logrus.Println(string(data))
+		var e k8smodel.K8sServiceError
+		if json.Unmarshal(data, &e) == nil {
+			if e.Code == 404 {
+				err = errors.New("not found")
+				return
+			}
+		}
 		err = errors.New(fmt.Sprintf("Unmarshal Error [%s]", err.Error()))
 	}
 
