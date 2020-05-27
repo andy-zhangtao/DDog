@@ -30,6 +30,14 @@ type K8sMonitorAgent struct {
 	StopChan    chan int
 }
 
+type serviceMetadata struct {
+	f         func(sc *svcconf.SvcConf, apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, span *zipkin.Span) (delete bool, err error)
+	sc        *svcconf.SvcConf
+	apiServer k8sconfig.K8sCluster
+	msg       *monitor.MonitorModule
+	span      *zipkin.Span
+}
+
 func (k *K8sMonitorAgent) HandleMessage(m *nsq.Message) error {
 	m.DisableAutoResponse()
 	workerHome[K8sMonitorAgentName] <- m
@@ -38,6 +46,8 @@ func (k *K8sMonitorAgent) HandleMessage(m *nsq.Message) error {
 
 var currentDeploySvc map[string]int
 var message string
+
+var readyForCheck map[string]serviceMetadata
 
 const (
 	INSTANCE_INIT = iota
@@ -94,11 +104,12 @@ func (this *K8sMonitorAgent) Run() {
 	}
 
 	currentDeploySvc = make(map[string]int)
+	readyForCheck = make(map[string]serviceMetadata)
 
 	logrus.WithFields(logrus.Fields{"K8s API Service": k8sMasters, "Watch-Namespace": os.Getenv(_const.ENV_WATCH_MONITOR_NAMESPACE)}).Info(K8sMonitorAgentName)
 
 	go startHttp()
-
+	go loopServiceStatus()
 	go func() {
 		for m := range workerChan {
 			logrus.WithFields(logrus.Fields{topic: string(m.Body)}).Info(K8sMonitorAgentName)
@@ -165,6 +176,92 @@ func (this *K8sMonitorAgent) Run() {
 	<-r.StopChan
 }
 
+//func pushServiceMetadata(sc *svcconf.SvcConf, apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, span *zipkin.Span) (delete bool, err error) {
+//	// 发送等待通知消息
+//	sc.Deploy = _const.WAIITING
+//	sc.Msg = "watting"
+//
+//	NotifyDevExWithMessage(sc)
+//
+//	//	开始轮询当前实例状态
+//	//	Spider上送的是统一服务名称，这里需要的实际服务名称
+//	msg.Svcname = sc.SvcName
+//	i := 0
+//	for i < 5 {
+//		isReady, err := checkServiceStata(apiServer, msg, span)
+//		if err != nil {
+//			//(*span).Annotate(time.Now(), fmt.Sprintf("Service Status Check Error %s ", err.Error()))
+//			return false, err
+//		}
+//
+//		if message != "" {
+//			sc.Deploy = _const.WAIITING
+//			sc.Msg = message
+//
+//			NotifyDevExWithMessage(sc)
+//		}
+//
+//		logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "isReady": isReady}).Info(ModuleName)
+//		if isReady {
+//			ip, port, err := getServiceLB(apiServer, msg, span)
+//			if err != nil {
+//				//(*span).Annotate(time.Now(), fmt.Sprintf("Service LB Check Error %s ", err.Error()))
+//				return false, err
+//			}
+//
+//			lb := svcconf.LoadBlance{
+//				IP:   ip,
+//				Port: port,
+//			}
+//
+//			lb.Port = port
+//			sc.LbConfig = lb
+//			sc.Deploy = _const.DeploySuc
+//			sc.Status = _const.NeedDeploy
+//			sc.Msg = msg.Msg
+//			sc.Span = (*span).Context()
+//			logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "lb": lb}).Info(ModuleName)
+//			NotifyDevEx(sc)
+//
+//			if err := svcconf.UpdateSvcConf(sc); err != nil {
+//				//(*span).Annotate(time.Now(), fmt.Sprintf("Update-Service-Error %s ", err.Error()))
+//				return false, err
+//			}
+//
+//			return true, err
+//		}
+//
+//		time.Sleep(2 * time.Second)
+//		i++
+//	}
+//	//delete(currentDeploySvc, sc.Name)
+//	return false, err
+//}
+
+func loopServiceStatus() {
+	logrus.Infof("Loop 10s For Fetch Service Status")
+	ticker := time.NewTicker(10 * time.Second)
+
+	for range ticker.C {
+		for name, s := range readyForCheck {
+			logrus.Infof("Loop Fetch %s Service Status", name)
+
+			go func(s serviceMetadata, name string) {
+				isNeedDelete, err := s.f(s.sc, s.apiServer, s.msg, s.span)
+				if err != nil {
+					logrus.Errorf("Exec f Error: %s", err.Error())
+					return
+				}
+
+				if isNeedDelete {
+					delete(readyForCheck, name)
+				}
+
+			}(s, name)
+		}
+	}
+}
+
 func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, span *zipkin.Span) {
 	logrus.WithFields(logrus.Fields{"msg": msg.Msg, "name": msg.Svcname}).Info(K8sMonitorAgentName)
 	sc, err := svcconf.GetSvcConfByName(msg.Svcname, msg.Namespace)
@@ -209,66 +306,135 @@ func (this *K8sMonitorAgent) handlerMsg(apiServer k8sconfig.K8sCluster, msg *mon
 		//}
 
 		logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "stat": currentDeploySvc[msg.Svcname]}).Info(ModuleName)
-		if currentDeploySvc[msg.Svcname] == INSTANCE_INIT {
-			currentDeploySvc[msg.Svcname] = INSTANCE_LOOKUP
 
-			// 发送等待通知消息
-			sc.Deploy = _const.WAIITING
-			sc.Msg = "watting"
+		readyForCheck[msg.Svcname] = serviceMetadata{
+			sc:        sc,
+			apiServer: apiServer,
+			msg:       msg,
+			span:      span,
+			f: func(sc *svcconf.SvcConf, apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, span *zipkin.Span) (delete bool, err error) {
+				// 发送等待通知消息
+				sc.Deploy = _const.WAIITING
+				sc.Msg = "watting"
 
-			NotifyDevExWithMessage(sc)
+				NotifyDevExWithMessage(sc)
 
-			//	开始轮询当前实例状态
-			//	Spider上送的是统一服务名称，这里需要的实际服务名称
-			msg.Svcname = sc.SvcName
-			for {
-				isReady, err := checkServiceStata(apiServer, msg, span)
-				if err != nil {
-					(*span).Annotate(time.Now(), fmt.Sprintf("Service Status Check Error %s ", err.Error()))
-					return
-				}
-
-				if message != "" {
-					sc.Deploy = _const.WAIITING
-					sc.Msg = message
-
-					NotifyDevExWithMessage(sc)
-				}
-
-				logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "isReady": isReady}).Info(ModuleName)
-				if isReady {
-					ip, port, err := getServiceLB(apiServer, msg, span)
+				//	开始轮询当前实例状态
+				//	Spider上送的是统一服务名称，这里需要的实际服务名称
+				msg.Svcname = sc.SvcName
+				i := 0
+				for i < 5 {
+					isReady, err := checkServiceStata(apiServer, msg, span)
 					if err != nil {
-						(*span).Annotate(time.Now(), fmt.Sprintf("Service LB Check Error %s ", err.Error()))
-						return
+						//(*span).Annotate(time.Now(), fmt.Sprintf("Service Status Check Error %s ", err.Error()))
+						return false, err
 					}
 
-					lb := svcconf.LoadBlance{
-						IP:   ip,
-						Port: port,
+					if message != "" {
+						sc.Deploy = _const.WAIITING
+						sc.Msg = message
+
+						NotifyDevExWithMessage(sc)
 					}
 
-					lb.Port = port
-					sc.LbConfig = lb
-					sc.Deploy = _const.DeploySuc
-					sc.Status = _const.NeedDeploy
-					sc.Msg = msg.Msg
-					sc.Span = (*span).Context()
-					logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "lb": lb}).Info(ModuleName)
-					NotifyDevEx(sc)
+					logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "isReady": isReady}).Info(ModuleName)
+					if isReady {
+						ip, port, err := getServiceLB(apiServer, msg, span)
+						if err != nil {
+							//(*span).Annotate(time.Now(), fmt.Sprintf("Service LB Check Error %s ", err.Error()))
+							return false, err
+						}
 
-					if err := svcconf.UpdateSvcConf(sc); err != nil {
-						(*span).Annotate(time.Now(), fmt.Sprintf("Update-Service-Error %s ", err.Error()))
-						return
+						lb := svcconf.LoadBlance{
+							IP:   ip,
+							Port: port,
+						}
+
+						lb.Port = port
+						sc.LbConfig = lb
+						sc.Deploy = _const.DeploySuc
+						sc.Status = _const.NeedDeploy
+						sc.Msg = msg.Msg
+						sc.Span = (*span).Context()
+						logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "lb": lb}).Info(ModuleName)
+						NotifyDevEx(sc)
+
+						if err := svcconf.UpdateSvcConf(sc); err != nil {
+							//(*span).Annotate(time.Now(), fmt.Sprintf("Update-Service-Error %s ", err.Error()))
+							return false, err
+						}
+
+						return true, err
 					}
 
-					break
+					time.Sleep(2 * time.Second)
+					i++
 				}
-
-				time.Sleep(3 * time.Second)
-			}
-			delete(currentDeploySvc, sc.Name)
+				//delete(currentDeploySvc, sc.Name)
+				return false, err
+			},
 		}
+
+		//if currentDeploySvc[msg.Svcname] == INSTANCE_INIT {
+		//	currentDeploySvc[msg.Svcname] = INSTANCE_LOOKUP
+		//
+		//	// 发送等待通知消息
+		//	sc.Deploy = _const.WAIITING
+		//	sc.Msg = "watting"
+		//
+		//	NotifyDevExWithMessage(sc)
+		//
+		//	//	开始轮询当前实例状态
+		//	//	Spider上送的是统一服务名称，这里需要的实际服务名称
+		//	msg.Svcname = sc.SvcName
+		//	for {
+		//		isReady, err := checkServiceStata(apiServer, msg, span)
+		//		if err != nil {
+		//			(*span).Annotate(time.Now(), fmt.Sprintf("Service Status Check Error %s ", err.Error()))
+		//			return
+		//		}
+		//
+		//		if message != "" {
+		//			sc.Deploy = _const.WAIITING
+		//			sc.Msg = message
+		//
+		//			NotifyDevExWithMessage(sc)
+		//		}
+		//
+		//		logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "isReady": isReady}).Info(ModuleName)
+		//		if isReady {
+		//			ip, port, err := getServiceLB(apiServer, msg, span)
+		//			if err != nil {
+		//				(*span).Annotate(time.Now(), fmt.Sprintf("Service LB Check Error %s ", err.Error()))
+		//				return
+		//			}
+		//
+		//			lb := svcconf.LoadBlance{
+		//				IP:   ip,
+		//				Port: port,
+		//			}
+		//
+		//			lb.Port = port
+		//			sc.LbConfig = lb
+		//			sc.Deploy = _const.DeploySuc
+		//			sc.Status = _const.NeedDeploy
+		//			sc.Msg = msg.Msg
+		//			sc.Span = (*span).Context()
+		//			logrus.WithFields(logrus.Fields{"name": sc.SvcName, "namespace": sc.Namespace, "lb": lb}).Info(ModuleName)
+		//			NotifyDevEx(sc)
+		//
+		//			if err := svcconf.UpdateSvcConf(sc); err != nil {
+		//				(*span).Annotate(time.Now(), fmt.Sprintf("Update-Service-Error %s ", err.Error()))
+		//				return
+		//			}
+		//
+		//			break
+		//		}
+		//
+		//		time.Sleep(3 * time.Second)
+		//	}
+		//	delete(currentDeploySvc, sc.Name)
+		//}
 
 	default:
 		if _, ok := currentDeploySvc[msg.Svcname]; ok {
