@@ -465,17 +465,26 @@ func checkServiceStata(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModul
 
 func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, span *zipkin.Span) (ip string, port []int, err error) {
 
+	var idx = 0
 	for {
+		if idx == 20 {
+			return "0.0.0.0", []int{0}, nil
+		}
+
 		service, err := k8service.GetK8sSpecifyService(apiServer, msg.Namespace, msg.Svcname)
 		if err != nil {
+			fmt.Printf("ERROR: %v \n", err)
 			if err.Error() == "not found" {
 				return "0.0.0.0", []int{0}, nil
 			}
 
-			return ip, port, err
-		}
+			(*span).Annotate(time.Now(), fmt.Sprintf("[%d] Get Service LB Error [%v]", idx, err))
 
-		(*span).Annotate(time.Now(), fmt.Sprintf("Service LB [%v]", service.Spec.ClusterIP))
+			idx++
+			time.Sleep(3 * time.Second)
+			continue
+			//return ip, port, err
+		}
 
 		//如果服务网络类型为LoadBalancer则需要获取负载IP, 如果是ClusterIP,只需要获取集群访问IP
 		//2019-02-13 腾讯云生成LB速度特别慢,因此直接获取集群LB。不再获取腾讯云生成的LB
@@ -485,6 +494,8 @@ func getServiceLB(apiServer k8sconfig.K8sCluster, msg *monitor.MonitorModule, sp
 				for _, p := range service.Spec.Ports {
 					port = append(port, p.Port)
 				}
+
+				logrus.Printf("Return Service LB [%v] \n", service.Spec.ClusterIP)
 				return service.Spec.ClusterIP, port, err
 			}
 
