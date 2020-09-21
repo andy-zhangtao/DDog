@@ -1,0 +1,39 @@
+. {
+	debug
+	errors
+	whoami
+	log
+	
+	proxy . /etc/resolv.conf {
+        	except eqshow.cn
+    }
+	
+	proxy . /etc/resolv.conf  {
+			except eqxiu.cn 
+	}
+	   
+	proxy . /etc/resolv.conf {
+			except yqxiu.cn	
+	}
+
+	proxy . /etc/resolv.conf {
+			except eqxiu.com
+	}
+
+	proxy . /etc/resolv.con {
+			except eqh5.com
+	}
+	#proxy . /etc/resolv.conf {
+	#		except res.eqh5.com	 res1.eqh5.com res2.eqh5.com res3.eqh5.com res5.eqh5.com as.eqh5.com
+	#}
+	#proxy . /etc/resolv.conf {
+	#		except eqxiu.com
+	#}
+
+	etcd eqshow.cn eqxiu.cn yqxiu.cn eqh5.com eqxiu.com {
+		stubzones
+		path /dev
+		endpoint http://192.168.0.8:2379 http://192.168.0.9:2379 http://192.168.0.18:2379
+	}
+
+}

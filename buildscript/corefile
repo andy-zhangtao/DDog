@@ -1,0 +1,17 @@
+. {
+	debug
+	errors
+	whoami
+	log
+	
+	proxy . /etc/resolv.conf {
+        	except eqshow.cn
+    }
+
+	etcd eqshow.cn {
+		stubzones
+		path /
+		endpoint http://172.26.60.211:2379
+	}
+
+}

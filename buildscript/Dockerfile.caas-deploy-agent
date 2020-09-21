@@ -1,0 +1,7 @@
+FROM    vikings/alpine:base	
+LABEL 	maintainer=ztao8607@gmail.com
+RUN 	cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    	echo "Asia/Shanghai" > /etc/timezone
+COPY 	caas-deploy-agent /caas-deploy-agent
+EXPOSE 	8000
+ENTRYPOINT ["/caas-deploy-agent"]

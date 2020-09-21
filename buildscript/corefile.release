@@ -1,0 +1,17 @@
+. {
+	debug
+	errors
+	whoami
+	log
+	
+	proxy . 114.114.114.114 {
+        	except store.eqxiu.com www.eqxiu.com
+    }
+
+	etcd store.eqxiu.com www.eqxiu.com {
+		stubzones
+		path /release
+		endpoint http://192.168.0.8:2379 http://192.168.0.9:2379 http://192.168.0.18:2379
+	}
+
+}

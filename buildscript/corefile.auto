@@ -1,0 +1,33 @@
+. {
+	debug
+	errors
+	whoami
+	log
+	
+	proxy . /etc/resolv.conf {
+        	except eqshow.cn eqxiu.cn yqxiu.cn api.253.com csec.api.qcloud.com
+    }
+	
+	#proxy . /etc/resolv.conf  {
+    #			except eqxiu.cn 
+	#}
+	   
+	#proxy . /etc/resolv.conf {
+	#			except yqxiu.cn	
+	#}
+
+	#proxy . /etc/resolv.conf {
+	#		except eqxiu.com
+	#}
+
+	#proxy . /etc/resolv.conf {
+	#		except eqh5.com
+	#}
+
+	etcd eqshow.cn eqxiu.cn yqxiu.cn eqh5.com eqxiu.com api.253.com csec.api.qcloud.com {
+		stubzones
+		path /auto
+		endpoint http://192.168.0.8:2379 http://192.168.0.9:2379 http://192.168.0.18:2379
+	}
+
+}
