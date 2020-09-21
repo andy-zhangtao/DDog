@@ -1,6 +1,48 @@
 # DDog
 A tool for auto generate coredns configure file
 
+## How to Build?
+
+** All build scripts in `buildscript` dir **
+
+The belowing commands exec in `buildscript` dir. 
+
++ k8smonitor
+
+```
+./buildK8sMonitorAgent.sh k8smonitor
+```
+
++ deployagent
+
+```
+./buildDeployAgent.sh deployagent
+```
+
++ caas-deploy-agent
+
+```
+./buildGraphAgent.sh caas-deploy-agent
+```
+
++ destoryagent
+
+```
+./buildDestoryAgent.sh destoryagent
+```
+
++ monitoragent
+
+```
+./buildMonitorAgent.sh monitoragent
+```
+
++ replicaagent
+
+```
+./buildReplicaAgent.sh replicaagent
+```
+
 ## API Reference
 
 ## How to Run?
